@@ -26,6 +26,16 @@ import kotlinx.coroutines.withContext
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import kotlinx.coroutines.delay
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -92,15 +102,125 @@ class MainActivity : ComponentActivity() {
         val appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "Unbekannt"
         setContent {
             var darkMode by rememberSaveable { mutableStateOf(preferences.getBoolean("dark_mode", false)) }
+            var showSplash by rememberSaveable { mutableStateOf(true) }
+            LaunchedEffect(Unit) {
+                delay(3_100)
+                showSplash = false
+            }
             TopfSecretTheme(darkMode) {
-                ActivationGate {
-                    TopfSecretApp(appContext, repository, productCatalog, blsFoodDao, darkMode, appVersion) { enabled ->
-                        darkMode = enabled
-                        preferences.edit().putBoolean("dark_mode", enabled).apply()
+                if (showSplash) {
+                    TopfSecretSplash(onFinished = { showSplash = false })
+                } else {
+                    ActivationGate {
+                        TopfSecretApp(appContext, repository, productCatalog, blsFoodDao, darkMode, appVersion) { enabled ->
+                            darkMode = enabled
+                            preferences.edit().putBoolean("dark_mode", enabled).apply()
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TopfSecretSplash(onFinished: () -> Unit) {
+    val potScale = remember { Animatable(0.72f) }
+    val lidTilt = remember { Animatable(-22f) }
+    val steamAlpha = remember { Animatable(0f) }
+    val steamRise = remember { Animatable(18f) }
+    var showTitle by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        potScale.animateTo(1f, tween(520))
+        delay(180)
+        lidTilt.animateTo(13f, tween(420))
+        steamAlpha.animateTo(1f, tween(260))
+        steamRise.animateTo(-8f, tween(520))
+        delay(220)
+        lidTilt.animateTo(0f, tween(380))
+        showTitle = true
+        delay(1_050)
+        onFinished()
+    }
+
+    Column(
+        modifier = Modifier.fillMaxSize().background(Cream),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Box(
+            modifier = Modifier.size(width = 270.dp, height = 230.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "♨",
+                color = Copper.copy(alpha = steamAlpha.value),
+                fontSize = 54.sp,
+                modifier = Modifier.align(Alignment.TopCenter).offset(y = steamRise.value.dp)
+            )
+            Box(
+                modifier = Modifier.offset(y = 34.dp).graphicsLayer {
+                    scaleX = potScale.value
+                    scaleY = potScale.value
+                },
+                contentAlignment = Alignment.Center
+            ) {
+                Row(
+                    modifier = Modifier.width(230.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Box(Modifier.size(34.dp, 44.dp).border(7.dp, Color(0xFF9B4C25), RoundedCornerShape(14.dp)))
+                    Spacer(Modifier.width(162.dp))
+                    Box(Modifier.size(34.dp, 44.dp).border(7.dp, Color(0xFF9B4C25), RoundedCornerShape(14.dp)))
+                }
+                Box(
+                    modifier = Modifier.size(194.dp, 132.dp).background(Color(0xFFE87524), RoundedCornerShape(42.dp)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Canvas(Modifier.fillMaxSize()) {
+                        val eyeY = size.height * 0.39f
+                        drawCircle(Color(0xFF302019), radius = 6.5.dp.toPx(), center = Offset(size.width * 0.36f, eyeY))
+                        drawCircle(Color(0xFF302019), radius = 6.5.dp.toPx(), center = Offset(size.width * 0.64f, eyeY))
+                        drawArc(
+                            color = Color(0xFF302019),
+                            startAngle = 0f,
+                            sweepAngle = 180f,
+                            useCenter = false,
+                            topLeft = Offset(size.width * 0.37f, size.height * 0.48f),
+                            size = Size(size.width * 0.26f, size.height * 0.25f),
+                            style = Stroke(width = 4.dp.toPx())
+                        )
+                    }
+                }
+                Box(
+                    modifier = Modifier.offset(y = (-76).dp).graphicsLayer { rotationZ = lidTilt.value }
+                        .size(210.dp, 19.dp)
+                        .background(Color(0xFF9B4C25), RoundedCornerShape(50))
+                )
+                Box(
+                    modifier = Modifier.offset(y = (-91).dp).size(34.dp, 17.dp)
+                        .background(Color(0xFF9B4C25), RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                )
+            }
+        }
+        Spacer(Modifier.height(2.dp))
+        Text(
+            "TOPF SECRET",
+            color = Copper,
+            fontSize = 17.sp,
+            fontWeight = FontWeight.ExtraBold,
+            letterSpacing = 4.sp
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            if (showTitle) "Pssst … hier wird's lecker! 😉" else "Deine Rezepte. Euer Geheimnis.",
+            color = MutedInk,
+            fontSize = 15.sp,
+            fontWeight = FontWeight.Medium,
+            textAlign = TextAlign.Center
+        )
     }
 }
 
