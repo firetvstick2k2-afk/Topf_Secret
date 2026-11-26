@@ -126,3 +126,12 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Falsche Barcode-Antworten von Open Food Facts werden abgewiesen, wenn der API-Produktcode vom gescannten Code abweicht.
 - Datenquellen-Roadmap für manuelle Suche: Open Food Facts Search-a-licious; BLS 4.0 (kostenlos, CC BY 4.0, besonders relevant für deutsche Lebensmittel); Livsmedelsverket JSON API (CC BY 4.0); USDA FoodData Central (CC0, API-Key erforderlich). UK CoFID als möglicher Offline-Datensatz nach Lizenz-/Formatprüfung. Keine privaten/gebührenpflichtigen Lifesum-Daten oder APIs verwenden.
 - Offen: weitere Datenquellen technisch integrieren, deutsche Bezeichnungen/Übersetzungen, Qualitäts-/Plausibilitätsregeln und Katalog-Backup/Restore.
+
+
+## H. Quellen, Lizenzen und Danksagungen
+- Ein Drei-Striche-Menü auf der Startseite bietet den Einstieg zu „Quellen & Danksagungen“.
+- Die Seite führt verwendete Datenquellen und Projekte mit Herausgeber, Lizenz und Link auf. Der BLS 4.0 wird mit offizieller Zitierangabe des Max Rubner-Instituts und CC BY 4.0 aufgeführt; Open Food Facts mit ODbL 1.0; Wikimedia Commons mit dateispezifischer Lizenz-/Urheberzuordnung.
+- Weitere Datenquellen, Bibliotheken und freiwillige Mitwirkende sollen später ergänzbar sein. Personen werden nur mit ihrer Zustimmung namentlich genannt.
+- BLS-Integration: Daten lokal/offline durchsuchbar machen; deutsche Lebensmittelbezeichnungen und Nährwerte übernehmen; Datenherkunft und fehlende Werte erhalten; Quellenstatus in der Zutaten-/Nährwertansicht anzeigen.
+- Vor Veröffentlichung der BLS-Datenintegration Lizenzhinweise exakt umsetzen, Änderungen/Aufbereitungen kennzeichnen und klarstellen, dass das Max Rubner-Institut Topf Secret nicht unterstützt oder geprüft hat. Open-Food-Facts-ODbL-Anforderungen separat behandeln.
+- Status: Menü und Quellen-/Danksagungsseite auf development angelegt; Build und Gerätetest ausstehend. Der eigentliche BLS-Datenimport ist noch nicht implementiert.
