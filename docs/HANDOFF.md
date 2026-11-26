@@ -158,3 +158,10 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Der Import speichert derzeit die vier für die bestehende Rezeptberechnung benötigten Makronährwerte; die übrigen 134 Nährstoffkomponenten werden noch nicht in Room übernommen. Datenherkunft/Referenzen der vier gespeicherten Werte bleiben erhalten.
 - BLS-Import ist noch nicht mit der Originaldatei auf einem Gerät verifiziert; Build und Test stehen aus. Vor Freigabe muss der Import mit der offiziellen BLS_4_0_Daten_2025_DE.xlsx getestet werden.
 - Android CI wurde so angepasst, dass Pushes auf `development` automatisch einen Build starten; Release-Veröffentlichung bleibt weiterhin manuell.
+
+
+### Absturzdiagnose BLS-Datenbankmigration (2026-11-26)
+- Nutzer-Gerätetest nach Installation von App 0.6.0 auf Samsung SM-S908B / Android 16 stürzte beim Öffnen der Room-Datenbank ab.
+- Absturzprotokoll: `Migration didn't properly handle: bls_foods`. Die Migration 3→4 legt den Index `index_bls_foods_germanName` an, aber `BlsFoodEntity` hatte diesen Index nicht in der `@Entity`-Definition deklariert. Room erwartete deshalb ein Schema ohne Index und fand einen zusätzlichen Index.
+- Korrektur auf `development`: `BlsFoodEntity` deklariert jetzt `Index(value = ["germanName"])`; dies stimmt mit dem bereits vorhandenen SQL in Migration 3→4 überein. Datenbankversion und Tabellen-/Spaltenstruktur bleiben unverändert; kein Datenbank-Reset und keine destructive migration.
+- Noch offen: CI-Build des Korrektur-Commits und erneuter Installationstest auf dem betroffenen Gerät. Bis zur Bestätigung ist der Startfehler als behoben im Code, aber noch nicht auf dem Gerät verifiziert zu behandeln.
