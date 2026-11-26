@@ -255,3 +255,12 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Die Überschrift im aufgeklappten Bereich lautet einheitlich „Nährwertangaben“. Darunter sind „Gesamtgericht“ und „Pro Portion“ klar getrennt; manuell hinterlegte Altwerte tragen eine eigene Kennzeichnung.
 - Auch im Rezepteditor liegen automatische Berechnung und optionale manuelle Nährwertfelder gemeinsam im aufklappbaren Bereich unterhalb der Zubereitung.
 - Keine Datenbankänderung. Build/Tests und Gerätetest für Commit `fc1e5db39cbcc9ff1d2e9b479140daa11157bfdc` stehen noch aus.
+
+
+## Eigene Zutaten im Produktkatalog (2026-11-26)
+- Zutateneditor: Barcode-Scan, Produktsuche und „Zutat hinzufügen“ stehen als drei Aktionen untereinander bzw. nebeneinander in einer eigenen Zeile unter der Überschrift Zutaten, das Zutatenfeld folgt darunter.
+- Eigene Zutaten erfassen Name, optionale Marke sowie Energie, Kohlenhydrate, Zucker, Ballaststoffe, Eiweiß, Fett, gesättigte Fettsäuren und Salz je 100 g oder 100 ml. Fehlende Werte bleiben leer.
+- Eigene Einträge werden dauerhaft in Room lokal gespeichert, erhalten eine eigene CUSTOM-Kennung und erscheinen bei künftigen Produktsuchen vor BLS-, übrigen lokalen und Online-Treffern.
+- Datenbankmigration 6→7 ergänzt die Bezugsbasis der lokalen Produkte; bestehende Rezepte und Produktdaten bleiben erhalten.
+- Nährwertbasis 100 ml wird für flüssige Zutaten bei der Berechnung als Volumenbasis berücksichtigt. Build/Tests und Gerätetest für die neuen Commits stehen noch aus.
+- Relevante Commits: `0e4f4022`, `a21cbbc7`, `953097df`, `56a03a74`, `79f445d4`, `fd429fac`, `b497093f`.
