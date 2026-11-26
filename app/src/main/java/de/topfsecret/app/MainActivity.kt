@@ -158,10 +158,13 @@ private fun HomeScreen(recipeCount: Int, darkMode: Boolean, onDarkModeChange: (B
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Image(painterResource(R.drawable.topf_secret_logo), "Topf Secret", Modifier.size(76.dp))
             Spacer(Modifier.width(14.dp))
-            Column {
+            Column(Modifier.weight(1f)) {
                 Text("TOPF SECRET", color = Copper, fontSize = 13.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
                 Text("Euer Kochbuch", color = Ink, fontSize = 23.sp, fontWeight = FontWeight.Bold)
                 Text("Deine Rezepte. Eure Küche.", color = MutedInk, fontSize = 13.sp)
+            }
+            IconButton(onClick = { onDarkModeChange(!darkMode) }) {
+                Text(if (darkMode) "☀️" else "🌙", fontSize = 23.sp)
             }
         }
         Spacer(Modifier.height(28.dp))
@@ -171,11 +174,11 @@ private fun HomeScreen(recipeCount: Int, darkMode: Boolean, onDarkModeChange: (B
         Spacer(Modifier.height(10.dp))
         Text("Eure Rezeptsammlung für gemeinsame Lieblingsmomente wächst hier Schritt für Schritt.", color = MutedInk, style = MaterialTheme.typography.bodyLarge, lineHeight = 24.sp)
         Spacer(Modifier.height(24.dp))
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Ink)) {
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = if (darkMode) Color(0xFF493022) else Color(0xFF302019))) {
             Column(Modifier.padding(22.dp)) {
                 Text("GUTEN APPETIT!", color = Color(0xFFFFB879), fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
                 Spacer(Modifier.height(8.dp))
-                Text("Eure Küche.\nEure Regeln.", color = Color.White, fontSize = 27.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold)
+                Text("Eure Küche.\\nEure Regeln.", color = Color.White, fontSize = 27.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
                 Text("Ein Ort für die Rezepte, die euch schmecken und verbinden.", color = Color(0xFFFFE8D8), lineHeight = 21.sp)
             }
@@ -188,13 +191,8 @@ private fun HomeScreen(recipeCount: Int, darkMode: Boolean, onDarkModeChange: (B
             HomeActionCard(Modifier.weight(1f), "🥕", "Kategorien", "Alles im Blick", Sage, onCategoriesClick)
         }
         Spacer(Modifier.height(22.dp))
-        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(if (darkMode) "🌙 Dunkelmodus" else "☀️ Hellmodus", modifier = Modifier.weight(1f), color = Ink, fontWeight = FontWeight.SemiBold)
-                Switch(checked = darkMode, onCheckedChange = onDarkModeChange)
-            }
-        }
         Spacer(Modifier.height(18.dp))
+
         Text("Hier entsteht euer digitales Kochbuch.", Modifier.fillMaxWidth(), color = MutedInk, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall)
     }
 }
