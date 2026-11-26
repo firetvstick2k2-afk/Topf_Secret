@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -66,10 +66,13 @@ jobs:
           echo "APK_PATH=$APK_PATH" >> "$GITHUB_ENV"
           echo "Created $APK_NAME"
 
-      - name: Upload signed APK
-        uses: actions/upload-artifact@v4
+      - name: Publish APK as direct GitHub Release download
+        if: github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
         with:
-          name: topf_secret_#${{ github.run_number }}
-          path: ${{ env.APK_PATH }}
-          if-no-files-found: error
-          retention-days: 14
+          tag_name: build-${{ github.run_number }}
+          name: Topf Secret Build #${{ github.run_number }}
+          body: "Installierbare APK für Build #${{ github.run_number }}."
+          files: ${{ env.APK_PATH }}
+          draft: false
+          prerelease: true
