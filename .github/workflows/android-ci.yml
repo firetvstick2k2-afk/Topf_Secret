@@ -65,13 +65,19 @@ jobs:
             unzip -Z1 "$APK_SOURCE" | grep 'assets/' || true
             exit 1
           fi
-          APK_ASSET_SHA="$(unzip -p "$APK_SOURCE" assets/bls_foods_v4.jsonl | sha256sum | awk '{print $1}')"
+          APK_ASSET="$RUNNER_TEMP/bls_foods_v4.jsonl"
+          unzip -p "$APK_SOURCE" assets/bls_foods_v4.jsonl > "$APK_ASSET"
+          if gzip -t "$APK_ASSET" 2>/dev/null; then
+            APK_ASSET_SHA="$(gzip -dc "$APK_ASSET" | sha256sum | awk '{print $1}')"
+          else
+            APK_ASSET_SHA="$(sha256sum "$APK_ASSET" | awk '{print $1}')"
+          fi
           EXPECTED_SHA="b58c764620ab5b3b28f81aa3d7caca23b4b2665b151642fde809fca25f4890a6"
           if [ "$APK_ASSET_SHA" != "$EXPECTED_SHA" ]; then
-            echo "::error::BLS asset checksum mismatch inside APK: $APK_ASSET_SHA"
+            echo "::error::BLS JSONL content checksum mismatch inside APK: $APK_ASSET_SHA"
             exit 1
           fi
-          echo "Verified BLS asset in APK (SHA-256: $APK_ASSET_SHA)"
+          echo "Verified BLS JSONL content in APK (SHA-256: $APK_ASSET_SHA)"
           
       - name: Rename APK with build number
         run: |
