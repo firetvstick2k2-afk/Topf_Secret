@@ -68,7 +68,7 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte solle
 
 - Kotlin und Jetpack Compose.
 - Room 2.8.3 als lokale Datenzugriffsschicht.
-- SQLCipher for Android als Datenbankverschlüsselungskandidat; Version und Integration mit Room 2.8.3, compileSdk 36 und API 26+ zuerst in einem Prototyp validieren.
+- SQLCipher for Android 4.20.0 ist eingebunden; Room 2.8.3 nutzt die SupportOpenHelperFactory und AndroidX SQLite 2.7.0. Ein isolierter Room-/SQLCipher-Instrumentierungstest ist für CI auf einem API-35-Emulator eingerichtet; API-26-Gerätetest und erfolgreicher CI-Lauf stehen noch aus.
 - Schlüsselmaterial mit Android Keystore schützen; optionale biometrische Freigabe über AndroidX BiometricPrompt.
 - Repository-/Use-Case-Schicht, damit Datenbank und Synchronisationsanbieter austauschbar bleiben.
 - Synchronisation erst nach Sicherheits- und Datenschutzkonzept integrieren.
@@ -80,7 +80,7 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte solle
 1. Projektgrundlage und CI-Build
 2. UI-Grundgerüst und Navigation
 3. Lokales Datenmodell und Room
-4. Sicherheitsarchitektur und SQLCipher-/Keystore-Prototyp
+4. Sicherheitsarchitektur und SQLCipher-/Room-2-Prototyp (eingebunden; Emulator-/API-26-Validierung offen)
 5. Datenbankmigration und lokale Profile mit PIN, Wiederherstellungscode und optionaler Biometrie
 6. Rezeptverwaltung und verschlüsselte Bilder
 7. Portionen- und Nährwertberechnung
