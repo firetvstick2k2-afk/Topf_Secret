@@ -794,15 +794,17 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                                 val localResults = productCatalog.search(productSearchQuery).map {
                                     OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl, it.sugarsGPer100, it.fiberGPer100, it.saltGPer100, it.saturatedFatGPer100, it.nutritionBasis)
                                 }
+                                val customResults = localResults.filter { it.barcode.startsWith("CUSTOM:") }
+                                val otherLocalResults = localResults.filterNot { it.barcode.startsWith("CUSTOM:") }
                                 OpenFoodFactsClient.searchProducts(productSearchQuery).fold(
                                     onSuccess = { remote ->
-                                        val combined = blsProducts + localResults + remote
+                                        val combined = customResults + blsProducts + otherLocalResults + remote
                                         productSearchResults = combined.distinctBy { it.barcode }.take(40)
-                                        productSearchMessage = if (productSearchResults.isEmpty()) "Keine passenden Produkte oder BLS-Lebensmittel gefunden." else "BLS 4.0 und lokale Produkte stehen vor den Online-Treffern."
+                                        productSearchMessage = if (productSearchResults.isEmpty()) "Keine passenden Produkte oder BLS-Lebensmittel gefunden." else "Eigene Zutaten zuerst · danach BLS 4.0, lokale und Online-Produkte."
                                         productSearchLoading = false
                                     },
                                     onFailure = { error ->
-                                        productSearchResults = (blsProducts + localResults).distinctBy { it.barcode }.take(40)
+                                        productSearchResults = (customResults + blsProducts + otherLocalResults).distinctBy { it.barcode }.take(40)
                                         productSearchMessage = if (productSearchResults.isNotEmpty()) "Offline-Treffer aus BLS 4.0 und lokalem Katalog. Online-Suche nicht erreichbar." else (error.message ?: "Die Suche ist fehlgeschlagen.")
                                         productSearchLoading = false
                                     }
@@ -811,7 +813,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                                 val localResults = productCatalog.search(productSearchQuery).map {
                                     OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl, it.sugarsGPer100, it.fiberGPer100, it.saltGPer100, it.saturatedFatGPer100, it.nutritionBasis)
                                 }
-                                productSearchResults = localResults
+                                productSearchResults = localResults.sortedByDescending { it.barcode.startsWith("CUSTOM:") }
                                 productSearchMessage = "BLS konnte nicht geladen werden: ${error.message ?: "unbekannter Fehler"}"
                                 productSearchLoading = false
                             }
