@@ -183,3 +183,11 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Android-CI läuft bei Pull Requests gegen `development` und bei manuellem Start (`workflow_dispatch`).
 - Kein automatischer `push`-Trigger. Ältere Dokumentationsstellen, die einen Push-Build erwähnen, sind überholt.
 - Ausschließlich `development` bearbeiten; `main` bleibt unangetastet.
+
+
+## BLS-Suche: Korrektur nach Gerätetest-Rückmeldung (2026-11-26)
+
+- Der Nutzer meldete, dass der Hinweis „BLS 4.0 wird offline vorbereitet …“ dauerhaft sichtbar blieb und Semmelknödel nicht gefunden wurden. Ursache im UI: Der Hinweis war nur ein initialer Platzhalter; die BLS-Abfrage war von der separaten Schaltfläche „BLS suchen“ getrennt. Die normale Schaltfläche „Suchen“ fragte ausschließlich lokalen Produktkatalog und Open Food Facts ab.
+- Korrektur auf `development`: BLS wird nun bei der normalen Produktsuche zuerst initialisiert/validiert und parallel in die Trefferliste aufgenommen; anschließend folgen lokale Produktkatalog- und Online-Treffer. Die separate BLS-Schaltfläche und der irreführende Dauerhinweis wurden entfernt.
+- Der Datensatz enthält nach Prüfung u. a. „Semmelknödel“, „Semmelknödel roh“, „Semmelknödel gekocht“ und „Semmelknödel getrocknet“.
+- **Status:** UI-Code committed (Commit `5b451330263a65c1a3b2fb4ccbb8155c799354dc`). Build und erneuter Gerätetest stehen noch aus.
