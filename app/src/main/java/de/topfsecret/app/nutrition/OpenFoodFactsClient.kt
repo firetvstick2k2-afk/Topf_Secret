@@ -18,7 +18,8 @@ data class OpenFoodFactsProduct(
     val sugarsGPer100: Double? = null,
     val fiberGPer100: Double? = null,
     val saltGPer100: Double? = null,
-    val saturatedFatGPer100: Double? = null
+    val saturatedFatGPer100: Double? = null,
+    val nutritionBasis: String = "100g"
 ) {
     val hasNutrition: Boolean
         get() = caloriesKcalPer100 != null || carbohydratesGPer100 != null ||
