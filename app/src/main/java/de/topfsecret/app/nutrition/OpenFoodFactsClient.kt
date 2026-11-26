@@ -84,45 +84,61 @@ object OpenFoodFactsClient {
             runCatching {
                 val term = query.trim()
                 require(term.length >= 2) { "Bitte mindestens zwei Suchzeichen eingeben." }
-                val encoded = java.net.URLEncoder.encode(term, Charsets.UTF_8.name())
-                val url = URL(
-                    "https://world.openfoodfacts.org/cgi/search.pl?action=process&search_terms=$encoded" +
-                        "&json=1&page_size=${limit.coerceIn(1, 30)}" +
-                        "&fields=code,product_name,product_name_de,brands,nutriments"
-                )
+                val url = URL("https://search.openfoodfacts.org/search")
                 val connection = (url.openConnection() as HttpURLConnection).apply {
-                    requestMethod = "GET"
+                    requestMethod = "POST"
                     connectTimeout = 10_000
-                    readTimeout = 15_000
+                    readTimeout = 20_000
+                    doOutput = true
                     setRequestProperty("User-Agent", "TopfSecret/0.6.0 (https://github.com/firetvstick2k2-afk/Topf_Secret)")
                     setRequestProperty("Accept", "application/json")
+                    setRequestProperty("Content-Type", "application/json; charset=utf-8")
                 }
                 try {
+                    val body = JSONObject().apply {
+                        put("q", term)
+                        put("langs", org.json.JSONArray(listOf("de", "en", "fr")))
+                        put("page", 1)
+                        put("page_size", limit.coerceIn(1, 30))
+                        put("boost_phrase", true)
+                        put("fields", org.json.JSONArray(listOf("code", "product_name", "product_name_de", "product_name_en", "brands", "nutriments")))
+                    }.toString()
+                    connection.outputStream.use { it.write(body.toByteArray(Charsets.UTF_8)) }
                     val status = connection.responseCode
-                    if (status !in 200..299) error("Produktsuche nicht erreichbar (HTTP $status).")
+                    if (status !in 200..299) error("Produktsuche ist gerade nicht erreichbar (HTTP $status).")
                     val root = JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
-                    val products = root.optJSONArray("products") ?: org.json.JSONArray()
-                    (0 until products.length()).mapNotNull { index ->
-                        val item = products.optJSONObject(index) ?: return@mapNotNull null
+                    val hits = root.optJSONObject("hits")?.optJSONArray("hits")
+                        ?: root.optJSONArray("hits")
+                        ?: root.optJSONArray("products")
+                        ?: org.json.JSONArray()
+                    (0 until hits.length()).mapNotNull { index ->
+                        val hit = hits.optJSONObject(index) ?: return@mapNotNull null
+                        val item = hit.optJSONObject("_source") ?: hit.optJSONObject("document") ?: hit
                         val code = item.optString("code").takeIf { it.matches(Regex("[0-9]{8,14}")) }
                             ?: return@mapNotNull null
-                        val name = item.optString("product_name_de").takeIf { it.isNotBlank() && it != "null" }
+                        val germanName = item.optString("product_name_de").takeIf { it.isNotBlank() && it != "null" }
+                        val name = germanName
                             ?: item.optString("product_name").takeIf { it.isNotBlank() && it != "null" }
+                            ?: item.optString("product_name_en").takeIf { it.isNotBlank() && it != "null" }
                             ?: return@mapNotNull null
-                        val nutrients = item.optJSONObject("nutriments") ?: JSONObject()
-                        fun number(key: String): Double? {
-                            if (!nutrients.has(key) || nutrients.isNull(key)) return null
-                            val value = nutrients.optDouble(key, Double.NaN)
-                            return value.takeIf { it.isFinite() && it >= 0.0 }
+                        val nutrients = item.optJSONObject("nutriments") ?: item.optJSONObject("nutrients") ?: JSONObject()
+                        fun number(vararg keys: String): Double? {
+                            for (key in keys) {
+                                if (nutrients.has(key) && !nutrients.isNull(key)) {
+                                    val value = nutrients.optDouble(key, Double.NaN)
+                                    if (value.isFinite() && value >= 0.0) return value
+                                }
+                            }
+                            return null
                         }
                         OpenFoodFactsProduct(
                             barcode = code,
                             name = name.trim(),
                             brand = item.optString("brands").takeIf { it.isNotBlank() && it != "null" },
-                            caloriesKcalPer100 = number("energy-kcal_100g") ?: number("energy-kj_100g")?.div(4.184),
-                            carbohydratesGPer100 = number("carbohydrates_100g"),
-                            proteinGPer100 = number("proteins_100g"),
-                            fatGPer100 = number("fat_100g"),
+                            caloriesKcalPer100 = number("energy-kcal_100g", "energy-kcal"),
+                            carbohydratesGPer100 = number("carbohydrates_100g", "carbohydrates"),
+                            proteinGPer100 = number("proteins_100g", "proteins"),
+                            fatGPer100 = number("fat_100g", "fat"),
                             sourceUrl = "https://world.openfoodfacts.org/product/$code"
                         )
                     }.distinctBy { it.barcode }
