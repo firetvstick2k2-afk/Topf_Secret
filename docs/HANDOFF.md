@@ -37,7 +37,7 @@ Stand: 2026-11-26
 
 ## Admin-Freischaltung (Version 0.5.0)
 - Beim Start erscheint vor dem Kochbuch eine lokale Freischaltseite.
-- Ein gemeinsamer, dauerhaft gültiger Admin-Key ist für den Nutzer und seine Ehefrau vorgesehen: `TOPF-1312-2709-ADMIN`.
+- Ein gemeinsamer, dauerhaft gültiger Admin-Key ist für den Nutzer und seine Ehefrau vorgesehen: `KOCH-1312-2709-TOPF`.
 - Die App vergleicht einen SHA-256-Prüfwert; der Klartext-Key ist nicht im Repository hinterlegt.
 - Nach erfolgreicher Eingabe wird nur der Freischaltstatus in den privaten App-Einstellungen gespeichert. Der Key muss auf diesem Gerät danach nicht erneut eingegeben werden.
 - Die Rezeptdatenbank wird durch Fehlversuche nicht verändert oder gelöscht.
