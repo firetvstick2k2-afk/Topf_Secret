@@ -555,7 +555,37 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
             Text("Das Bild konnte nicht übernommen werden. Bitte erneut versuchen.", color = Color(0xFFB3261E), style = MaterialTheme.typography.bodySmall)
         }
         Spacer(Modifier.height(10.dp))
-        OutlinedTextField(ingredients, { ingredients = it }, Modifier.fillMaxWidth(), label = { Text("Zutaten – eine pro Zeile") }, placeholder = { Text("z. B. 500 g Kartoffeln\n1 Zwiebel") }, minLines = 4)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Zutaten", color = Ink, fontWeight = FontWeight.Bold)
+            OutlinedButton(enabled = !barcodeLoading, onClick = {
+                barcodeError = ""
+                barcodeLoading = true
+                val options = GmsBarcodeScannerOptions.Builder()
+                    .setBarcodeFormats(Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8, Barcode.FORMAT_UPC_A, Barcode.FORMAT_UPC_E)
+                    .enableAutoZoom()
+                    .build()
+                GmsBarcodeScanning.getClient(context, options).startScan()
+                    .addOnSuccessListener { barcode ->
+                        val code = barcode.rawValue
+                        if (code.isNullOrBlank()) {
+                            barcodeError = "Kein Barcode erkannt."
+                            barcodeLoading = false
+                        } else scope.launch {
+                            OpenFoodFactsClient.lookupBarcode(code).fold(
+                                onSuccess = { scannedProduct = it; barcodeLoading = false },
+                                onFailure = { barcodeError = it.message ?: "Produkt konnte nicht geladen werden."; barcodeLoading = false }
+                            )
+                        }
+                    }
+                    .addOnCanceledListener { barcodeLoading = false }
+                    .addOnFailureListener { error ->
+                        barcodeError = error.message ?: "Der Barcode-Scanner konnte nicht gestartet werden."
+                        barcodeLoading = false
+                    }
+            }) { Text(if (barcodeLoading) "Suche…" else "Barcode scannen") }
+        }
+        OutlinedTextField(ingredients, { ingredients = it }, Modifier.fillMaxWidth(), label = { Text("Zutaten – eine pro Zeile") }, placeholder = { Text("z. B. 500 g Kartoffeln\\n1 Zwiebel") }, minLines = 4)
+        if (barcodeError.isNotBlank()) Text(barcodeError, color = Color(0xFFB3261E), style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(steps, { steps = it }, Modifier.fillMaxWidth(), label = { Text("Zubereitung – ein Schritt pro Zeile") }, placeholder = { Text("Kartoffeln schälen und würfeln.\nZwiebel glasig anbraten.") }, minLines = 4)
         Spacer(Modifier.height(16.dp))
