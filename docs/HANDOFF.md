@@ -374,6 +374,6 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 
 
 ## Startanimation – frecher Geheimtopf (2026-11-26)
-- Beim App-Start erscheint vor der Aktivierungsprüfung eine kurze Compose-Animation (ca. 3,1 Sekunden): Kochtopf fährt ein, Deckel hebt sich/wackelt, Dampf steigt auf, anschließend erscheint der Markenname mit augenzwinkerndem Begrüßungstext.
+- Beim App-Start erscheint vor der Aktivierungsprüfung eine kurze Compose-Animation (ca. 3,6 Sekunden): Kochtopf fährt ein, Deckel hebt sich/wackelt, Dampf steigt auf, anschließend erscheint der Markenname mit augenzwinkerndem Begrüßungstext.
 - Animation ist vollständig lokal mit Jetpack Compose umgesetzt; keine zusätzliche Bibliothek, kein Netzwerk und keine Bilddatei erforderlich.
 - App-Version auf 0.9.4 / versionCode 20 erhöht. CI-Build und Gerätetest stehen noch aus.
