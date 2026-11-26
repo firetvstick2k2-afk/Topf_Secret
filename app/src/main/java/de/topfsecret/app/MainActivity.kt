@@ -52,11 +52,12 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         val repository = RecipeRepository(TopfSecretDatabase.getInstance(applicationContext).recipeDao())
         val preferences = getSharedPreferences("topf_secret_settings", MODE_PRIVATE)
+        val appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "Unbekannt"
         setContent {
             var darkMode by rememberSaveable { mutableStateOf(preferences.getBoolean("dark_mode", false)) }
             TopfSecretTheme(darkMode) {
                 ActivationGate {
-                    TopfSecretApp(repository, darkMode) { enabled ->
+                    TopfSecretApp(repository, darkMode, appVersion) { enabled ->
                         darkMode = enabled
                         preferences.edit().putBoolean("dark_mode", enabled).apply()
                     }
@@ -75,7 +76,7 @@ private fun TopfSecretTheme(darkMode: Boolean, content: @Composable () -> Unit) 
 }
 
 @Composable
-private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit) {
+private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var selectedRecipeId by rememberSaveable { mutableLongStateOf(0L) }
     var editingRecipeId by rememberSaveable { mutableLongStateOf(0L) }
@@ -106,7 +107,7 @@ private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, onDar
     ) { innerPadding ->
         Surface(Modifier.fillMaxSize().padding(innerPadding), color = Cream) {
             when (selectedTab) {
-                0 -> HomeScreen(recipes.size, darkMode, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 })
+                0 -> HomeScreen(recipes.size, darkMode, appVersion, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 })
                 1 -> {
                     if (editingRecipeId != 0L) {
                         val editing = recipes.firstOrNull { it.recipe.id == editingRecipeId }
@@ -164,7 +165,8 @@ private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, onDar
 }
 
 @Composable
-private fun HomeScreen(recipeCount: Int, darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit) {
+private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit) {
+    var showInfoDialog by rememberSaveable { mutableStateOf(false) }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.Start
@@ -177,11 +179,32 @@ private fun HomeScreen(recipeCount: Int, darkMode: Boolean, onDarkModeChange: (B
                 Text("Euer Kochbuch", color = Ink, fontSize = 23.sp, fontWeight = FontWeight.Bold)
                 Text("Deine Rezepte. Eure Küche.", color = MutedInk, fontSize = 13.sp)
             }
+            IconButton(onClick = { showInfoDialog = true }) {
+                Text("ⓘ", color = Copper, fontSize = 27.sp, fontWeight = FontWeight.Bold)
+            }
             IconButton(onClick = { onDarkModeChange(!darkMode) }) {
                 Text(if (darkMode) "☀️" else "🌙", fontSize = 23.sp)
             }
         }
         Spacer(Modifier.height(28.dp))
+        if (showInfoDialog) {
+            AlertDialog(
+                onDismissRequest = { showInfoDialog = false },
+                confirmButton = {
+                    TextButton(onClick = { showInfoDialog = false }) { Text("Schließen", color = Copper) }
+                },
+                icon = {
+                    Image(painterResource(R.drawable.topf_secret_logo), "Topf Secret Logo", Modifier.size(104.dp))
+                },
+                title = {
+                    Text("Topf Secret by Andre Schlüter", color = Ink, textAlign = TextAlign.Center)
+                },
+                text = {
+                    Text("Version $appVersion", color = MutedInk, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                },
+                containerColor = Paper
+            )
+        }
         Text("Schön, dass ihr da seid! 👋", color = MutedInk, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(7.dp))
         Text("Was kochen wir heute?", color = Ink, fontSize = 29.sp, lineHeight = 35.sp, fontWeight = FontWeight.Bold)
