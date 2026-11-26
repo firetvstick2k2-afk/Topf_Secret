@@ -35,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -746,10 +747,10 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                         preparationMinutes = prepMinutes.toIntOrNull(),
                         cookingMinutes = cookMinutes.toIntOrNull(),
                         imageUri = imageUri.ifBlank { null },
-                        caloriesPerServing = if (calculatedNutrition.calculatedIngredients > 0 && uncalculatedReasons.isEmpty()) calculatedNutrition.caloriesKcal / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else kcal.toDecimalOrNull(),
-                        carbohydratesPerServing = if (calculatedNutrition.calculatedIngredients > 0 && uncalculatedReasons.isEmpty()) calculatedNutrition.carbohydratesG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else carbs.toDecimalOrNull(),
-                        proteinPerServing = if (calculatedNutrition.calculatedIngredients > 0 && uncalculatedReasons.isEmpty()) calculatedNutrition.proteinG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else protein.toDecimalOrNull(),
-                        fatPerServing = if (calculatedNutrition.calculatedIngredients > 0 && uncalculatedReasons.isEmpty()) calculatedNutrition.fatG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else fat.toDecimalOrNull(),
+                        caloriesPerServing = if (calculatedNutrition.calculatedIngredients > 0) { if (uncalculatedReasons.isEmpty()) calculatedNutrition.caloriesKcal / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else null } else kcal.toDecimalOrNull(),
+                        carbohydratesPerServing = if (calculatedNutrition.calculatedIngredients > 0) { if (uncalculatedReasons.isEmpty()) calculatedNutrition.carbohydratesG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else null } else carbs.toDecimalOrNull(),
+                        proteinPerServing = if (calculatedNutrition.calculatedIngredients > 0) { if (uncalculatedReasons.isEmpty()) calculatedNutrition.proteinG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else null } else protein.toDecimalOrNull(),
+                        fatPerServing = if (calculatedNutrition.calculatedIngredients > 0) { if (uncalculatedReasons.isEmpty()) calculatedNutrition.fatG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else null } else fat.toDecimalOrNull(),
                         sugarsPerServing = if (calculatedNutrition.calculatedIngredients > 0 && calculatedNutrition.sugarsComplete && uncalculatedReasons.isEmpty()) calculatedNutrition.sugarsG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else null,
                         fiberPerServing = if (calculatedNutrition.calculatedIngredients > 0 && calculatedNutrition.fiberComplete && uncalculatedReasons.isEmpty()) calculatedNutrition.fiberG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else null,
                         saltPerServing = if (calculatedNutrition.calculatedIngredients > 0 && calculatedNutrition.saltComplete && uncalculatedReasons.isEmpty()) calculatedNutrition.saltG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else null,
