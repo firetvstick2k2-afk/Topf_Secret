@@ -21,6 +21,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
@@ -109,6 +111,7 @@ internal fun OnlineDishImageSearch(
                                 Text(result.title.removePrefix("File:"), fontWeight = FontWeight.SemiBold, style = MaterialTheme.typography.bodySmall, maxLines = 2)
                                 Text("Lizenz: " + result.license, style = MaterialTheme.typography.labelSmall)
                                 if (result.artist.isNotBlank()) Text("Urheber: " + result.artist, style = MaterialTheme.typography.labelSmall, maxLines = 2)
+                                if (result.attribution.isNotBlank()) Text(result.attribution, style = MaterialTheme.typography.labelSmall, maxLines = 2)
                                 TextButton(
                                     onClick = {
                                         scope.launch {
@@ -204,13 +207,19 @@ private fun readCommonsUrl(address: String): String {
     return connection.inputStream.bufferedReader().use { it.readText() }.also { connection.disconnect() }
 }
 
-private fun loadCommonsThumbnail(address: String): Bitmap? = runCatching {
-    val connection = URL(address).openConnection() as HttpURLConnection
-    connection.connectTimeout = 10_000
-    connection.readTimeout = 15_000
-    connection.setRequestProperty("User-Agent", "TopfSecret/0.6 (https://github.com/firetvstick2k2-afk/Topf_Secret)")
-    connection.inputStream.use { BitmapFactory.decodeStream(it) }.also { connection.disconnect() }
-}.getOrNull()
+private val commonsThumbnailSemaphore = Semaphore(3)
+
+private suspend fun loadCommonsThumbnail(address: String): Bitmap? = commonsThumbnailSemaphore.withPermit {
+    withContext(Dispatchers.IO) {
+        runCatching {
+            val connection = URL(address).openConnection() as HttpURLConnection
+            connection.connectTimeout = 10_000
+            connection.readTimeout = 15_000
+            connection.setRequestProperty("User-Agent", "TopfSecret/0.6 (https://github.com/firetvstick2k2-afk/Topf_Secret)")
+            connection.inputStream.use { BitmapFactory.decodeStream(it) }.also { connection.disconnect() }
+        }.getOrNull()
+    }
+}
 
 private suspend fun downloadCommonsImage(context: Context, image: CommonsDishImage): String? = withContext(Dispatchers.IO) {
     runCatching {
