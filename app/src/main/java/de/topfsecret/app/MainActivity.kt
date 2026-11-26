@@ -1,6 +1,9 @@
 package de.topfsecret.app
 
 import android.os.Bundle
+import com.google.android.gms.mlkit.codescanner.GmsBarcodeScanning
+import com.google.android.gms.mlkit.codescanner.GmsBarcodeScannerOptions
+import com.google.mlkit.vision.barcode.common.Barcode
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -37,6 +40,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.topfsecret.app.data.RecipeRepository
 import de.topfsecret.app.data.local.RecipeEntity
+import de.topfsecret.app.data.local.IngredientEntity
+import de.topfsecret.app.nutrition.OpenFoodFactsClient
+import de.topfsecret.app.nutrition.OpenFoodFactsProduct
 import de.topfsecret.app.data.local.RecipeWithDetails
 import de.topfsecret.app.data.local.TopfSecretDatabase
 import kotlinx.coroutines.launch
@@ -129,9 +135,9 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, darkMo
                         RecipeEditorScreen(
                             recipe = editing,
                             onCancel = { editingRecipeId = 0L },
-                            onSave = { entity, ingredients, steps ->
+                            onSave = { entity, ingredients, steps, nutritionByIngredientName ->
                                 scope.launch {
-                                    val newId = repository.saveRecipe(entity, ingredients, steps)
+                                    val newId = repository.saveRecipe(entity, ingredients, steps, nutritionByIngredientName)
                                     if (editing != null && editing.recipe.imageUri != entity.imageUri) {
                                         deleteManagedRecipeImage(context, editing.recipe.imageUri)
                                     }
@@ -437,7 +443,7 @@ private fun FavoriteScreen(
 }
 
 @Composable
-private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit, onSave: (RecipeEntity, List<String>, List<String>) -> Unit) {
+private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit, onSave: (RecipeEntity, List<String>, List<String>, Map<String, OpenFoodFactsProduct>) -> Unit) {
     val original = recipe?.recipe
     var title by rememberSaveable(original?.id) { mutableStateOf(original?.title.orEmpty()) }
     var description by rememberSaveable(original?.id) { mutableStateOf(original?.description.orEmpty()) }
@@ -456,6 +462,27 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
     var pendingCameraPath by rememberSaveable(original?.id) { mutableStateOf("") }
     var imageError by rememberSaveable(original?.id) { mutableStateOf(false) }
     var showOnlineImageSearch by rememberSaveable(original?.id) { mutableStateOf(false) }
+    val nutritionByIngredientName = remember(original?.id) {
+        mutableStateMapOf<String, OpenFoodFactsProduct>().apply {
+            recipe?.ingredients?.forEach { item ->
+                if (item.barcode != null) {
+                    put(item.name, OpenFoodFactsProduct(
+                        barcode = item.barcode,
+                        name = item.name,
+                        brand = null,
+                        caloriesKcalPer100 = item.caloriesPer100,
+                        carbohydratesGPer100 = item.carbohydratesPer100,
+                        proteinGPer100 = item.proteinPer100,
+                        fatGPer100 = item.fatPer100,
+                        sourceUrl = item.nutritionSource ?: "https://world.openfoodfacts.org/"
+                    ))
+                }
+            }
+        }
+    }
+    var scannedProduct by remember { mutableStateOf<OpenFoodFactsProduct?>(null) }
+    var barcodeError by remember { mutableStateOf("") }
+    var barcodeLoading by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -564,10 +591,40 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                         fatPerServing = fat.toDecimalOrNull(),
                         updatedAt = System.currentTimeMillis()
                     )
-                    onSave(entity, ingredients.lines(), steps.lines())
+                    onSave(entity, ingredients.lines(), steps.lines(), nutritionByIngredientName.toMap())
                 }
             }) { Text("Rezept speichern") }
         }
+    }
+    scannedProduct?.let { product ->
+        AlertDialog(
+            onDismissRequest = { scannedProduct = null },
+            title = { Text("Produkt gefunden") },
+            text = {
+                Column {
+                    Text(product.name, fontWeight = FontWeight.Bold)
+                    product.brand?.takeIf(String::isNotBlank)?.let { Text(it, color = MutedInk) }
+                    Spacer(Modifier.height(8.dp))
+                    Text("Nährwerte je 100 g")
+                    Text("Energie: " + (product.caloriesKcalPer100?.let { it.prettyNumber() + " kcal" } ?: "nicht vorhanden"))
+                    Text("Kohlenhydrate: " + (product.carbohydratesGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
+                    Text("Eiweiß: " + (product.proteinGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
+                    Text("Fett: " + (product.fatGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
+                    Spacer(Modifier.height(6.dp))
+                    Text(if (product.hasNutrition) "Datenquelle: Open Food Facts" else "Für dieses Produkt sind keine Nährwerte hinterlegt.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    nutritionByIngredientName[product.name] = product
+                    if (ingredients.lines().none { it.contains(product.name, ignoreCase = true) }) {
+                        ingredients = listOf(ingredients.trimEnd(), "100 g " + product.name).filter(String::isNotBlank).joinToString("\\n")
+                    }
+                    scannedProduct = null
+                }) { Text("Als Zutat übernehmen") }
+            },
+            dismissButton = { TextButton(onClick = { scannedProduct = null }) { Text("Abbrechen") } }
+        )
     }
     if (showOnlineImageSearch) {
         OnlineDishImageSearch(
