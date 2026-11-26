@@ -18,10 +18,12 @@ Stand: 2026-11-26
 - Navigation nutzt Compose-Zustand und benötigt noch keine zusätzliche Navigation-Bibliothek.
 - Room `2.8.3` ist eingebunden (Kotlin KAPT als Compiler-Anbindung). Die lokale Datenbank `topf_secret.db` wird bei Bedarf über `TopfSecretDatabase.getInstance(context)` erstellt.
 - Datenmodell v1: `RecipeEntity` mit Titel, Beschreibung, Kategorie, Portionen, Zeiten, Bild-/Quellen-URI, Notizen, optionalen Nährwert-Schätzwerten pro Portion, Favoritenstatus und Zeitstempeln. Zutaten (`IngredientEntity`) und Zubereitungsschritte (`PreparationStepEntity`) sind normalisiert und per Fremdschlüssel mit Cascade Delete verknüpft.
-- `RecipeDao` bietet Flow-Beobachtung aller Rezepte, einzelner Rezepte und Kategorien sowie transaktionales Speichern mit Ersetzen der Zutaten und Schritte. Die Datenbank ist noch nicht mit der Oberfläche verbunden; es gibt noch keine Rezept-Eingabemasken oder Migrationen über Version 1 hinaus.
+- `RecipeDao` bietet Flow-Beobachtung aller Rezepte, einzelner Rezepte und Kategorien sowie transaktionales Speichern mit Ersetzen der Zutaten und Schritte. Der Rezepte-Bereich ist mit Room verbunden; Rezeptliste, Detailansicht und Eingabemaske unterstützen den ersten lokalen CRUD-Ablauf. Migrationen über Datenbankversion 1 hinaus sind noch nicht umgesetzt.
 - Pushes auf `development` lösen keinen Build mehr aus. Builds werden manuell über GitHub Actions → Android CI → Run workflow gestartet. Pull Requests gegen `development` lösen weiterhin automatisch einen Build aus.
 - CI erstellt nun ein signiertes Release-APK als Artefakt `topf-secret-release-apk` (14 Tage Aufbewahrung).
 - Aktuelle App-Version im Quellstand: `versionCode = 7`, `versionName = 0.5.0`.
+- Build 15 (`6254af2`) wurde erfolgreich erstellt.
+- Build 16 (`3f1c1d7`) ist beim Kotlin-Compile fehlgeschlagen: `KeyboardOptions` war aus dem falschen Compose-Paket importiert. Korrektur in `ActivationGate.kt`: Import auf `androidx.compose.foundation.text.KeyboardOptions` geändert. Ein erneuter Release-Build steht noch aus.
 - Neues App-Symbol liegt unter `app/src/main/res/drawable-nodpi/topf_secret_app_icon.png`; `AndroidManifest.xml` verweist für `icon` und `roundIcon` auf `@drawable/topf_secret_app_icon`.
 - Das vollständige Startlogo wurde als PNG unter `app/src/main/res/drawable-nodpi/topf_secret_logo.png` hochgeladen; der Kotlin-Ressourcenname bleibt `R.drawable.topf_secret_logo`.
 - Die vorherige JPEG-Datei `topf_secret_logo.jpg` war unvollständig (APK enthielt 7.500 Bytes und der JPEG-Decoder meldete fehlende Bytes am Dateiende). Sie wurde aus `development` entfernt. Die frühere Annahme, die Dateiendung sei alleinige Ursache, war nicht korrekt.
@@ -66,7 +68,7 @@ Stand: 2026-11-26
 ## Nächste Schritte
 1. Die vier GitHub Actions Secrets sicher hinterlegen.
 2. Manuellen Workflow starten und signiertes Release-APK bauen.
-3. Version 0.4.0 bauen, APK-Signatur prüfen und auf dem Samsung-Gerät testen; eine Deinstallation nur dann durchführen, wenn die Signatur nicht mit der installierten Version übereinstimmt.
+3. Nach dem Import-Fix einen neuen signierten Release-Build starten, APK-Signatur prüfen und Aktivierungsseite auf dem Gerät testen; eine Deinstallation nur dann durchführen, wenn die Signatur nicht mit der installierten Version übereinstimmt.
 4. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
 5. Rezeptverwaltung mit Room ist angebunden; Build und Geräteeinsatz testen, insbesondere Anlegen/Bearbeiten/Löschen und App-Neustart/Persistenz.
 6. Rezeptmodell um Mengen-/Einheitenfelder, Zeiten und Nährwert-Eingabe erweitern.
