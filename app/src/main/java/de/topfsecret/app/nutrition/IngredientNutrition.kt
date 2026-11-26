@@ -38,8 +38,8 @@ object IngredientMeasureConverter {
     }
 }
 
-data class NutritionPer100(val caloriesKcal: Double?, val carbohydratesG: Double?, val proteinG: Double?, val fatG: Double?, val basis: IngredientMeasureConverter.Basis) {
-    data class Totals(val caloriesKcal: Double = 0.0, val carbohydratesG: Double = 0.0, val proteinG: Double = 0.0, val fatG: Double = 0.0, val calculatedIngredients: Int = 0, val uncalculatedIngredients: Int = 0, val estimatedMeasures: Boolean = false)
+data class NutritionPer100(val caloriesKcal: Double?, val carbohydratesG: Double?, val proteinG: Double?, val fatG: Double?, val basis: IngredientMeasureConverter.Basis, val sugarsG: Double? = null, val fiberG: Double? = null, val saltG: Double? = null, val saturatedFatG: Double? = null) {
+    data class Totals(val caloriesKcal: Double = 0.0, val carbohydratesG: Double = 0.0, val proteinG: Double = 0.0, val fatG: Double = 0.0, val calculatedIngredients: Int = 0, val uncalculatedIngredients: Int = 0, val estimatedMeasures: Boolean = false, val sugarsG: Double = 0.0, val fiberG: Double = 0.0, val saltG: Double = 0.0, val saturatedFatG: Double = 0.0)
 
     fun forAmount(amount: Double, unit: String, ingredientName: String): Totals? {
         val converted = IngredientMeasureConverter.convert(amount, unit) ?: return null
@@ -49,10 +49,10 @@ data class NutritionPer100(val caloriesKcal: Double?, val carbohydratesG: Double
             if (converted.basis == IngredientMeasureConverter.Basis.MILLILITRES) converted else return null
         }
         val factor = normalized.value / 100.0
-        return Totals((caloriesKcal ?: 0.0) * factor, (carbohydratesG ?: 0.0) * factor, (proteinG ?: 0.0) * factor, (fatG ?: 0.0) * factor, calculatedIngredients = 1, estimatedMeasures = converted.estimated || normalized.estimated)
+        return Totals((caloriesKcal ?: 0.0) * factor, (carbohydratesG ?: 0.0) * factor, (proteinG ?: 0.0) * factor, (fatG ?: 0.0) * factor, calculatedIngredients = 1, estimatedMeasures = converted.estimated || normalized.estimated, sugarsG = (sugarsG ?: 0.0) * factor, fiberG = (fiberG ?: 0.0) * factor, saltG = (saltG ?: 0.0) * factor, saturatedFatG = (saturatedFatG ?: 0.0) * factor)
     }
 }
 
 fun List<NutritionPer100.Totals>.sumNutrition(): NutritionPer100.Totals = fold(NutritionPer100.Totals()) { total, item ->
-    total.copy(caloriesKcal = total.caloriesKcal + item.caloriesKcal, carbohydratesG = total.carbohydratesG + item.carbohydratesG, proteinG = total.proteinG + item.proteinG, fatG = total.fatG + item.fatG, calculatedIngredients = total.calculatedIngredients + item.calculatedIngredients, uncalculatedIngredients = total.uncalculatedIngredients + item.uncalculatedIngredients, estimatedMeasures = total.estimatedMeasures || item.estimatedMeasures)
+    total.copy(caloriesKcal = total.caloriesKcal + item.caloriesKcal, carbohydratesG = total.carbohydratesG + item.carbohydratesG, proteinG = total.proteinG + item.proteinG, fatG = total.fatG + item.fatG, sugarsG = total.sugarsG + item.sugarsG, fiberG = total.fiberG + item.fiberG, saltG = total.saltG + item.saltG, saturatedFatG = total.saturatedFatG + item.saturatedFatG, calculatedIngredients = total.calculatedIngredients + item.calculatedIngredients, uncalculatedIngredients = total.uncalculatedIngredients + item.uncalculatedIngredients, estimatedMeasures = total.estimatedMeasures || item.estimatedMeasures)
 }
