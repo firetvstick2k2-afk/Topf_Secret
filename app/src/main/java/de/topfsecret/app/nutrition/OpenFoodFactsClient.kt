@@ -79,4 +79,57 @@ object OpenFoodFactsClient {
                 }
             }
         }
+    suspend fun searchProducts(query: String, limit: Int = 20): Result<List<OpenFoodFactsProduct>> =
+        withContext(Dispatchers.IO) {
+            runCatching {
+                val term = query.trim()
+                require(term.length >= 2) { "Bitte mindestens zwei Suchzeichen eingeben." }
+                val encoded = java.net.URLEncoder.encode(term, Charsets.UTF_8.name())
+                val url = URL(
+                    "https://world.openfoodfacts.org/cgi/search.pl?action=process&search_terms=$encoded" +
+                        "&json=1&page_size=${limit.coerceIn(1, 30)}" +
+                        "&fields=code,product_name,product_name_de,brands,nutriments"
+                )
+                val connection = (url.openConnection() as HttpURLConnection).apply {
+                    requestMethod = "GET"
+                    connectTimeout = 10_000
+                    readTimeout = 15_000
+                    setRequestProperty("User-Agent", "TopfSecret/0.6.0 (https://github.com/firetvstick2k2-afk/Topf_Secret)")
+                    setRequestProperty("Accept", "application/json")
+                }
+                try {
+                    val status = connection.responseCode
+                    if (status !in 200..299) error("Produktsuche nicht erreichbar (HTTP $status).")
+                    val root = JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+                    val products = root.optJSONArray("products") ?: org.json.JSONArray()
+                    (0 until products.length()).mapNotNull { index ->
+                        val item = products.optJSONObject(index) ?: return@mapNotNull null
+                        val code = item.optString("code").takeIf { it.matches(Regex("[0-9]{8,14}")) }
+                            ?: return@mapNotNull null
+                        val name = item.optString("product_name_de").takeIf { it.isNotBlank() && it != "null" }
+                            ?: item.optString("product_name").takeIf { it.isNotBlank() && it != "null" }
+                            ?: return@mapNotNull null
+                        val nutrients = item.optJSONObject("nutriments") ?: JSONObject()
+                        fun number(key: String): Double? {
+                            if (!nutrients.has(key) || nutrients.isNull(key)) return null
+                            val value = nutrients.optDouble(key, Double.NaN)
+                            return value.takeIf { it.isFinite() && it >= 0.0 }
+                        }
+                        OpenFoodFactsProduct(
+                            barcode = code,
+                            name = name.trim(),
+                            brand = item.optString("brands").takeIf { it.isNotBlank() && it != "null" },
+                            caloriesKcalPer100 = number("energy-kcal_100g") ?: number("energy-kj_100g")?.div(4.184),
+                            carbohydratesGPer100 = number("carbohydrates_100g"),
+                            proteinGPer100 = number("proteins_100g"),
+                            fatGPer100 = number("fat_100g"),
+                            sourceUrl = "https://world.openfoodfacts.org/product/$code"
+                        )
+                    }.distinctBy { it.barcode }
+                } finally {
+                    connection.disconnect()
+                }
+            }
+        }
+
 }
