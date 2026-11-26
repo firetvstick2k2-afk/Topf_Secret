@@ -531,7 +531,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
         val issues = mutableListOf<Pair<String, String>>()
         val knownUnits = setOf("mg", "g", "gramm", "kg", "ml", "cl", "dl", "l", "liter", "litre", "tl", "teelöffel", "el", "esslöffel", "tasse", "tassen")
         lines.forEach { line ->
-            val match = Regex("""^(\\d+(?:[.,]\\d+)?)(?:\\s*([\\p{L}.]+))?(?:\\s+(.+))?$""", RegexOption.IGNORE_CASE).matchEntire(line)
+            val match = Regex("""^(\d+(?:[.,]\d+)?)(?:\s*([\p{L}.]+))?(?:\s+(.+))?$""", RegexOption.IGNORE_CASE).matchEntire(line)
             if (match == null) { issues += line to "Die Mengenangabe konnte nicht erkannt werden."; return@forEach }
             val quantity = match.groupValues[1].replace(',', '.').toDoubleOrNull()
             val second = match.groupValues[2].trim()
@@ -540,7 +540,9 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
             val unit = if (hasUnit) second else "Stück"
             val name = if (hasUnit) third else listOf(second, third).filter(String::isNotBlank).joinToString(" ")
             if (name.isBlank() || quantity == null) { issues += line to "Bitte Menge, Einheit und Zutat prüfen."; return@forEach }
-            val product = nutritionSnapshot[name]
+            val product = nutritionSnapshot[name] ?: nutritionSnapshot.entries.singleOrNull { (key, _) ->
+                key.contains(name, ignoreCase = true) || name.contains(key, ignoreCase = true)
+            }?.value
             if (product == null) { issues += line to "Für diese Zutat liegen keine Nährwertdaten vor."; return@forEach }
             val nutrition = NutritionPer100(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, IngredientMeasureConverter.Basis.GRAMS, product.sugarsGPer100, product.fiberGPer100, product.saltGPer100, product.saturatedFatGPer100)
             val result = nutrition.forAmount(quantity, unit, name)
