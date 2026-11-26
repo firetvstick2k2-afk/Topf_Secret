@@ -251,3 +251,10 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Technische Schutzmaßnahmen: nur HTTP(S), Timeout, max. 1.5 MB, HTTP-Statusprüfung; keine zusätzliche Library.
 - Version 0.7.0 / versionCode 12.
 - **Status: implementiert, aber nicht gebaut/getestet.** Vor Nutzerfreigabe Android-CI und Gerätetest durchführen und mehrere echte Rezeptseiten prüfen.
+
+
+### G.11 Online-Rezeptimport – Kategorieauswahl und Quell-Nährwerte (2026-11-26)
+- Vor dem Speichern kann die Rezeptkategorie frei eingegeben/geändert werden; vorhandene Kategorie wird als Vorschlag verwendet.
+- Strukturierte Nährwerte aus Schema.org NutritionInformation werden übernommen, wenn die Quelle sie bereitstellt: kcal, Kohlenhydrate, Zucker, Ballaststoffe, Eiweiß, Fett, gesättigte Fettsäuren und Salz. Sodium wird bei fehlendem SaltContent mit Faktor 2,5 in Salzäquivalent umgerechnet.
+- Werte der Quelle werden pro Portion separat von der Zutatenberechnung gespeichert und angezeigt. Keine Werte werden geschätzt oder erfunden, wenn die Quelle sie nicht bereitstellt.
+- Version 0.7.1 / versionCode 13. Build und Gerätetest ausstehend.
