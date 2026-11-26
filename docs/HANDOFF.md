@@ -346,3 +346,10 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Ursache: Die Detailabfrage lieferte `imageUrl`, die gemeinsame Vorschau rendert Bildkandidaten aber ausschließlich aus `imageUrls`. Deshalb erschien „Bildauswahl“ ohne Bild.
 - TheMealDB-Detailantwort übergibt das vorhandene Rezeptfoto jetzt zusätzlich als einzigen Bildkandidaten. Es wird in der Vorschau angezeigt und ist standardmäßig ausgewählt; beim Speichern wird es wie beim bisherigen Import lokal abgelegt.
 - Version 0.9.2 / versionCode 18. Build und Gerätetest stehen aus.
+
+
+### G.16 Chefkoch als externe Suchquelle (2026-11-26)
+- Entdecken erhält eine Quellenumschaltung zwischen TheMealDB und Chefkoch.
+- Chefkoch-Suche öffnet die offizielle Chefkoch-Suche mit dem eingegebenen Suchbegriff im Browser. Der Nutzer kopiert anschließend den konkreten Rezeptlink und nutzt den bestehenden Online-Linkimport in Topf Secret.
+- Keine automatisierte Chefkoch-Suche, kein Scraping und keine Umgehung von Zugriffsbeschränkungen; die Chefkoch-Bedingungen untersagen automatisches Auslesen und den Aufbau eigener Suchsysteme.
+- Version 0.9.3 / versionCode 19. Build und Gerätetest stehen aus. Deutsche Übersetzung für TheMealDB ist als nächster Umsetzungsschritt offen.
