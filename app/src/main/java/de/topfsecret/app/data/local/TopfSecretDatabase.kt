@@ -86,6 +86,10 @@ abstract class TopfSecretDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE local_food_products ADD COLUMN fiberGPer100 REAL")
                 db.execSQL("ALTER TABLE local_food_products ADD COLUMN saltGPer100 REAL")
                 db.execSQL("ALTER TABLE local_food_products ADD COLUMN saturatedFatGPer100 REAL")
+                db.execSQL("ALTER TABLE recipes ADD COLUMN sugarsPerServing REAL")
+                db.execSQL("ALTER TABLE recipes ADD COLUMN fiberPerServing REAL")
+                db.execSQL("ALTER TABLE recipes ADD COLUMN saltPerServing REAL")
+                db.execSQL("ALTER TABLE recipes ADD COLUMN saturatedFatPerServing REAL")
             }
         }
         @Volatile private var INSTANCE: TopfSecretDatabase? = null
