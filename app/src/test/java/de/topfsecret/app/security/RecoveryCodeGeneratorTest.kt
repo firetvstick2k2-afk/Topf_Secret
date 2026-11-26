@@ -49,6 +49,6 @@ class RecoveryCodeGeneratorTest {
     fun formatReturnsCanonicalGroups() {
         val raw = "0123456789ABCDEFGHJKMNPQ"
 
-        assertEquals("0123-4567-89AB-CDEG-HJKM-NPQ", RecoveryCodeGenerator.format(raw))
+        assertEquals("0123-4567-89AB-CDEF-GHJK-MNPQ", RecoveryCodeGenerator.format(raw))
     }
 }
