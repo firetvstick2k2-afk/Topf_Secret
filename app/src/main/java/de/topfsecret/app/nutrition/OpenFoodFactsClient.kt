@@ -14,11 +14,15 @@ data class OpenFoodFactsProduct(
     val carbohydratesGPer100: Double?,
     val proteinGPer100: Double?,
     val fatGPer100: Double?,
-    val sourceUrl: String
+    val sourceUrl: String,
+    val sugarsGPer100: Double? = null,
+    val fiberGPer100: Double? = null,
+    val saltGPer100: Double? = null,
+    val saturatedFatGPer100: Double? = null
 ) {
     val hasNutrition: Boolean
         get() = caloriesKcalPer100 != null || carbohydratesGPer100 != null ||
-            proteinGPer100 != null || fatGPer100 != null
+            proteinGPer100 != null || fatGPer100 != null || sugarsGPer100 != null ||\n            fiberGPer100 != null || saltGPer100 != null || saturatedFatGPer100 != null
 }
 
 object OpenFoodFactsClient {
@@ -76,7 +80,11 @@ object OpenFoodFactsClient {
                         carbohydratesGPer100 = number("carbohydrates_100g"),
                         proteinGPer100 = number("proteins_100g"),
                         fatGPer100 = number("fat_100g"),
-                        sourceUrl = "https://world.openfoodfacts.org/product/$barcode"
+                        sourceUrl = "https://world.openfoodfacts.org/product/$barcode",
+                        sugarsGPer100 = number("sugars_100g"),
+                        fiberGPer100 = number("fiber_100g"),
+                        saltGPer100 = number("salt_100g"),
+                        saturatedFatGPer100 = number("saturated-fat_100g")
                     )
                 } finally {
                     connection.disconnect()
@@ -143,7 +151,11 @@ object OpenFoodFactsClient {
                             carbohydratesGPer100 = number("carbohydrates_100g", "carbohydrates"),
                             proteinGPer100 = number("proteins_100g", "proteins"),
                             fatGPer100 = number("fat_100g", "fat"),
-                            sourceUrl = "https://world.openfoodfacts.org/product/$code"
+                            sourceUrl = "https://world.openfoodfacts.org/product/$code",
+                            sugarsGPer100 = number("sugars_100g", "sugars"),
+                            fiberGPer100 = number("fiber_100g", "fiber"),
+                            saltGPer100 = number("salt_100g", "salt"),
+                            saturatedFatGPer100 = number("saturated-fat_100g", "saturated-fat")
                         )
                     }.distinctBy { it.barcode }
                 } finally {
