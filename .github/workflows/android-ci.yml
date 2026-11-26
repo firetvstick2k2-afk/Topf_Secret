@@ -14,7 +14,9 @@ permissions:
 jobs:
   build:
     name: Build signed release APK
-    runs-on: ubuntu-latest
+    # Emulator-Instrumentierungstests sind auf neueren GitHub-Runner-Images
+    # zeitweise hängen geblieben. Bis zur Klärung verwenden wir 22.04.
+    runs-on: ubuntu-22.04
     steps:
       - name: Check out source
         uses: actions/checkout@v4
