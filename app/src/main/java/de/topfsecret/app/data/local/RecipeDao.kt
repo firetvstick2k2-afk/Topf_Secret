@@ -29,6 +29,9 @@ interface RecipeDao {
     @Query("SELECT * FROM recipes ORDER BY id ASC")
     suspend fun getAllRecipesWithDetails(): List<RecipeWithDetails>
 
+    @Query("SELECT EXISTS(SELECT 1 FROM recipes WHERE title = :title COLLATE NOCASE AND ((sourceUrl = :sourceUrl) OR (sourceUrl IS NULL AND :sourceUrl IS NULL)))")
+    suspend fun recipeExists(title: String, sourceUrl: String?): Boolean
+
     @Transaction
     suspend fun importRecipeWithDetails(
         recipe: RecipeEntity,
