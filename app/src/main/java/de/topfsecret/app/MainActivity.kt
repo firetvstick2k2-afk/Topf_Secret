@@ -116,7 +116,7 @@ class MainActivity : ComponentActivity() {
                                 userName = cleanedName
                             })
                         } else {
-                            TopfSecretApp(appContext, repository, productCatalog, blsFoodDao, darkMode, appVersion, userName) { enabled ->
+                            TopfSecretApp(appContext, repository, productCatalog, blsFoodDao, database.recipeDao(), darkMode, appVersion, userName) { enabled ->
                                 darkMode = enabled
                                 preferences.edit().putBoolean("dark_mode", enabled).apply()
                             }
@@ -284,7 +284,7 @@ private fun TopfSecretTheme(darkMode: Boolean, content: @Composable () -> Unit) 
 }
 
 @Composable
-private fun TopfSecretApp(context: Context, repository: RecipeRepository, productCatalog: LocalFoodProductDao, blsFoodDao: de.topfsecret.app.data.local.BlsFoodDao, darkMode: Boolean, appVersion: String, userName: String, onDarkModeChange: (Boolean) -> Unit) {
+private fun TopfSecretApp(context: Context, repository: RecipeRepository, productCatalog: LocalFoodProductDao, blsFoodDao: de.topfsecret.app.data.local.BlsFoodDao, recipeDao: de.topfsecret.app.data.local.RecipeDao, darkMode: Boolean, appVersion: String, userName: String, onDarkModeChange: (Boolean) -> Unit) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var selectedRecipeId by rememberSaveable { mutableLongStateOf(0L) }
     var editingRecipeId by rememberSaveable { mutableLongStateOf(0L) }
@@ -316,7 +316,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
     ) { innerPadding ->
         Surface(Modifier.fillMaxSize().padding(innerPadding), color = Cream) {
             when (selectedTab) {
-                0 -> HomeScreen(recipes.size, darkMode, appVersion, userName, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 }, { selectedTab = 5 })
+                0 -> HomeScreen(recipes.size, darkMode, appVersion, userName, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 }, { selectedTab = 5 }, { selectedTab = 6 })
                 1 -> {
                     if (editingRecipeId == -2L) {
                         OnlineRecipeImportScreen(
@@ -432,6 +432,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                         selectedTab = 1
                     }
                 )
+                6 -> RecipeBackupScreen(context, recipeDao)
                 else -> AcknowledgementsScreen()
             }
         }
@@ -439,7 +440,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
 }
 
 @Composable
-private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, userName: String, onDarkModeChange: (Boolean) -> Unit, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit, onSourcesClick: () -> Unit) {
+private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, userName: String, onDarkModeChange: (Boolean) -> Unit, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit, onSourcesClick: () -> Unit, onBackupClick: () -> Unit) {
     var showInfoDialog by rememberSaveable { mutableStateOf(false) }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 18.dp),
@@ -453,6 +454,7 @@ private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, 
                     DropdownMenuItem(text = { Text("Start") }, onClick = { menuExpanded = false })
                     DropdownMenuItem(text = { Text("Rezepte") }, onClick = { menuExpanded = false; onRecipesClick() })
                     DropdownMenuItem(text = { Text("Kategorien") }, onClick = { menuExpanded = false; onCategoriesClick() })
+                    DropdownMenuItem(text = { Text("Backup & Import") }, onClick = { menuExpanded = false; onBackupClick() })
                     DropdownMenuItem(text = { Text("Quellen & Danksagungen") }, onClick = { menuExpanded = false; onSourcesClick() })
                     DropdownMenuItem(text = { Text("Über Topf Secret") }, onClick = { menuExpanded = false; showInfoDialog = true })
                 }
