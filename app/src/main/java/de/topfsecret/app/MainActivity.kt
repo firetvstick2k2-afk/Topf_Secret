@@ -496,7 +496,11 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                         carbohydratesGPer100 = item.carbohydratesPer100,
                         proteinGPer100 = item.proteinPer100,
                         fatGPer100 = item.fatPer100,
-                        sourceUrl = item.nutritionSource ?: "https://world.openfoodfacts.org/"
+                        sourceUrl = item.nutritionSource ?: "https://world.openfoodfacts.org/",
+                        sugarsGPer100 = item.sugarsPer100,
+                        fiberGPer100 = item.fiberPer100,
+                        saltGPer100 = item.saltPer100,
+                        saturatedFatGPer100 = item.saturatedFatPer100
                     ))
                 }
             }
@@ -521,20 +525,33 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
     var editedProtein by remember { mutableStateOf("") }
     var editedFat by remember { mutableStateOf("") }
     val nutritionSnapshot = nutritionByIngredientName.toMap()
-    val calculatedNutrition = remember(ingredients, nutritionSnapshot) {
+    val nutritionEvaluation = remember(ingredients, nutritionSnapshot) {
         val lines = ingredients.lines().map(String::trim).filter(String::isNotEmpty)
-        val calculated = lines.mapNotNull { line ->
-            val match = Regex("""^(\d+(?:[.,]\d+)?\s*[\p{L}.]+)\s+(.+)$""", RegexOption.IGNORE_CASE).matchEntire(line)
-                ?: return@mapNotNull null
-            val amount = IngredientMeasureConverter.parseAmount(match.groupValues[1]) ?: return@mapNotNull null
-            val name = match.groupValues[2].trim()
-            val product = nutritionSnapshot[name] ?: return@mapNotNull null
-            NutritionPer100(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, IngredientMeasureConverter.Basis.GRAMS)
-                .forAmount(amount.first, amount.second, name)
+        val calculated = mutableListOf<NutritionPer100.Totals>()
+        val issues = mutableListOf<Pair<String, String>>()
+        val knownUnits = setOf("mg", "g", "gramm", "kg", "ml", "cl", "dl", "l", "liter", "litre", "tl", "teelöffel", "el", "esslöffel", "tasse", "tassen")
+        lines.forEach { line ->
+            val match = Regex("""^(\\d+(?:[.,]\\d+)?)(?:\\s*([\\p{L}.]+))?(?:\\s+(.+))?$""", RegexOption.IGNORE_CASE).matchEntire(line)
+            if (match == null) { issues += line to "Die Mengenangabe konnte nicht erkannt werden."; return@forEach }
+            val quantity = match.groupValues[1].replace(',', '.').toDoubleOrNull()
+            val second = match.groupValues[2].trim()
+            val third = match.groupValues[3].trim()
+            val hasUnit = second.lowercase(java.util.Locale.GERMAN) in knownUnits
+            val unit = if (hasUnit) second else "Stück"
+            val name = if (hasUnit) third else listOf(second, third).filter(String::isNotBlank).joinToString(" ")
+            if (name.isBlank() || quantity == null) { issues += line to "Bitte Menge, Einheit und Zutat prüfen."; return@forEach }
+            val product = nutritionSnapshot[name]
+            if (product == null) { issues += line to "Für diese Zutat liegen keine Nährwertdaten vor."; return@forEach }
+            val nutrition = NutritionPer100(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, IngredientMeasureConverter.Basis.GRAMS, product.sugarsGPer100, product.fiberGPer100, product.saltGPer100, product.saturatedFatGPer100)
+            val result = nutrition.forAmount(quantity, unit, name)
+            if (result == null) issues += line to if (unit == "Stück") "Aufgrund der Mengenangabe nicht berechenbar: Stückgewicht fehlt." else "Die Einheit lässt sich ohne passende Umrechnung nicht berechnen."
+            else if (listOf(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100).all { it == null }) issues += line to "Für diese Zutat fehlen verwertbare Grundnährwerte."
+            else calculated += result
         }
-        val sum = calculated.sumNutrition()
-        sum.copy(uncalculatedIngredients = lines.size - sum.calculatedIngredients)
+        calculated.sumNutrition().copy(uncalculatedIngredients = issues.size) to issues
     }
+    val calculatedNutrition = nutritionEvaluation.first
+    val uncalculatedReasons = nutritionEvaluation.second
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { selected ->
             scope.launch {
@@ -627,7 +644,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                         } else scope.launch {
                             val saved = productCatalog.findByBarcode(code)
                             if (saved != null) {
-                                scannedProduct = OpenFoodFactsProduct(saved.barcode, saved.name, saved.brand, saved.caloriesKcalPer100, saved.carbohydratesGPer100, saved.proteinGPer100, saved.fatGPer100, saved.sourceUrl)
+                                scannedProduct = OpenFoodFactsProduct(saved.barcode, saved.name, saved.brand, saved.caloriesKcalPer100, saved.carbohydratesGPer100, saved.proteinGPer100, saved.fatGPer100, saved.sourceUrl, saved.sugarsGPer100, saved.fiberGPer100, saved.saltGPer100, saved.saturatedFatGPer100)
                                 barcodeLoading = false
                             } else {
                                 OpenFoodFactsClient.lookupBarcode(code).fold(
@@ -672,10 +689,21 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
             Card(colors = CardDefaults.cardColors(containerColor = PaleCopper), shape = RoundedCornerShape(14.dp)) {
                 Column(Modifier.fillMaxWidth().padding(12.dp)) {
                     Text("Automatisch berechnete Nährwerte", color = Ink, fontWeight = FontWeight.Bold)
-                    Text("Gesamt: " + calculatedNutrition.caloriesKcal.prettyNumber() + " kcal · KH " + calculatedNutrition.carbohydratesG.prettyNumber() + " g · Eiweiß " + calculatedNutrition.proteinG.prettyNumber() + " g · Fett " + calculatedNutrition.fatG.prettyNumber() + " g", color = Ink, style = MaterialTheme.typography.bodySmall)
                     val portionCount = servings.toIntOrNull()?.coerceAtLeast(1) ?: 2
-                    Text("Pro Portion: " + (calculatedNutrition.caloriesKcal / portionCount).prettyNumber() + " kcal · KH " + (calculatedNutrition.carbohydratesG / portionCount).prettyNumber() + " g · Eiweiß " + (calculatedNutrition.proteinG / portionCount).prettyNumber() + " g · Fett " + (calculatedNutrition.fatG / portionCount).prettyNumber() + " g", color = Ink, style = MaterialTheme.typography.bodySmall)
+                    Text("Gesamtgericht", color = Copper, fontWeight = FontWeight.SemiBold)
+                    NutritionValueLines(calculatedNutrition)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Pro Portion", color = Copper, fontWeight = FontWeight.SemiBold)
+                    NutritionValueLines(calculatedNutrition.copy(caloriesKcal = calculatedNutrition.caloriesKcal / portionCount, carbohydratesG = calculatedNutrition.carbohydratesG / portionCount, proteinG = calculatedNutrition.proteinG / portionCount, fatG = calculatedNutrition.fatG / portionCount, sugarsG = calculatedNutrition.sugarsG / portionCount, fiberG = calculatedNutrition.fiberG / portionCount, saltG = calculatedNutrition.saltG / portionCount, saturatedFatG = calculatedNutrition.saturatedFatG / portionCount))
                     Text(calculatedNutrition.calculatedIngredients.toString() + " von " + (calculatedNutrition.calculatedIngredients + calculatedNutrition.uncalculatedIngredients) + " Zutaten berechnet" + if (calculatedNutrition.estimatedMeasures) " · Küchenmaße/Dichte teilweise geschätzt" else "", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                    if (uncalculatedReasons.isNotEmpty()) {
+                        Spacer(Modifier.height(8.dp))
+                        Text("Nicht berechnete Zutaten", color = Ink, fontWeight = FontWeight.SemiBold)
+                        uncalculatedReasons.forEach { (line, reason) ->
+                            Text("• $line", color = Ink, style = MaterialTheme.typography.bodySmall)
+                            Text(reason, color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
                 }
             }
             Spacer(Modifier.height(10.dp))
@@ -734,11 +762,17 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                             runCatching {
                                 de.topfsecret.app.nutrition.BlsDatasetSeeder.ensureSeeded(context, blsFoodDao)
                                 blsFoodDao.search(productSearchQuery.trim()).map { item ->
-                                    OpenFoodFactsProduct("BLS:${item.code}", item.germanName, "BLS 4.0", item.kcalPer100, item.carbohydratesGPer100, item.proteinGPer100, item.fatGPer100, "https://blsdb.de/")
+                                    OpenFoodFactsProduct(
+                                        barcode = "BLS:${item.code}", name = item.germanName, brand = "BLS 4.0",
+                                        caloriesKcalPer100 = item.kcalPer100, carbohydratesGPer100 = item.carbohydratesGPer100,
+                                        proteinGPer100 = item.proteinGPer100, fatGPer100 = item.fatGPer100, sourceUrl = "https://blsdb.de/",
+                                        sugarsGPer100 = item.blsNumber("SUGAR"), fiberGPer100 = item.blsNumber("FIBT"),
+                                        saltGPer100 = item.blsNumber("NACL"), saturatedFatGPer100 = item.blsNumber("FASAT")
+                                    )
                                 }
                             }.onSuccess { blsProducts ->
                                 val localResults = productCatalog.search(productSearchQuery).map {
-                                    OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl)
+                                    OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl, it.sugarsGPer100, it.fiberGPer100, it.saltGPer100, it.saturatedFatGPer100)
                                 }
                                 OpenFoodFactsClient.searchProducts(productSearchQuery).fold(
                                     onSuccess = { remote ->
@@ -815,6 +849,10 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                         Text("Kohlenhydrate: " + (product.carbohydratesGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
                         Text("Eiweiß: " + (product.proteinGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
                         Text("Fett: " + (product.fatGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
+                        Text("davon Zucker: " + (product.sugarsGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
+                        Text("Ballaststoffe: " + (product.fiberGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
+                        Text("Salz: " + (product.saltGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
+                        Text("davon gesättigte Fettsäuren: " + (product.saturatedFatGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
                         Spacer(Modifier.height(6.dp))
                         Text(if (product.barcode.startsWith("BLS:")) "Quelle: Bundeslebensmittelschlüssel (BLS) 4.0 · Durchschnittswerte je 100 g." else "Quelle: Open Food Facts · vor Übernahme bitte Verpackung prüfen.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
                     }
@@ -842,7 +880,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                                 val existing = productCatalog.findByBarcode(product.barcode)
                                 val quality = if (existing?.quality == "VERIFIED_LOCAL") "VERIFIED_LOCAL" else "UNVERIFIED"
                                 val sourceName = existing?.sourceName ?: "Open Food Facts"
-                                productCatalog.save(LocalFoodProductEntity(product.barcode, product.name, product.brand, product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, product.sourceUrl, sourceName, quality))
+                                productCatalog.save(LocalFoodProductEntity(product.barcode, product.name, product.brand, product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, product.sourceUrl, sourceName, quality, sugarsGPer100 = product.sugarsGPer100, fiberGPer100 = product.fiberGPer100, saltGPer100 = product.saltGPer100, saturatedFatGPer100 = product.saturatedFatGPer100))
                             }
                             nutritionByIngredientName[product.name] = product
                             if (ingredients.lines().none { it.contains(product.name, ignoreCase = true) }) {
@@ -982,6 +1020,28 @@ private fun PlaceholderScreen(eyebrow: String, title: String, description: Strin
 
 private fun String.toDecimalOrNull(): Double? =
     trim().replace(',', '.').takeIf(String::isNotBlank)?.toDoubleOrNull()
+
+private fun de.topfsecret.app.data.local.BlsFoodEntity.blsNumber(code: String): Double? {
+    val raw = runCatching { org.json.JSONObject(nutrientsJson).optJSONArray(code)?.opt(0) }.getOrNull() ?: return null
+    val text = raw.toString()
+    if (text == "null" || text.startsWith("<") || text == "-") return null
+    return text.replace(',', '.').toDoubleOrNull()?.takeIf { it.isFinite() && it >= 0.0 }
+}
+
+@Composable
+private fun NutritionValueLines(values: NutritionPer100.Totals) {
+    val rows = listOf(
+        "Energie" to "${values.caloriesKcal.prettyNumber()} kcal",
+        "Kohlenhydrate" to "${values.carbohydratesG.prettyNumber()} g",
+        "davon Zucker" to "${values.sugarsG.prettyNumber()} g",
+        "Ballaststoffe" to "${values.fiberG.prettyNumber()} g",
+        "Eiweiß" to "${values.proteinG.prettyNumber()} g",
+        "Fett" to "${values.fatG.prettyNumber()} g",
+        "davon gesättigte Fettsäuren" to "${values.saturatedFatG.prettyNumber()} g",
+        "Salz" to "${values.saltG.prettyNumber()} g"
+    )
+    rows.forEach { (label, value) -> Text("$label: $value", color = Ink, style = MaterialTheme.typography.bodySmall) }
+}
 
 private fun Double.prettyNumber(): String =
     if (this % 1.0 == 0.0) toInt().toString() else toString().replace('.', ',')
