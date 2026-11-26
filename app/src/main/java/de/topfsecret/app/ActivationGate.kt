@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.sp
 import java.security.MessageDigest
 import java.util.Locale
 
-private const val ADMIN_KEY_SHA256 = "f62cb41ded03fafc42d8fe807f3dbf22bcbc3b9cbe981e99f1682319e52fefc7"
+private const val ADMIN_KEY_SHA256 = "625a5d8ffcc7d51ed5ec6703877b3d4c30a2232ee1a2c34434b7ad3f055ada1f"
 private const val ACTIVATION_PREFS = "topf_secret_activation"
 private const val ACTIVATED_KEY = "admin_unlocked"
 
