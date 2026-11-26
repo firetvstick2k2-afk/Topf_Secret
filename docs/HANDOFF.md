@@ -141,3 +141,11 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Livsmedelsverket (Schwedische Lebensmittelbehörde) stellt eine JSON-API für ca. 2.500 Lebensmittel mit CC BY 4.0 bereit; Quellenangabe erforderlich: https://www.livsmedelsverket.se/en/about-us/open-data/food-composition-data.
 - USDA FoodData Central ist CC0 und kostenlos, benötigt für die API jedoch einen data.gov-API-Key. Kein Schlüssel darf in die öffentliche App oder das Repository eingebettet werden; Integration erst mit sicherem Proxy oder vom Nutzer verwaltetem Schlüssel erwägen: https://fdc.nal.usda.gov/api-guide/.
 - UK CoFID ist als herunterladbarer Datensatz auf GOV.UK verfügbar; vor einer Einbindung sind aktuelle Lizenz-/Attributionsbedingungen und Datenformat zu prüfen: https://www.gov.uk/government/publications/composition-of-foods-integrated-dataset-cofid.
+
+
+## Quellen & Danksagungen / Transparenz
+- Auf development wurde ein Drei-Striche-Menü auf der Startseite ergänzt, das zur Seite „Quellen & Danksagungen“ führt.
+- Die Seite nennt den BLS 4.0 mit offizieller Zitierangabe des Max Rubner-Instituts und CC BY 4.0, Open Food Facts mit ODbL 1.0 sowie Wikimedia Commons mit dateispezifischen Lizenz-/Urheberangaben.
+- Der BLS-Hinweis enthält eine ausdrückliche Nicht-Unterstützungs-/Nicht-Affiliationsklausel. Weitere Quellen und Mitwirkende können ergänzt werden; persönliche Namensnennungen nur mit Zustimmung.
+- Rechtliche Umsetzung ist noch nicht abschließend geprüft: Vor Einbindung des BLS-Datensatzes müssen die Originaldateien, Metadaten, Lizenzhinweise und etwaige Änderungen/Aufbereitungen konkret dokumentiert werden. Für Open Food Facts ist die ODbL einschließlich etwaiger Share-Alike-Pflichten gesondert zu beachten.
+- Die neue UI ist noch nicht gebaut oder auf einem Gerät getestet.
