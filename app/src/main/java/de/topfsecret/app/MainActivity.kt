@@ -215,7 +215,7 @@ private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, 
             Column(Modifier.padding(22.dp)) {
                 Text("GUTEN APPETIT!", color = Color(0xFFFFB879), fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
                 Spacer(Modifier.height(8.dp))
-                Text("Eure Küche.\\nEure Regeln.", color = Color.White, fontSize = 27.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold)
+                Text("Eure Küche.\nEure Regeln.", color = Color.White, fontSize = 27.sp, lineHeight = 32.sp, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(8.dp))
                 Text("Ein Ort für die Rezepte, die euch schmecken und verbinden.", color = Color(0xFFFFE8D8), lineHeight = 21.sp)
             }
