@@ -103,3 +103,10 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Volumen-/Gewichtsumrechnung nur mit bekannter lebensmittelspezifischer Dichte; Stück, Prise, Bund und ähnliche Angaben nur mit hinterlegtem Stück-/Referenzgewicht.
 - Nicht zuordenbare oder unvollständige Zutaten sichtbar als nicht berechnet kennzeichnen; manuelle Eingabe/Korrektur ermöglichen.
 - Open Food Facts API v3, eigener User-Agent, Quellenhinweis und Einhaltung der ODbL-/Datenlizenzbedingungen.
+
+
+### G.1 Aktueller Implementierungsstand
+- Barcode-Scan per Google Code Scanner (ohne eigene Kamera-Berechtigung), Produktabfrage Open Food Facts API v3 und Vorschau/Bestätigung.
+- Produktname und verfügbare Nährwerte je 100 g werden mit Barcode und Quellen-URL an der Zutat gespeichert.
+- Automatische Addition bekannter Zutaten und Ausgabe Gesamtgericht/pro Portion im Rezepteditor; fehlende Zutaten werden gezählt und angezeigt.
+- Konvertierungs- und Parser-Unit-Tests ergänzt. Build und Gerätetest sind noch offen.
