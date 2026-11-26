@@ -71,9 +71,9 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Topf Secret v0.6.0 – Build #${{ github.run_number }}
+          name: Topf Secret v0.6.1 – Build #${{ github.run_number }}
           body: |
-            **App-Version:** 0.6.0 (versionCode 8)
+            **App-Version:** 0.6.1 (versionCode 9)
 
             **Build:** #${{ github.run_number }}
 
