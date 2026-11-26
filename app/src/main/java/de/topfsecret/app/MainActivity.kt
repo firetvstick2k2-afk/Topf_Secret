@@ -520,7 +520,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
             blsImporting = true
             blsImportMessage = "BLS-Datei wird eingelesen …"
             scope.launch {
-                de.topfsecret.app.nutrition.BlsXlsxImporter.import(context, selected, blsFoodDao).fold(
+                de.topfsecret.app.nutrition.BlsXlsxImporter.importWorkbook(context, selected, blsFoodDao).fold(
                     onSuccess = { count -> blsImportMessage = "$count Lebensmittel aus dem BLS 4.0 importiert."; blsImporting = false },
                     onFailure = { error -> blsImportMessage = error.message ?: "Der BLS-Import ist fehlgeschlagen."; blsImporting = false }
                 )
