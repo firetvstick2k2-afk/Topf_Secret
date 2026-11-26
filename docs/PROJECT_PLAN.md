@@ -110,3 +110,11 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Produktname und verfügbare Nährwerte je 100 g werden mit Barcode und Quellen-URL an der Zutat gespeichert.
 - Automatische Addition bekannter Zutaten und Ausgabe Gesamtgericht/pro Portion im Rezepteditor; fehlende Zutaten werden gezählt und angezeigt.
 - Konvertierungs- und Parser-Unit-Tests ergänzt. Build und Gerätetest sind noch offen.
+
+
+### G.2 Produktsuche und Barcode-Fallback (vereinbart und implementiert auf development)
+- Manuelle Produktsuche jederzeit in der Zutatenverwaltung; Suchbegriffe dürfen Lebensmittelname oder Marke sein.
+- Bei unbekanntem Barcode, fehlendem Produktnamen, Lookup-/Netzwerkfehler oder Scannerfehler automatisch Such-Popup öffnen.
+- Treffer aus Open Food Facts mit Produktname, Marke und verfügbaren Nährwerten anzeigen; ausgewähltes Produkt über die bestehende Vorschau übernehmen.
+- Bei keinem Treffer den Suchbegriff als normale Zutat ohne Produktdaten übernehmen können. Keine erfundenen Nährwerte.
+- Build und Gerätetest stehen noch aus.
