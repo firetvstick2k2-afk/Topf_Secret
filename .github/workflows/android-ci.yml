@@ -71,8 +71,15 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Topf Secret Build #${{ github.run_number }}
-          body: "Installierbare APK für Build #${{ github.run_number }}."
+          name: Topf Secret v0.6.0 – Build #${{ github.run_number }}
+          body: |
+            **App-Version:** 0.6.0 (versionCode 8)
+
+            **Build:** #${{ github.run_number }}
+
+            **Commit:** `${{ github.sha }}`
+
+            Installierbare APK für Topf Secret. Die Änderungen dieses Builds sind im Commit und in der Projektdokumentation auf `development` nachvollziehbar.
           files: ${{ env.APK_PATH }}
           draft: false
           prerelease: true
