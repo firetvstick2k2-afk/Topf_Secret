@@ -18,6 +18,8 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte solle
 - Der Wiederherstellungscode gilt nur für das jeweilige Profil und ermöglicht nach erfolgreicher Prüfung das Setzen einer neuen PIN.
 - Admin-Aktivierung bleibt getrennt von persönlichen Profilen und PINs.
 - Rezeptdaten und Bilder standardmäßig privat.
+- Lokale Datenaufteilung: eine verschlüsselte gemeinsame SQLCipher-Datenbank plus je eine separat verschlüsselte private Datenbank pro Profil. Beide Profile erhalten jeweils eine eigene Schlüsselhülle für die gemeinsame Datenbank; private Datenbankschlüssel werden nicht zwischen Profilen geteilt.
+- Private Rezeptbilder und Anhänge werden zusätzlich dateibasiert verschlüsselt; Datenbankverschlüsselung allein schützt keine extern referenzierten Dateien.
 - Öffentlicher GitHub-Code darf keine Zugangsdaten, echten Rezeptdaten oder privaten Backups enthalten.
 
 ### B. Rezepte
@@ -64,7 +66,9 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte solle
 ## Technische Leitlinien
 
 - Kotlin und Jetpack Compose.
-- Room als lokale Datenbank.
+- Room 2.8.3 als lokale Datenzugriffsschicht.
+- SQLCipher for Android als Datenbankverschlüsselungskandidat; Version und Integration mit Room 2.8.3, compileSdk 36 und API 26+ zuerst in einem Prototyp validieren.
+- Schlüsselmaterial mit Android Keystore schützen; optionale biometrische Freigabe über AndroidX BiometricPrompt.
 - Repository-/Use-Case-Schicht, damit Datenbank und Synchronisationsanbieter austauschbar bleiben.
 - Synchronisation erst nach Sicherheits- und Datenschutzkonzept integrieren.
 - Android 8.0 / API 26 als vorläufiges Mindestziel; reale Kompatibilität testen.
@@ -75,17 +79,18 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte solle
 1. Projektgrundlage und CI-Build
 2. UI-Grundgerüst und Navigation
 3. Lokales Datenmodell und Room
-4. Sicherheitsarchitektur: persönliche Profile, getrennte private Daten, PIN, Biometrie und Wiederherstellung
-5. Rezeptverwaltung und Bilder
-6. Portionen- und Nährwertberechnung
-7. Backup/Restore
-8. Web-Rezeptimport
-9. Sichere Synchronisation für zwei Personen
-10. Geräte- und Regressionstests, Release
+4. Sicherheitsarchitektur und SQLCipher-/Keystore-Prototyp
+5. Datenbankmigration und lokale Profile mit PIN, Wiederherstellungscode und optionaler Biometrie
+6. Rezeptverwaltung und verschlüsselte Bilder
+7. Portionen- und Nährwertberechnung
+8. Backup/Restore
+9. Web-Rezeptimport
+10. Sichere Synchronisation für zwei Personen
+11. Geräte- und Regressionstests, Release
 
 ## Noch zu entscheiden
 
-- Konkrete kryptografische Architektur und Datenverschlüsselung für die getrennten privaten Rezeptbereiche
+- Konkrete KDF-Parameter und konkrete SQLCipher-Version müssen vor Implementierung per Prototyp und API-26-/CI-Build bestätigt werden
 - PIN-Länge und Sperrverhalten
 - Supabase oder eigener Synchronisationsdienst
 - Backup-Verschlüsselung standardmäßig optional oder verpflichtend
