@@ -356,3 +356,12 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - CI-Build #55 scheiterte bei der Kotlin-Kompilierung, weil `DownloadConditions` aus dem falschen Paket importiert wurde.
 - Korrektur auf `com.google.mlkit.common.model.DownloadConditions`; ML Kit Translation bleibt Version `17.0.3`.
 - Keine Änderung an App-Version, Datenbank oder Rezeptdaten. Fix committed auf `development`; erneuter CI-Build und Gerätetest offen.
+
+
+### H.4 Übersetzung entfernt und Backup/Wiederherstellung (2026-11-27)
+- Nutzerentscheidung: TheMealDB-Rezepte nicht automatisch übersetzen; Originalsprache anzeigen. Nutzer kann extern selbst übersetzen oder Chefkoch nutzen.
+- ML Kit Translation einschließlich dynamischem Sprachmodell-Download entfernt; Barcode-Scanner-Abhängigkeit bleibt bestehen.
+- ZIP-Backup mit JSON-Manifest und Rezeptbildern implementiert. Gesichert werden Rezeptdaten, Kategorien, Portionen/Zeiten, Beschreibung/Notizen, Favoriten, Nährwerte, Zutaten und deren Nährwert-Metadaten, Zubereitungsschritte sowie lokal verwaltete Bilder und Bildquellen.
+- Export und Import über Android Storage Access Framework. Import validiert Backupformat und Pfade, begrenzt Größe auf 100 MB, importiert mit neuen IDs, überspringt Duplikate (Titel + Quell-URL) und überschreibt keine vorhandenen Rezepte.
+- Keine Room-Schemaänderung (weiter Version 7), keine automatische Löschung vorhandener Daten.
+- App-Version 0.9.7 / versionCode 23; CI-Build, Unit-Tests und Gerätetest inkl. Export/Neuinstallation/Import stehen aus. Bis zur erfolgreichen Wiederherstellungsprüfung keine Neuinstallation ohne vorheriges Backup.
