@@ -13,12 +13,14 @@ Stand: 2026-11-26
 
 ## Aktueller Stand
 - Android-Projektgrundgerüst mit Kotlin, Jetpack Compose und API-26-Mindestziel.
-- GitHub-Actions baut auf `development` erfolgreich ein Debug-APK und lädt es als Artefakt `topf-secret-debug-apk` hoch (14 Tage Aufbewahrung); der Upload-Schritt wurde bereits erfolgreich ausgeführt.
+- GitHub-Actions baut auf `development` erfolgreich ein Debug-APK und lädt es als Artefakt `topf-secret-debug-apk` hoch (14 Tage Aufbewahrung).
 - Das vom Nutzer bestätigte Original-Logo liegt als `app/src/main/res/drawable-nodpi/topf_secret_logo.webp` vor.
 - Das passende quadratische App-Symbol liegt als `app/src/main/res/drawable-nodpi/ic_launcher.webp` vor.
 - Das Manifest verwendet das neue App-Symbol; die Compose-Startseite zeigt das vollständige Logo.
-- Grafiken wurden für Android-WebP-Darstellung optimiert; das Motiv und der Entwurf wurden nicht verändert.
-- Die neue Logo-/Icon-Version muss noch durch den nächsten CI-Build und eine Installation auf einem echten Gerät bestätigt werden.
+- Build 9 (`b7f0a46`) wurde vom Nutzer installiert, stürzt auf dem Gerät aber direkt beim Öffnen ab. Der GitHub-CI-Build war erfolgreich; ein erfolgreicher CI-Build bestätigt keinen fehlerfreien Lauf auf echter Hardware.
+- Zur Diagnose wurde `TopfSecretApplication.kt` ergänzt: Ein globaler Uncaught-Exception-Handler schreibt Absturzdetails (Zeitpunkt, App-/Android-Version, Gerätemodell, Thread und Stacktrace) als `.log`.
+- Android 10+ speichert die Datei über MediaStore direkt im öffentlichen Ordner `/storage/emulated/0/Download`, ohne Speicherberechtigung. Android 8/9 nutzt mangels moderner Download-API den app-eigenen Download-Ordner.
+- Das Manifest registriert `.TopfSecretApplication`. Der nächste Build muss auf dem betroffenen Gerät getestet werden; nach einem Absturz die neueste `TopfSecret_Crash_*.log` aus Downloads bereitstellen.
 - Gradle Wrapper ist noch nicht eingecheckt. CI verwendet vorerst Gradle 8.13 über `gradle/actions/setup-gradle@v4`. Wrapper-Dateien erst aus einer vertrauenswürdigen Gradle-8.13-Installation generieren und den offiziellen Wrapper-JAR-Prüfwert verifizieren.
 
 ## Vereinbarte Produktanforderungen
@@ -37,14 +39,16 @@ Stand: 2026-11-26
 - PIN nie im Klartext speichern.
 - Synchronisation nur authentifiziert und auf berechtigte Personen begrenzt.
 - Nährwerte als Schätzwerte kennzeichnen; keine medizinischen Therapieempfehlungen.
+- Absturzprotokolle können technische Geräteinformationen enthalten; vor dem Teilen keine persönlichen Inhalte ergänzen.
 
 ## Nächste Schritte
-1. CI-Build mit Logo und App-Symbol prüfen und neue APK als Artefakt bereitstellen.
-2. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
-3. App-Navigation und Designsystem aufbauen.
-4. Datenmodell und Room-Datenbank entwerfen.
-5. PIN-Sperre implementieren und testen.
-6. Rezeptverwaltung entwickeln.
+1. Build mit Absturzprotokollierung auf dem betroffenen Gerät installieren und den Absturz reproduzieren.
+2. Die erzeugte `TopfSecret_Crash_*.log` aus Downloads auswerten und die konkrete Ursache beheben.
+3. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
+4. App-Navigation und Designsystem aufbauen.
+5. Datenmodell und Room-Datenbank entwerfen.
+6. PIN-Sperre implementieren und testen.
+7. Rezeptverwaltung entwickeln.
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
