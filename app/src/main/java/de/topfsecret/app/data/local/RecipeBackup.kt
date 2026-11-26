@@ -126,6 +126,8 @@ object RecipeBackup {
                 val item = recipes.getJSONObject(index)
                 val title = item.optString("title").trim()
                 require(title.isNotBlank()) { "Ein Rezept im Backup hat keinen Namen." }
+                val sourceUrl = item.optNullableString("sourceUrl")
+                if (dao.recipeExists(title, sourceUrl)) continue
                 val imageEntry = item.optString("imageEntry").takeIf { it.isNotBlank() && it != "null" }
                 val imageUri = imageEntry?.let { name ->
                     val bytes = entries[name] ?: throw IllegalArgumentException("Ein Rezeptbild im Backup fehlt.")
@@ -147,7 +149,7 @@ object RecipeBackup {
                     preparationMinutes = item.nullableInt("preparationMinutes"),
                     cookingMinutes = item.nullableInt("cookingMinutes"),
                     imageUri = imageUri,
-                    sourceUrl = item.optNullableString("sourceUrl"),
+                    sourceUrl = sourceUrl,
                     notes = item.optString("notes"),
                     caloriesPerServing = item.nullableDouble("caloriesPerServing"),
                     carbohydratesPerServing = item.nullableDouble("carbohydratesPerServing"),
