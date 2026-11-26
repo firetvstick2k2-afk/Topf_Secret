@@ -175,3 +175,11 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Android CI Build #41 lief erfolgreich und veröffentlichte eine signierte APK. Die BLS-Assetdatei liegt im Android-Standardpfad `app/src/main/assets`; die APK-Größe ist gegenüber dem Build ohne den Datensatz deutlich gestiegen.
 - Für ein Update ohne Deinstallation wurde `versionCode` auf 9 und `versionName` auf 0.6.1 erhöht; CI-Release-Metadaten wurden angepasst.
 - Noch offen: neuen manuellen CI-Build für Version 0.6.1 starten, APK installieren und BLS-Suche auf dem Gerät mit „Semmelknödel“/„Knödel“ prüfen. Keine Datenbank- oder Rezeptdatenlöschung.
+
+
+### APK-Prüfung BLS-Asset (2026-11-26)
+- Nutzer bestätigt: Version 0.6.1 aus Release `build-42` installiert; Fehler beim Öffnen von `bls_foods_v4.jsonl.gz` bleibt bestehen.
+- Git-Tree des Build-42-Commits `28409a0935b575a535efaf33fa47efcfae93927b` enthält `app/src/main/assets/bls_foods_v4.jsonl.gz` mit 3.720.228 Bytes und Blob-SHA `827fc98c0a296d0eb64062f80cd31738f8a20f22`.
+- Build #42 war erfolgreich; das beweist allein nicht, dass das Asset in der APK enthalten ist.
+- CI-Workflow wurde auf `development` um einen harten APK-Integritätstest ergänzt: `unzip -Z1` muss `assets/bls_foods_v4.jsonl.gz` finden und der aus der APK extrahierte SHA-256 muss `96e3f2aaf98fa538f84dd6d826a36b1a7565e87f2520bb80b2d9b4aa51ec0bbf` entsprechen. Der nächste manuelle Build soll die Frage eindeutig entscheiden.
+- Bis zum erfolgreichen APK-Asset-Test und Gerätetest bleibt BLS-Lauffähigkeit unbestätigt. Keine Deinstallation oder Datenlöschung.
