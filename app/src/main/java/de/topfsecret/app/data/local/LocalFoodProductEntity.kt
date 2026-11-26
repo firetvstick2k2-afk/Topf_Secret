@@ -18,7 +18,11 @@ data class LocalFoodProductEntity(
     val sourceUrl: String,
     val sourceName: String = "Open Food Facts",
     val quality: String = "VERIFIED_LOCAL",
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+    val sugarsGPer100: Double? = null,
+    val fiberGPer100: Double? = null,
+    val saltGPer100: Double? = null,
+    val saturatedFatGPer100: Double? = null
 )
 
 @Dao
