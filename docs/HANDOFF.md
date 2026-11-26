@@ -18,9 +18,11 @@ Stand: 2026-11-26
 - Erste Platzhalter-Startansicht vorhanden.
 - Produktanforderungen und Roadmap dokumentiert.
 - GitHub-Actions-Workflow `.github/workflows/android-ci.yml` ergänzt: baut bei Push/Pull Request auf `development` ein Debug-APK.
-- Erster CI-Lauf ist fehlgeschlagen, bevor Gradle gestartet wurde: `android-actions/setup-android` wollte das veraltete SDK-Paket `tools` installieren (Paket nicht mehr verfügbar).
-- Workflow korrigiert: SDK-Setup fordert nun explizit `platform-tools`, `platforms;android-36` und `build-tools;36.0.0` an.
-- Der korrigierte Workflow muss durch einen neuen CI-Lauf noch verifiziert werden.
+- Die ersten CI-Läufe scheiterten vor dem Gradle-Build bei der Android-SDK-Einrichtung.
+- Ursache Lauf 1: Setup-Action versuchte das veraltete SDK-Paket `tools` zu installieren.
+- Ursache Lauf 2: Die Paketliste wurde mit Kommas übergeben; dadurch wurde beispielsweise `platform-tools,` als Paketname interpretiert.
+- Workflow erneut korrigiert: SDK-Pakete werden jetzt als leerzeichengetrennte Argumente übergeben: `platform-tools platforms;android-36 build-tools;36.0.0`.
+- Dieser neue Workflow-Stand muss noch durch einen CI-Lauf verifiziert werden.
 - Gradle Wrapper ist noch nicht eingecheckt; der CI-Workflow verwendet vorerst Gradle 8.13 aus der Action.
 
 ## Vereinbarte Produktanforderungen
