@@ -401,6 +401,22 @@ private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedReci
                         singleLine = true
                     )
                     Text("${recipe.servings} Portionen · Vorbereitung: ${recipe.preparationMinutes?.let { "$it Min." } ?: "–"} · Kochzeit: ${recipe.cookingMinutes?.let { "$it Min." } ?: "–"}", color = Ink)
+                    val importedNutritionPreview = listOfNotNull(
+                        recipe.caloriesPerServing?.let { "Energie: ${it.prettyNumber()} kcal" },
+                        recipe.carbohydratesPerServing?.let { "Kohlenhydrate: ${it.prettyNumber()} g" },
+                        recipe.sugarsPerServing?.let { "Zucker: ${it.prettyNumber()} g" },
+                        recipe.fiberPerServing?.let { "Ballaststoffe: ${it.prettyNumber()} g" },
+                        recipe.proteinPerServing?.let { "Eiweiß: ${it.prettyNumber()} g" },
+                        recipe.fatPerServing?.let { "Fett: ${it.prettyNumber()} g" },
+                        recipe.saturatedFatPerServing?.let { "Gesättigte Fettsäuren: ${it.prettyNumber()} g" },
+                        recipe.saltPerServing?.let { "Salz: ${it.prettyNumber()} g" }
+                    )
+                    if (importedNutritionPreview.isNotEmpty()) {
+                        Text("Nährwerte laut Rezeptquelle (pro Portion)", color = Ink, fontWeight = FontWeight.Bold)
+                        importedNutritionPreview.forEach { Text(it, color = Ink, style = MaterialTheme.typography.bodySmall) }
+                    } else {
+                        Text("Die Quelle stellt keine strukturierten Nährwertangaben bereit. Die Zutatenberechnung in Topf Secret kann später Werte ergänzen.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    }
                     Text("Zutaten (${recipe.ingredients.size})", color = Ink, fontWeight = FontWeight.Bold)
                     recipe.ingredients.forEach { Text("• $it", color = Ink, style = MaterialTheme.typography.bodyMedium) }
                     Text("Zubereitung (${recipe.steps.size} Schritte)", color = Ink, fontWeight = FontWeight.Bold)
