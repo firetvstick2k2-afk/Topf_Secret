@@ -481,33 +481,28 @@ private fun HomeActionCard(modifier: Modifier, symbol: String, title: String, su
 private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var query by rememberSaveable { mutableStateOf("") }
     var selectedSource by rememberSaveable { mutableStateOf("TheMealDB") }
     var selectedCategory by rememberSaveable { mutableStateOf("Für dich") }
     var meals by remember { mutableStateOf<List<DiscoveryRecipe>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
     val categories = listOf("Für dich", "Chicken", "Beef", "Seafood", "Vegetarian", "Pasta", "Dessert", "Starter")
-    fun load(category: String, search: String = "") {
+    fun load(category: String) {
         selectedSource = "TheMealDB"
         selectedCategory = category
         loading = true
         error = ""
         scope.launch {
             runCatching {
-                when {
-                    search.isNotBlank() -> RecipeDiscoveryClient.search(search)
-                    category == "Für dich" -> RecipeDiscoveryClient.popular()
-                    else -> RecipeDiscoveryClient.byCategory(category)
-                }
+                if (category == "Für dich") RecipeDiscoveryClient.popular()
+                else RecipeDiscoveryClient.byCategory(category)
             }.onSuccess { meals = it }
                 .onFailure { error = it.message ?: "Rezepte konnten nicht geladen werden." }
             loading = false
         }
     }
     fun openChefkochSearch() {
-        val target = if (query.isBlank()) "https://www.chefkoch.de/" else
-            "https://www.chefkoch.de/rs/suche.php?q=${Uri.encode(query.trim())}"
+        val target = "https://www.chefkoch.de/"
         runCatching {
             context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(target)))
         }.onFailure { error = "Chefkoch konnte nicht geöffnet werden." }
@@ -524,19 +519,6 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
                 FilterChip(selected = selectedSource == "Chefkoch", onClick = { selectedSource = "Chefkoch"; error = "" }, label = { Text("Chefkoch") })
             }
             Spacer(Modifier.height(8.dp))
-            OutlinedTextField(
-                value = query,
-                onValueChange = { query = it },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text(if (selectedSource == "Chefkoch") "Auf Chefkoch suchen" else "Rezept suchen") },
-                trailingIcon = {
-                    TextButton(
-                        onClick = { if (selectedSource == "Chefkoch") openChefkochSearch() else load(selectedCategory, query.trim()) },
-                        enabled = selectedSource == "Chefkoch" || query.isNotBlank()
-                    ) { Text("Suchen") }
-                }
-            )
         }
         if (selectedSource == "Chefkoch") {
             Card(
@@ -549,7 +531,7 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
                     Text("Rezepte auf Chefkoch finden", color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                     Text("Die Suche öffnet die offizielle Chefkoch-Seite. Wenn du ein Rezept gefunden hast, kopiere dessen Rezeptlink und importiere ihn in Topf Secret über „Online-Rezept über Link importieren“. Die Rezeptvorschau und Speicherung laufen dann wie gewohnt in Topf Secret.", color = MutedInk)
                     Button(onClick = { openChefkochSearch() }, modifier = Modifier.fillMaxWidth()) {
-                        Text(if (query.isBlank()) "Chefkoch öffnen" else "Chefkoch-Suche öffnen")
+                        Text("Chefkoch öffnen")
                     }
                     Text("Chefkoch-Rezeptinhalte werden nicht automatisch ausgelesen. So bleiben wir bei der offiziellen Suche und dem vorhandenen Linkimport.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
                 }
@@ -557,11 +539,11 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
         } else {
             Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 categories.forEach { category ->
-                    FilterChip(selected = selectedCategory == category && query.isBlank(), onClick = { query = ""; load(category) }, label = { Text(category) })
+                    FilterChip(selected = selectedCategory == category, onClick = { load(category) }, label = { Text(category) })
                 }
             }
             Spacer(Modifier.height(14.dp))
-            if (selectedCategory == "Für dich" && query.isBlank() && meals.isNotEmpty()) {
+            if (selectedCategory == "Für dich" && meals.isNotEmpty()) {
                 val hero = meals.first()
                 Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(220.dp)) {
                     RecipePhoto(hero.imageUrl, Modifier.fillMaxSize())
@@ -574,12 +556,12 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
                 Spacer(Modifier.height(18.dp))
             }
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(if (query.isNotBlank()) "Suchergebnisse" else selectedCategory, color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(if (selectedCategory == "Für dich") "Frisch für dich entdeckt" else selectedCategory, color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.weight(1f))
                 if (loading) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
             }
             if (error.isNotBlank()) Text(error, color = Color(0xFFB3261E), modifier = Modifier.padding(16.dp))
-            if (!loading && meals.isEmpty() && error.isBlank()) Text("Keine Rezepte gefunden. Probiere einen anderen Suchbegriff.", color = MutedInk, modifier = Modifier.padding(16.dp))
+            if (!loading && meals.isEmpty() && error.isBlank()) Text("Gerade keine Rezepte gefunden. Wähle eine andere Kategorie.", color = MutedInk, modifier = Modifier.padding(16.dp))
             if (meals.isNotEmpty()) {
                 Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     meals.forEach { meal ->
