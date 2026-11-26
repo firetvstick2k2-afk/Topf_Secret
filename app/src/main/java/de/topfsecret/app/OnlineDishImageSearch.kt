@@ -166,32 +166,95 @@ private fun CommonsThumbnail(url: String, modifier: Modifier = Modifier) {
 }
 
 private suspend fun searchCommonsDishImages(query: String): List<CommonsDishImage> = withContext(Dispatchers.IO) {
-    val encoded = URLEncoder.encode(query.trim(), "UTF-8")
-    val api = "https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=16&gsrsearch=$encoded&prop=imageinfo&iiprop=url%7Cextmetadata&iiurlwidth=640&iiextmetadatalanguage=de&iiextmetadatafilter=Artist%7CLicenseShortName%7CLicenseUrl%7CAttribution"
-    val json = JSONObject(readCommonsUrl(api))
-    val pages = json.optJSONObject("query")?.optJSONObject("pages") ?: return@withContext emptyList()
-    val output = mutableListOf<CommonsDishImage>()
-    val keys = pages.keys()
-    while (keys.hasNext()) {
-        val page = pages.optJSONObject(keys.next()) ?: continue
-        val info = page.optJSONArray("imageinfo")?.optJSONObject(0) ?: continue
-        val thumb = info.optString("thumburl")
-        val pageUrl = info.optString("descriptionurl")
-        val metadata = info.optJSONObject("extmetadata") ?: JSONObject()
-        val license = metadata.value("LicenseShortName")
-        val artist = metadata.value("Artist")
-        val attribution = metadata.value("Attribution")
-        if (thumb.isBlank() || pageUrl.isBlank() || license.isBlank()) continue
-        output += CommonsDishImage(
-            title = page.optString("title"),
-            thumbnailUrl = thumb,
-            descriptionUrl = pageUrl,
-            license = license,
-            artist = artist,
-            attribution = attribution
-        )
+    val searchTerms = buildList {
+        add(query.trim())
+        val normalized = query.trim()
+        if (normalized.isNotBlank()) {
+            add("$normalized Gericht")
+            add("$normalized gekocht")
+            add("$normalized food")
+            add("$normalized dish")
+        }
+        val lower = normalized.lowercase()
+        if (lower.contains("grünkohl") || lower.contains("gruenkohl")) {
+            add("Grünkohl mit Pinkel")
+            add("Grünkohleintopf")
+            add("Kale stew")
+            add("Kale soup")
+        }
+    }.filter { it.isNotBlank() }.distinct()
+
+    val found = linkedMapOf<String, CommonsDishImage>()
+    for (term in searchTerms) {
+        val encoded = URLEncoder.encode("filetype:bitmap $term", "UTF-8")
+        val api = "https://commons.wikimedia.org/w/api.php?action=query&format=json&generator=search&gsrnamespace=6&gsrlimit=30&gsrsearch=$encoded&prop=imageinfo&iiprop=url%7Cmime%7Cmediatype%7Cextmetadata&iiurlwidth=640&iiextmetadatalanguage=de&iiextmetadatafilter=Artist%7CLicenseShortName%7CLicenseUrl%7CAttribution"
+        val json = JSONObject(readCommonsUrl(api))
+        val pages = json.optJSONObject("query")?.optJSONObject("pages") ?: continue
+        val keys = pages.keys()
+        while (keys.hasNext()) {
+            val page = pages.optJSONObject(keys.next()) ?: continue
+            val info = page.optJSONArray("imageinfo")?.optJSONObject(0) ?: continue
+            val mime = info.optString("mime").lowercase()
+            val mediaType = info.optString("mediatype").uppercase()
+            // Commons' File namespace also contains audio/video. Only actual bitmap images are eligible.
+            if (mediaType != "BITMAP" || !mime.startsWith("image/")) continue
+
+            val title = page.optString("title")
+            val normalizedTitle = title.lowercase()
+            if (blockedNonDishTerms.any { normalizedTitle.contains(it) }) continue
+
+            val thumb = info.optString("thumburl")
+            val pageUrl = info.optString("descriptionurl")
+            val metadata = info.optJSONObject("extmetadata") ?: JSONObject()
+            val license = metadata.value("LicenseShortName")
+            val artist = metadata.value("Artist")
+            val attribution = metadata.value("Attribution")
+            if (thumb.isBlank() || pageUrl.isBlank() || license.isBlank()) continue
+
+            val candidate = CommonsDishImage(
+                title = title,
+                thumbnailUrl = thumb,
+                descriptionUrl = pageUrl,
+                license = license,
+                artist = artist,
+                attribution = attribution
+            )
+            val key = page.optString("pageid").ifBlank { title }
+            found.putIfAbsent(key, candidate)
+        }
     }
-    output
+
+    found.values
+        .sortedByDescending { dishRelevanceScore(it.title, query) }
+        .take(30)
+}
+
+private val blockedNonDishTerms = listOf(
+    "ogg", "mp3", "wav", "flac", "opus", "mp4", "webm",
+    "plant", "pflanze", "pflanzen", "blüte", "blume", "flower",
+    "seed", "samen", "seedling", "sämling", "botanik", "botanical",
+    "herbarium", "feldaufnahme", "field recording", "sound", "audio"
+)
+
+private val dishTerms = listOf(
+    "gericht", "eintopf", "suppe", "soup", "stew", "food", "meal",
+    "dish", "cooked", "gekocht", "zubereitet", "recipe", "rezept",
+    "mit pinkel", "mit wurst", "traditional", "küche", "cuisine",
+    "essen", "serviert", "served", "plate", "teller"
+)
+
+private fun dishRelevanceScore(title: String, query: String): Int {
+    val normalizedTitle = title.lowercase()
+    val normalizedQuery = query.lowercase()
+    var score = dishTerms.count { normalizedTitle.contains(it) } * 5
+    val queryWords = normalizedQuery.split(Regex("[^\\p{L}\\p{N}]+"))
+        .filter { it.length >= 3 }
+    score += queryWords.count { normalizedTitle.contains(it) } * 2
+    if (normalizedTitle.contains("grünkohl") || normalizedTitle.contains("gruenkohl")) {
+        if (normalizedTitle.contains("pinkel") || normalizedTitle.contains("wurst") ||
+            normalizedTitle.contains("eintopf") || normalizedTitle.contains("suppe")) score += 12
+    }
+    return score
 }
 
 private fun JSONObject.value(key: String): String {
