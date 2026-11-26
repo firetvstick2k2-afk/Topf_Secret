@@ -698,7 +698,7 @@ private fun OnlineRecipeImportScreen(initialUrl: String = "", onCancel: () -> Un
         TextButton(onClick = onCancel) { Text("‹ Zurück zu den Rezepten", color = Copper) }
         Text("ONLINE-REZEPT", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
         Text(if (initialUrl.startsWith("themealdb://")) "Rezept ansehen & übernehmen" else "Rezept per Link übernehmen", color = Ink, fontSize = 27.sp, fontWeight = FontWeight.Bold)
-        Text(if (initialUrl.startsWith("themealdb://")) "Das vollständige Rezept wird direkt aus TheMealDB geladen. Prüfe Zutaten und Zubereitung und wähle vor dem Speichern deine Kategorie." else "Füge den Link einer Rezeptseite ein. Topf Secret sucht nach strukturierten Rezeptangaben (Schema.org) und zeigt dir die gefundenen Daten vor dem Speichern.", color = MutedInk)
+        Text(if (initialUrl.startsWith("themealdb://")) "Das vollständige Rezept wird direkt aus TheMealDB geladen und automatisch ins Deutsche übersetzt. Beim ersten Mal wird dafür einmalig das Sprachmodell heruntergeladen. Prüfe Zutaten und Zubereitung und wähle vor dem Speichern deine Kategorie." else "Füge den Link einer Rezeptseite ein. Topf Secret sucht nach strukturierten Rezeptangaben (Schema.org) und zeigt dir die gefundenen Daten vor dem Speichern.", color = MutedInk)
         OutlinedTextField(
             value = url,
             onValueChange = { url = it; imported = null; error = "" },
@@ -721,7 +721,7 @@ private fun OnlineRecipeImportScreen(initialUrl: String = "", onCancel: () -> Un
             },
             enabled = url.isNotBlank() && !loading,
             modifier = Modifier.fillMaxWidth()
-        ) { Text(if (loading) "Rezept wird gesucht…" else "Rezeptdaten laden") }
+        ) { Text(if (loading) "Rezept wird geladen und übersetzt…" else if (initialUrl.startsWith("themealdb://")) "Rezept und Übersetzung laden" else "Rezeptdaten laden") }
         if (error.isNotBlank()) {
             Text(error, color = Color(0xFFB3261E))
             Text("Tipp: Manche Webseiten stellen keine maschinenlesbaren Rezeptdaten bereit. Dann kannst du das Rezept weiterhin manuell anlegen.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
