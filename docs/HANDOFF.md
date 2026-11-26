@@ -15,10 +15,11 @@ Stand: 2026-11-26
 - Android-Projektgrundgerüst mit Kotlin, Jetpack Compose und API-26-Mindestziel.
 - Pushes auf `development` lösen keinen Build mehr aus. Builds werden manuell über GitHub Actions → Android CI → Run workflow gestartet. Pull Requests gegen `development` lösen weiterhin automatisch einen Build aus.
 - CI erstellt nun ein signiertes Release-APK als Artefakt `topf-secret-release-apk` (14 Tage Aufbewahrung).
-- App-Version für das nächste Update: `versionCode = 2`, `versionName = 0.1.1`.
-- Das App-Symbol bleibt unter `app/src/main/res/drawable-nodpi/ic_launcher.webp`.
-- Das große Startlogo war fälschlich als WebP benannt, enthielt tatsächlich JPEG-Daten. Es wurde in `app/src/main/res/drawable-nodpi/topf_secret_logo.jpg` umbenannt; der Kotlin-Ressourcenname bleibt `R.drawable.topf_secret_logo`.
-- Build 9 (`b7f0a46`) stürzte beim Laden des Logos ab. Das Crashlog vom 26.11.2026 zeigte `NullPointerException: null cannot be cast to BitmapDrawable` in `painterResource`; die Ursache war die falsche Dateiendung des JPEG-Bildes.
+- Aktuelle App-Version im Quellstand: `versionCode = 3`, `versionName = 0.1.2`.
+- Neues App-Symbol liegt unter `app/src/main/res/drawable-nodpi/topf_secret_app_icon.png`; `AndroidManifest.xml` verweist für `icon` und `roundIcon` auf `@drawable/topf_secret_app_icon`.
+- Das vollständige Startlogo wurde als PNG unter `app/src/main/res/drawable-nodpi/topf_secret_logo.png` hochgeladen; der Kotlin-Ressourcenname bleibt `R.drawable.topf_secret_logo`.
+- Die vorherige JPEG-Datei `topf_secret_logo.jpg` war unvollständig (APK enthielt 7.500 Bytes und der JPEG-Decoder meldete fehlende Bytes am Dateiende). Sie wurde aus `development` entfernt. Die frühere Annahme, die Dateiendung sei alleinige Ursache, war nicht korrekt.
+- Build 9 (`b7f0a46`) und ein späterer Build stürzten beim Laden des Logos mit `NullPointerException: null cannot be cast to BitmapDrawable` in `painterResource` ab. Die PNG-Datei ist jetzt die aktive Ressource; erneuter Build und Gerätetest stehen noch aus.
 - Zur Diagnose bleibt `TopfSecretApplication.kt` enthalten: Ein globaler Uncaught-Exception-Handler schreibt Absturzdetails (Zeitpunkt, App-/Android-Version, Gerätemodell, Thread und Stacktrace) als `.log`.
 - Android 10+ speichert die Datei über MediaStore direkt im öffentlichen Ordner `/storage/emulated/0/Download`, ohne Speicherberechtigung. Android 8/9 nutzt den app-eigenen Download-Ordner.
 - Für Updates wird ein fester Upload-Signaturschlüssel verwendet. Der Keystore gehört **nicht** ins öffentliche Repository.
@@ -48,7 +49,7 @@ Stand: 2026-11-26
 ## Nächste Schritte
 1. Die vier GitHub Actions Secrets sicher hinterlegen.
 2. Manuellen Workflow starten und signiertes Release-APK bauen.
-3. Alte Testversion einmalig deinstallieren, signierte Version 0.1.1 installieren und Updates durch Überinstallation testen.
+3. Version 0.1.2 bauen, APK-Signatur prüfen und auf dem Samsung-Gerät testen; eine Deinstallation nur dann durchführen, wenn die Signatur nicht mit der installierten Version übereinstimmt.
 4. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
 5. App-Navigation und Designsystem aufbauen.
 6. Datenmodell und Room-Datenbank entwerfen.
