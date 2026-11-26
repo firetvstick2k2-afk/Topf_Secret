@@ -72,7 +72,7 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 
 1. Projektgrundlage, UI-Grundgerüst, Navigation und lokale Rezeptverwaltung – umgesetzt.
 2. Rezeptbilder aus Galerie und Kamera aufnehmen; Dateien in `filesDir/recipe_images` übernehmen und in Rezeptliste/-detail anzeigen – umgesetzt auf `development`; Build-/Gerätetest und Optimierung noch offen.
-3. Online-Gerichtebildersuche über Wikimedia Commons mit Treffer-Vorschau, Lizenz-/Urheberanzeige, lokalem Download und Quellenbeleg – implementiert auf `development`; Build-/Gerätetest noch offen. Build 27 fand einen Fehler bei der Activity-Label-Referenz in der Bildbereinigung; Korrektur committed, erneuter Build ausstehend.
+3. Online-Gerichtebildersuche über Wikimedia Commons mit Treffer-Vorschau, Lizenz-/Urheberanzeige, lokalem Download und Quellenbeleg – implementiert auf `development`; Build-/Gerätetest noch offen. Build 27 und 28 scheiterten an ungültigen Kotlin-Labels für den Activity-Context. Korrektur committed: `applicationContext` wird vor `setContent` erfasst und explizit an `TopfSecretApp` übergeben (`15bf57b`); Build 29 steht zur Verifikation aus.
 4. Bildgrößenoptimierung und Regressionstests für Galerie-, Kamera- und Onlinebilder.
 5. Portionen- und Nährwertberechnung erweitern.
 6. Vollständiger Backup-/Restore-Workflow inklusive Bilder und Quellenbelege.
