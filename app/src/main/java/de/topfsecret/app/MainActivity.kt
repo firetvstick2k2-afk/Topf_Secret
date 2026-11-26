@@ -197,7 +197,7 @@ private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, 
                     Image(painterResource(R.drawable.topf_secret_logo), "Topf Secret Logo", Modifier.size(104.dp))
                 },
                 title = {
-                    Text("Topf Secret by Andre Schlüter", color = Ink, textAlign = TextAlign.Center)
+                    Text("Topf Secret by\nAndre Schlüter", color = Ink, textAlign = TextAlign.Center)
                 },
                 text = {
                     Text("Version $appVersion", color = MutedInk, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
