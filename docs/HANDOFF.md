@@ -235,3 +235,13 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 
 - Nachprüfung der Stück-/Packungs-/Haushaltsmaße: Stück, Stk., Prise, Packung, Bund, Dose und Becher werden als eigene Einheiten erkannt und ohne Referenzgewicht nicht stillschweigend in Gramm umgerechnet. Die Fehlermeldung nennt die betroffene Einheit.
 - Letzter Code-Stand vor dieser Dokumentationsaktualisierung: `ad56eeba9ae9cacec734b354c8c09518bd000421` auf `development`. Build #44 (Commit `2ae8f7c`) liegt vor diesen Änderungen und bestätigt sie nicht. Der nächste manuelle CI-Lauf muss Tests, APK-Build und BLS-Assetprüfung für den neuen Stand ausführen.
+
+
+## Korrekturen nach Gerätetest – Cursor und gespeicherte Nährwerte (2026-11-26)
+
+- Zutatenfeld verwendet nun `TextFieldValue`, damit die Cursorposition nach einer Produktübernahme explizit gesetzt wird. Nach Barcode- oder Produktsuche wird das Produkt als eigene Zeile übernommen und der Cursor steht direkt in der folgenden leeren Zeile; auch die manuelle Übernahme aus der Suche setzt ihn dorthin.
+- Rezeptdetail berechnet Nährwerte erneut aus den tatsächlich gespeicherten Zutaten und deren gespeicherten Nährwertdaten, mit derselben `IngredientMeasureConverter`-/`NutritionPer100`-Logik wie im Editor. Gesamtgericht und Werte pro Portion werden angezeigt; unberechenbare Zutaten werden als Teilmenge ausgewiesen.
+- Die bisherige Rückfalllogik, die bei einer nur teilweise möglichen automatischen Berechnung stattdessen manuell eingetragene Makrowerte als Rezeptberechnung anzeigen konnte, ist entfernt: Sobald mindestens eine Zutat automatisch berechnet wird, werden unvollständige automatische Gesamtergebnisse nicht durch manuelle Werte ersetzt. Wenn keine Zutat automatisch berechenbar ist, bleiben manuell gepflegte Altwerte sichtbar.
+- Bestehende Datenbankstruktur bleibt unverändert; keine Migration, kein Löschen oder Überschreiben vorhandener Rezepte.
+- **Noch nicht verifiziert:** Android-Build/Unit-Tests und Gerätetest dieses Fixes. Insbesondere prüfen: Produkt hinzufügen → Cursor steht in der nächsten leeren Zeile; gespeichertes Rezept zeigt dieselben Gesamt-/Portionswerte wie der Editor, mit Teilmengenhinweis bei nicht berechenbaren Stückmengen.
+- Aktueller Code-Commit: `f96e71ec66c48683cf7faeb0cca29b279352c7cf` (Detailberechnung); Cursor-Fix: `49af76d562b3638a28ff034bc44a67e8d29227e3`. Danach wurde die Speichern-Fallbacklogik angepasst; finalen Branch-HEAD nach Doku-Commit prüfen.
