@@ -29,6 +29,9 @@ interface LocalFoodProductDao {
     @Query("SELECT * FROM local_food_products WHERE name LIKE '%' || :query || '%' OR brand LIKE '%' || :query || '%' ORDER BY name COLLATE NOCASE LIMIT 30")
     suspend fun search(query: String): List<LocalFoodProductEntity>
 
+    @Query("DELETE FROM local_food_products WHERE barcode = :barcode")
+    suspend fun deleteByBarcode(barcode: String)
+
     @Upsert
     suspend fun save(product: LocalFoodProductEntity)
 }
