@@ -76,11 +76,11 @@ Stand: 2026-11-26
 - Absturzprotokolle können technische Geräteinformationen enthalten; vor dem Teilen keine persönlichen Inhalte ergänzen.
 
 ## Nächste Schritte
-1. Rezeptbilder aus Galerieauswahl auf dem Gerät testen: auswählen, speichern, App neu starten, Rezept bearbeiten und Bild entfernen.
-2. Bildauswahl um Kameraaufnahme erweitern und Bilder robust im App-internen Speicher ablegen.
+1. Online-Gerichtebildersuche, Galerie und Kamera auf dem Gerät testen; Bildübernahme, lokale Speicherung, Quellenbeleg und Entfernen prüfen.
+2. Bildgrößenoptimierung und Fehlerbehandlung für Galerie-, Kamera- und Onlinebilder ergänzen.
 3. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
 4. Version 0.6.0 in GitHub Actions bauen und auf dem Gerät testen: Hell-/Dunkelmodus, Rezeptzeiten, Nährwerte, Zutatenmengen sowie Anlegen/Bearbeiten/Löschen und Datenpersistenz.
-5. Backup/Restore einschließlich aller Rezeptbilder umsetzen.
+5. Backup/Restore einschließlich aller Rezeptbilder und ihrer Quellenbelege umsetzen.
 6. Danach Web-Rezeptimport und Zwei-Wege-Synchronisation planen.
 
 ## Aktueller Funktionsschritt
@@ -89,7 +89,9 @@ Stand: 2026-11-26
 - Rezeptbilder: Galerieauswahl über Android Document Picker; ausgewählte Bilddateien werden in `filesDir/recipe_images` kopiert, damit sie nicht von externen URI-Berechtigungen abhängen. Kameraaufnahme erfolgt über Android `TakePicture` und einen nicht exportierten `FileProvider`; auch Kamerabilder landen direkt im internen App-Speicher.
 - Bildvorschau in Rezeptliste, Detailansicht und Editor; Bild ändern/entfernen. Alte intern verwaltete Bilddateien werden nach erfolgreichem Speichern ersetzt/entfernt; neu importierte Dateien werden beim Abbrechen des Editors bereinigt.
 - Speicherung verwendet das bereits vorhandene Feld `RecipeEntity.imageUri`; Room-Schema bleibt Version 1. `AndroidManifest.xml` registriert den FileProvider und `res/xml/file_paths.xml` begrenzt den freigegebenen Pfad auf `recipe_images/`.
-- Online-Gerichtebildersuche ergänzt: Suche nach Gerichtsnamen über die Wikimedia-Commons-Action-API, Treffer mit Vorschaubildern und Lizenz-/Urheberangaben; Auswahl lädt ein Vorschaubild in `filesDir/recipe_images` herunter. Ein begleitender `.source.txt`-Beleg speichert Commons-Dateiseite, Thumbnail-URL, Lizenz, Urheber und Attribution. Die Bildquelle wird beim Löschen/Ersetzen der verwalteten Bilddatei mit entfernt. Dafür ist die Android-Internetberechtigung erforderlich. Es werden keine Google-Bilderseiten gescrapt und kein API-Schlüssel benötigt.\n- Online-Suche ist auf Gerichtefotos begrenzt; keine Rezept- oder Zutaten-Websuche. Ergebnisse ohne auslesbare Lizenzangabe werden ausgelassen. Vor der Übernahme werden Lizenz und Urheber im Treffer angezeigt.\n- Noch offen: Build-/Gerätetest der Online-Suche, Netzwerkfehler/Commons-Rate-Limits, Galerieformate und Kamera-Apps sowie Bildgrößen-/Speicheroptimierung.
+- Online-Gerichtebildersuche ergänzt: Suche nach Gerichtsnamen über die Wikimedia-Commons-Action-API, Treffer mit Vorschaubildern und Lizenz-/Urheberangaben; Auswahl lädt ein Vorschaubild in `filesDir/recipe_images` herunter. Ein begleitender `.source.txt`-Beleg speichert Commons-Dateiseite, Thumbnail-URL, Lizenz, Urheber und Attribution. Die Bildquelle wird beim Löschen/Ersetzen der verwalteten Bilddatei mit entfernt. Dafür ist die Android-Internetberechtigung erforderlich. Es werden keine Google-Bilderseiten gescrapt und kein API-Schlüssel benötigt.
+- Online-Suche ist auf Gerichtefotos begrenzt; keine Rezept- oder Zutaten-Websuche. Ergebnisse ohne auslesbare Lizenzangabe werden ausgelassen. Vor der Übernahme werden Lizenz und Urheber im Treffer angezeigt.
+- Noch offen: Build-/Gerätetest der Online-Suche, Netzwerkfehler/Commons-Rate-Limits, Galerieformate und Kamera-Apps sowie Bildgrößen-/Speicheroptimierung.
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
