@@ -274,3 +274,11 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - WebView: JavaScript/DOM Storage an, File-/Content-Zugriff aus, Popups aus, nur HTTP(S)-Navigation. Keine Umgehung von Zugangsbeschränkungen.
 - Unterstützung hängt weiterhin davon ab, ob die Webseite maschinenlesbare Rezeptdaten anbietet.
 - Version 0.8.0 / versionCode 15. Build und Gerätetest ausstehend.
+
+
+### G.14 Rezept-Entdecken – eigener Bild-Feed (2026-11-26)
+- Bottom-Navigation „Browser“ durch „Entdecken“ ersetzt. Eigene Netflix-artige Oberfläche mit Hero-Karte, horizontalen Bildkarten, Kategorien und Suche.
+- TheMealDB als erste öffentliche Rezeptdatenquelle über `RecipeDiscoveryClient.kt`; Bild- und Rezeptmetadaten für Feed-Karten.
+- Karte übergibt die Rezeptdetail-Webadresse an den vorhandenen Importer. API-direkter Import vollständiger Rezeptdetails ist als nächste Ausbaustufe vorgesehen; aktuell hängt Import von strukturierten Daten auf der Detailseite ab.
+- Chefkoch-API noch nicht eingebunden; keine nicht autorisierte Seitenauslesung.
+- Version 0.9.0 / versionCode 16. Build und Gerätetest ausstehend.
