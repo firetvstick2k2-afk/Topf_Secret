@@ -698,11 +698,15 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                 Column(Modifier.fillMaxWidth().padding(12.dp)) {
                     Text("Automatisch berechnete Nährwerte", color = Ink, fontWeight = FontWeight.Bold)
                     val portionCount = servings.toIntOrNull()?.coerceAtLeast(1) ?: 2
-                    Text(if (uncalculatedReasons.isEmpty()) "Gesamtgericht" else "Bisher berechenbare Zutaten (Teilmenge)", color = Copper, fontWeight = FontWeight.SemiBold)
-                    NutritionValueLines(calculatedNutrition)
-                    Spacer(Modifier.height(6.dp))
-                    Text("Pro Portion", color = Copper, fontWeight = FontWeight.SemiBold)
-                    NutritionValueLines(calculatedNutrition.copy(caloriesKcal = calculatedNutrition.caloriesKcal / portionCount, carbohydratesG = calculatedNutrition.carbohydratesG / portionCount, proteinG = calculatedNutrition.proteinG / portionCount, fatG = calculatedNutrition.fatG / portionCount, sugarsG = calculatedNutrition.sugarsG / portionCount, fiberG = calculatedNutrition.fiberG / portionCount, saltG = calculatedNutrition.saltG / portionCount, saturatedFatG = calculatedNutrition.saturatedFatG / portionCount))
+                    if (calculatedNutrition.calculatedIngredients > 0) {
+                        Text(if (uncalculatedReasons.isEmpty()) "Gesamtgericht" else "Bisher berechenbare Zutaten (Teilmenge)", color = Copper, fontWeight = FontWeight.SemiBold)
+                        NutritionValueLines(calculatedNutrition)
+                        Spacer(Modifier.height(6.dp))
+                        Text("Pro Portion" + if (uncalculatedReasons.isEmpty()) "" else " (Teilmenge)", color = Copper, fontWeight = FontWeight.SemiBold)
+                        NutritionValueLines(calculatedNutrition.copy(caloriesKcal = calculatedNutrition.caloriesKcal / portionCount, carbohydratesG = calculatedNutrition.carbohydratesG / portionCount, proteinG = calculatedNutrition.proteinG / portionCount, fatG = calculatedNutrition.fatG / portionCount, sugarsG = calculatedNutrition.sugarsG / portionCount, fiberG = calculatedNutrition.fiberG / portionCount, saltG = calculatedNutrition.saltG / portionCount, saturatedFatG = calculatedNutrition.saturatedFatG / portionCount))
+                    } else {
+                        Text("Noch keine Zutat mit passender Mengenangabe berechenbar.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    }
                     Text(calculatedNutrition.calculatedIngredients.toString() + " von " + (calculatedNutrition.calculatedIngredients + calculatedNutrition.uncalculatedIngredients) + " Zutaten berechnet" + if (calculatedNutrition.estimatedMeasures) " · Küchenmaße/Dichte teilweise geschätzt" else "", color = MutedInk, style = MaterialTheme.typography.labelSmall)
                     if (uncalculatedReasons.isNotEmpty()) {
                         Spacer(Modifier.height(8.dp))
