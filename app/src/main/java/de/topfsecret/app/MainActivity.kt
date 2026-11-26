@@ -320,7 +320,8 @@ private fun RecipeListScreen(
     selectedCategory: String,
     onClearCategory: () -> Unit,
     onAdd: () -> Unit,
-    onOpen: (Long) -> Unit
+    onOpen: (Long) -> Unit,
+    onImportOnline: () -> Unit
 ) {
     var searchText by rememberSaveable { mutableStateOf("") }
     val visibleRecipes = recipes.filter { item ->
@@ -358,6 +359,9 @@ private fun RecipeListScreen(
             if (selectedCategory.isNotBlank()) {
                 Spacer(Modifier.height(8.dp))
                 TextButton(onClick = onClearCategory) { Text("Alle Kategorien anzeigen", color = Copper) }
+            }
+            OutlinedButton(onClick = onImportOnline, modifier = Modifier.fillMaxWidth()) {
+                Text("🌐 Online-Rezept über Link importieren")
             }
             Spacer(Modifier.height(12.dp))
             if (visibleRecipes.isEmpty()) {
