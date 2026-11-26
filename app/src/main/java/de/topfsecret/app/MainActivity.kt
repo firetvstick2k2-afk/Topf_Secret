@@ -156,7 +156,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                                     de.topfsecret.app.nutrition.BlsDatasetSeeder.ensureSeeded(context, blsFoodDao)
                                     val importedNutrition = mutableMapOf<String, OpenFoodFactsProduct>()
                                     imported.ingredients.forEach { line ->
-                                        val ingredientName = Regex("""^\\d+(?:[.,]\\d+)?\\s*(?:kg|g|mg|l|ml|cl|dl|EL|TL|Stk\\.?|Stück)?\\s+(.+)$""", RegexOption.IGNORE_CASE)
+                                        val ingredientName = Regex("""^\d+(?:[.,]\d+)?\s*(?:kg|g|mg|l|ml|cl|dl|EL|TL|Stk\.?|Stück)?\s+(.+)$""", RegexOption.IGNORE_CASE)
                                             .matchEntire(line.trim())?.groupValues?.get(1)?.trim() ?: line.trim()
                                         val local = productCatalog.search(ingredientName).firstOrNull { it.name.equals(ingredientName, true) }
                                         if (local != null) {
