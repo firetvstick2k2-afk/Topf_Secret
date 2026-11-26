@@ -6,13 +6,7 @@ import java.util.Locale
 object IngredientMeasureConverter {
     data class ConvertedAmount(val value: Double, val basis: Basis, val estimated: Boolean = false)
     enum class Basis { GRAMS, MILLILITRES }
-
-    private val densityGramsPerMl = mapOf(
-        "wasser" to 1.0, "milch" to 1.03, "sahne" to 1.0, "öl" to 0.92,
-        "olivenöl" to 0.92, "sonnenblumenöl" to 0.92, "honig" to 1.42,
-        "sirup" to 1.30, "joghurt" to 1.03, "essig" to 1.01,
-        "brühe" to 1.0, "tomatenpassata" to 1.04
-    )
+    private val densityGramsPerMl = mapOf("wasser" to 1.0, "milch" to 1.03, "sahne" to 1.0, "olivenöl" to 0.92, "sonnenblumenöl" to 0.92, "öl" to 0.92, "honig" to 1.42, "sirup" to 1.30, "joghurt" to 1.03, "essig" to 1.01, "brühe" to 1.0, "tomatenpassata" to 1.04)
 
     fun convert(amount: Double, unit: String): ConvertedAmount? {
         if (!amount.isFinite() || amount < 0.0) return null
@@ -44,51 +38,21 @@ object IngredientMeasureConverter {
     }
 }
 
-data class NutritionPer100(
-    val caloriesKcal: Double?,
-    val carbohydratesG: Double?,
-    val proteinG: Double?,
-    val fatG: Double?,
-    val basis: IngredientMeasureConverter.Basis
-) {
-    data class Totals(
-        val caloriesKcal: Double = 0.0,
-        val carbohydratesG: Double = 0.0,
-        val proteinG: Double = 0.0,
-        val fatG: Double = 0.0,
-        val calculatedIngredients: Int = 0,
-        val uncalculatedIngredients: Int = 0,
-        val estimatedMeasures: Boolean = false
-    )
+data class NutritionPer100(val caloriesKcal: Double?, val carbohydratesG: Double?, val proteinG: Double?, val fatG: Double?, val basis: IngredientMeasureConverter.Basis) {
+    data class Totals(val caloriesKcal: Double = 0.0, val carbohydratesG: Double = 0.0, val proteinG: Double = 0.0, val fatG: Double = 0.0, val calculatedIngredients: Int = 0, val uncalculatedIngredients: Int = 0, val estimatedMeasures: Boolean = false)
 
     fun forAmount(amount: Double, unit: String, ingredientName: String): Totals? {
         val converted = IngredientMeasureConverter.convert(amount, unit) ?: return null
         val normalized = if (basis == IngredientMeasureConverter.Basis.GRAMS) {
-            if (converted.basis == IngredientMeasureConverter.Basis.GRAMS) converted
-            else IngredientMeasureConverter.volumeToGrams(converted.value, ingredientName) ?: return null
+            if (converted.basis == IngredientMeasureConverter.Basis.GRAMS) converted else IngredientMeasureConverter.volumeToGrams(converted.value, ingredientName) ?: return null
         } else {
             if (converted.basis == IngredientMeasureConverter.Basis.MILLILITRES) converted else return null
         }
         val factor = normalized.value / 100.0
-        return Totals(
-            caloriesKcal = (caloriesKcal ?: 0.0) * factor,
-            carbohydratesG = (carbohydratesG ?: 0.0) * factor,
-            proteinG = (proteinG ?: 0.0) * factor,
-            fatG = (fatG ?: 0.0) * factor,
-            calculatedIngredients = 1,
-            estimatedMeasures = converted.estimated || normalized.estimated
-        )
+        return Totals((caloriesKcal ?: 0.0) * factor, (carbohydratesG ?: 0.0) * factor, (proteinG ?: 0.0) * factor, (fatG ?: 0.0) * factor, calculatedIngredients = 1, estimatedMeasures = converted.estimated || normalized.estimated)
     }
 }
 
 fun List<NutritionPer100.Totals>.sumNutrition(): NutritionPer100.Totals = fold(NutritionPer100.Totals()) { total, item ->
-    total.copy(
-        caloriesKcal = total.caloriesKcal + item.caloriesKcal,
-        carbohydratesG = total.carbohydratesG + item.carbohydratesG,
-        proteinG = total.proteinG + item.proteinG,
-        fatG = total.fatG + item.fatG,
-        calculatedIngredients = total.calculatedIngredients + item.calculatedIngredients,
-        uncalculatedIngredients = total.uncalculatedIngredients + item.uncalculatedIngredients,
-        estimatedMeasures = total.estimatedMeasures || item.estimatedMeasures
-    )
+    total.copy(caloriesKcal = total.caloriesKcal + item.caloriesKcal, carbohydratesG = total.carbohydratesG + item.carbohydratesG, proteinG = total.proteinG + item.proteinG, fatG = total.fatG + item.fatG, calculatedIngredients = total.calculatedIngredients + item.calculatedIngredients, uncalculatedIngredients = total.uncalculatedIngredients + item.uncalculatedIngredients, estimatedMeasures = total.estimatedMeasures || item.estimatedMeasures)
 }
