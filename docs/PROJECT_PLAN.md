@@ -93,3 +93,13 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Manuelle GitHub-Releases tragen künftig den Titel `Topf Secret v<versionName> – Build #<GitHub-Run-Nummer>`.
 - Die Release-Beschreibung nennt App-Version, versionCode, Buildnummer und Commit-SHA. So sind installierter Stand und Änderungen leichter zuzuordnen.
 - Der am 2026-11-26 geprüfte Bestand enthält `build-21` und `build-29`; beide bisherigen Releases haben noch den generischen Titel „Topf Secret Build“. Neue Releases verwenden das eindeutige Schema.
+
+
+### G. Barcode-Import und Einheitenberechnung (vereinbart, Umsetzung begonnen)
+- Zutatenprodukte per Barcode scannen und Produktname sowie vorhandene Nährwerte aus Open Food Facts übernehmen.
+- Nährwerte je Zutat speichern (Wertebasis 100 g oder 100 ml, Barcode und Datenquelle) und bei Mengen-/Portionsänderungen neu berechnen.
+- Gesamtwerte des Gerichts durch Addition aller berechenbaren Zutaten bilden; Werte pro Portion anhand der Portionszahl ableiten.
+- Mengen normalisieren: mg/g/kg und ml/cl/dl/l; EL/TL/Tasse als definierte, ausdrücklich geschätzte Volumenmaße.
+- Volumen-/Gewichtsumrechnung nur mit bekannter lebensmittelspezifischer Dichte; Stück, Prise, Bund und ähnliche Angaben nur mit hinterlegtem Stück-/Referenzgewicht.
+- Nicht zuordenbare oder unvollständige Zutaten sichtbar als nicht berechnet kennzeichnen; manuelle Eingabe/Korrektur ermöglichen.
+- Open Food Facts API v3, eigener User-Agent, Quellenhinweis und Einhaltung der ODbL-/Datenlizenzbedingungen.
