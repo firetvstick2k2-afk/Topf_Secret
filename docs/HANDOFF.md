@@ -86,8 +86,10 @@ Stand: 2026-11-26
 ## Aktueller Funktionsschritt
 - PIN-/Biometrie-/Recovery-Code-/SQLCipher-Prototyp vollständig verworfen und aus dem App-Projekt entfernt. Die produktive Room-Datenbank blieb unverändert.
 - CI führt keine Android-Emulator-Instrumentierung mehr aus; Release-Build und Unit-Tests laufen weiterhin.
-- Rezeptbilder: Galerieauswahl über Android Document Picker, dauerhafte URI-Berechtigung, Bildvorschau in Rezeptliste und Detail sowie Bild ändern/entfernen im Editor. Die vorhandene Spalte `imageUri` wird verwendet; keine Room-Schemaänderung.
-- Noch nicht umgesetzt: Kameraaufnahme, Kopieren der Bilddatei in den App-internen Speicher, Build-/Gerätetest.
+- Rezeptbilder: Galerieauswahl über Android Document Picker; ausgewählte Bilddateien werden in `filesDir/recipe_images` kopiert, damit sie nicht von externen URI-Berechtigungen abhängen. Kameraaufnahme erfolgt über Android `TakePicture` und einen nicht exportierten `FileProvider`; auch Kamerabilder landen direkt im internen App-Speicher.
+- Bildvorschau in Rezeptliste, Detailansicht und Editor; Bild ändern/entfernen. Alte intern verwaltete Bilddateien werden nach erfolgreichem Speichern ersetzt/entfernt; neu importierte Dateien werden beim Abbrechen des Editors bereinigt.
+- Speicherung verwendet das bereits vorhandene Feld `RecipeEntity.imageUri`; Room-Schema bleibt Version 1. `AndroidManifest.xml` registriert den FileProvider und `res/xml/file_paths.xml` begrenzt den freigegebenen Pfad auf `recipe_images/`.
+- Noch offen: Build-/Gerätetest, Prüfung mit unterschiedlichen Galerieformaten und Kamera-Apps sowie Bildgrößen-/Speicheroptimierung.
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
