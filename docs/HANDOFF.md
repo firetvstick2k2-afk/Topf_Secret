@@ -100,3 +100,12 @@ Stand: 2026-11-26
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
+
+
+## Ergänzung: Nährwert- und Einheitenberechnung (in Arbeit)
+- Vereinbart: Lebensmittel per Barcode erkennen, Produktname und verfügbare Nährwerte übernehmen und alle berechenbaren Zutaten eines Gerichts addieren. Anzeige später für Gesamtgericht und je Portion, ausdrücklich als Schätzwert.
+- Einheiten: mg/g/kg, ml/cl/dl/l sowie EL/TL/Tasse. Stück, Prise, Bund usw. nur mit bekanntem Stück-/Referenzgewicht.
+- Open Food Facts API v3 ist als Barcode-Datenquelle vorgesehen. Produktabfragen erfolgen über `/api/v3/product/{code}` mit eigenem User-Agent; Lesezugriffe benötigen keinen API-Schlüssel. Die Daten können unvollständig/fehlerhaft sein. ODbL-/Datenlizenz-Attribution und Share-Alike-Bedingungen sind einzuhalten.
+- Implementiert auf `development`: Room-Schema v2 mit optionalem Barcode, Nährwerten pro 100 g bzw. 100 ml und Quellenfeld je Zutat; Migration 1→2 erhält vorhandene Rezeptdaten. Zutatenparser erkennt zusätzlich mg, dl, Esslöffel, Teelöffel, Tassen und weitere Küchenmaße.
+- Neue Rechenbasis `app/src/main/java/de/topfsecret/app/nutrition/IngredientNutrition.kt`: Gewichts-/Volumennormalisierung, definierte EL/TL/Tassen-Volumina und begrenzte lebensmittelspezifische Dichtewerte (z. B. Wasser, Milch, Öl, Honig). Volumen→Masse wird ohne bekannte Dichte bewusst nicht geraten. EL/TL/Tasse und Dichtewerte werden als Schätzungen markiert.
+- Noch NICHT fertig/getestet: Barcode-Scanner-UI, API-Client, Übergabe der Barcode-Nährwerte in Zutaten, automatische Berechnung/Anzeige im Rezepteditor und in der Detailansicht, Unit-/Migrationstests und Android-Build.
