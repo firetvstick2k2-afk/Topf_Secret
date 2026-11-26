@@ -53,10 +53,23 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: gradle --no-daemon assembleRelease
 
+      - name: Rename APK with build number
+        run: |
+          APK_SOURCE="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n 1)"
+          if [ -z "$APK_SOURCE" ]; then
+            echo "::error::No release APK was produced"
+            exit 1
+          fi
+          APK_NAME="topf_secret_#${GITHUB_RUN_NUMBER}.apk"
+          APK_PATH="app/build/outputs/apk/release/$APK_NAME"
+          mv "$APK_SOURCE" "$APK_PATH"
+          echo "APK_PATH=$APK_PATH" >> "$GITHUB_ENV"
+          echo "Created $APK_NAME"
+
       - name: Upload signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: topf-secret-release-apk
-          path: app/build/outputs/apk/release/*.apk
+          name: topf_secret_#${{ github.run_number }}
+          path: ${{ env.APK_PATH }}
           if-no-files-found: error
           retention-days: 14
