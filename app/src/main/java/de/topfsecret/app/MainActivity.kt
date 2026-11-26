@@ -349,6 +349,7 @@ private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedReci
     var url by rememberSaveable { mutableStateOf("") }
     var imported by remember { mutableStateOf<ImportedRecipe?>(null) }
     var selectedCategory by rememberSaveable { mutableStateOf("") }
+    var selectedImageUrl by rememberSaveable { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
     val context = LocalContext.current
@@ -376,7 +377,7 @@ private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedReci
                 imported = null
                 scope.launch {
                     runCatching { OnlineRecipeImporter.importFromUrl(url) }
-                        .onSuccess { imported = it; selectedCategory = it.category.ifBlank { "Importiert" } }
+                        .onSuccess { imported = it; selectedCategory = it.category.ifBlank { "Importiert" }; selectedImageUrl = it.imageUrl }
                         .onFailure { error = it.message ?: "Der Rezeptlink konnte nicht gelesen werden." }
                     loading = false
                 }
@@ -393,11 +394,27 @@ private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedReci
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("VORSCHAU", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
                     Text(recipe.title, color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
-                    if (!recipe.imageUrl.isNullOrBlank()) {
-                        RecipePhoto(recipe.imageUrl, Modifier.fillMaxWidth().height(190.dp))
-                        Text("Rezeptbild von der Originalseite", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                    Text("BILDAUSWAHL", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
+                    if (recipe.imageUrls.isNotEmpty()) {
+                        Text("Ich habe ${recipe.imageUrls.size} mögliche Bilder auf der Seite gefunden. Wähle das passende Rezeptbild aus:", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                        recipe.imageUrls.forEachIndexed { index, imageUrl ->
+                            Card(
+                                colors = CardDefaults.cardColors(containerColor = if (selectedImageUrl == imageUrl) PaleCopper else Paper),
+                                shape = RoundedCornerShape(14.dp)
+                            ) {
+                                Column(Modifier.fillMaxWidth().padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    RecipePhoto(imageUrl, Modifier.fillMaxWidth().height(145.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text("Bild ${index + 1}", color = Ink, style = MaterialTheme.typography.bodySmall)
+                                        TextButton(onClick = { selectedImageUrl = imageUrl }) {
+                                            Text(if (selectedImageUrl == imageUrl) "✓ Ausgewählt" else "Dieses Bild wählen", color = Copper)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     } else {
-                        Text("Auf der Rezeptseite wurde kein übernehmbares Bild gefunden.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                        Text("Auf der Rezeptseite wurden keine geeigneten Bilder gefunden. Du kannst das Rezept trotzdem ohne Bild übernehmen.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
                     }
                     if (recipe.description.isNotBlank()) Text(recipe.description, color = MutedInk)
                     OutlinedTextField(
@@ -430,8 +447,8 @@ private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedReci
                     Text("Zubereitung (${recipe.steps.size} Schritte)", color = Ink, fontWeight = FontWeight.Bold)
                     recipe.steps.forEachIndexed { index, step -> Text("${index + 1}. $step", color = Ink, style = MaterialTheme.typography.bodyMedium) }
                     Text("Quelle: ${recipe.sourceUrl}", color = MutedInk, style = MaterialTheme.typography.bodySmall)
-                    Text("Bitte prüfe die übernommenen Angaben. Das Rezeptbild wird lokal gespeichert; die Rezeptseite bleibt als Quelle hinterlegt.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
-                    Button(onClick = { onSave(recipe.copy(category = selectedCategory.trim().ifBlank { "Importiert" })) }, modifier = Modifier.fillMaxWidth()) { Text("In meine Rezepte übernehmen") }
+                    Text("Das ausgewählte Bild wird beim Speichern lokal abgelegt. Die Rezeptseite bleibt als Quelle hinterlegt.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    Button(onClick = { onSave(recipe.copy(category = selectedCategory.trim().ifBlank { "Importiert" }, imageUrl = selectedImageUrl)) }, modifier = Modifier.fillMaxWidth()) { Text("In meine Rezepte übernehmen") }
                 }
             }
         }
