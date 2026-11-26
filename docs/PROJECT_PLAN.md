@@ -118,3 +118,11 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Treffer aus Open Food Facts mit Produktname, Marke und verfügbaren Nährwerten anzeigen; ausgewähltes Produkt über die bestehende Vorschau übernehmen.
 - Bei keinem Treffer den Suchbegriff als normale Zutat ohne Produktdaten übernehmen können. Keine erfundenen Nährwerte.
 - Build und Gerätetest stehen noch aus.
+
+### G.3 Lokaler Produktkatalog und Korrektur von Barcode-Zuordnungen (in Umsetzung)
+- Lokale Room-Tabelle `local_food_products` (Schema v3) speichert bestätigte Produktdaten je Barcode. Lokale Zuordnungen haben beim Scan Vorrang vor Onlinequellen.
+- Manuelle Produktsuche führt lokale Einträge zuerst auf und bleibt mit lokalen Treffern auch bei Offline-/API-Ausfall nutzbar.
+- Produktdaten können in der Vorschau korrigiert werden: Barcode, Name, Marke und Makronährwerte. Manuell korrigierte Einträge erhalten den Status `VERIFIED_LOCAL`; Online-Treffer bleiben `UNVERIFIED`, bis sie bewusst lokal geprüft/korrigiert wurden.
+- Falsche Barcode-Antworten von Open Food Facts werden abgewiesen, wenn der API-Produktcode vom gescannten Code abweicht.
+- Datenquellen-Roadmap für manuelle Suche: Open Food Facts Search-a-licious; BLS 4.0 (kostenlos, CC BY 4.0, besonders relevant für deutsche Lebensmittel); Livsmedelsverket JSON API (CC BY 4.0); USDA FoodData Central (CC0, API-Key erforderlich). UK CoFID als möglicher Offline-Datensatz nach Lizenz-/Formatprüfung. Keine privaten/gebührenpflichtigen Lifesum-Daten oder APIs verwenden.
+- Offen: weitere Datenquellen technisch integrieren, deutsche Bezeichnungen/Übersetzungen, Qualitäts-/Plausibilitätsregeln und Katalog-Backup/Restore.
