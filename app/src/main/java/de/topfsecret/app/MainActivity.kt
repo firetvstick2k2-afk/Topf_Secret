@@ -139,7 +139,27 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
             when (selectedTab) {
                 0 -> HomeScreen(recipes.size, darkMode, appVersion, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 }, { selectedTab = 4 })
                 1 -> {
-                    if (editingRecipeId != 0L) {
+                    if (editingRecipeId == -2L) {
+                        OnlineRecipeImportScreen(
+                            onCancel = { editingRecipeId = 0L },
+                            onSave = { imported ->
+                                scope.launch {
+                                    val entity = RecipeEntity(
+                                        title = imported.title,
+                                        description = imported.description,
+                                        category = imported.category.ifBlank { "Importiert" },
+                                        servings = imported.servings,
+                                        preparationMinutes = imported.preparationMinutes,
+                                        cookingMinutes = imported.cookingMinutes,
+                                        sourceUrl = imported.sourceUrl
+                                    )
+                                    val newId = repository.saveRecipe(entity, imported.ingredients, imported.steps)
+                                    editingRecipeId = 0L
+                                    selectedRecipeId = newId
+                                }
+                            }
+                        )
+                    } else if (editingRecipeId != 0L) {
                         val editing = recipes.firstOrNull { it.recipe.id == editingRecipeId }
                         RecipeEditorScreen(
                             recipe = editing,
@@ -160,7 +180,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                     } else if (selectedRecipeId != 0L) {
                         val selected = recipes.firstOrNull { it.recipe.id == selectedRecipeId }
                         if (selected == null) {
-                            RecipeListScreen(recipes, selectedCategory, { selectedCategory = "" }, { editingRecipeId = -1L }, { selectedRecipeId = it })
+                            RecipeListScreen(recipes, selectedCategory, { selectedCategory = "" }, { editingRecipeId = -1L }, { selectedRecipeId = it }, { editingRecipeId = -2L })
                         } else {
                             RecipeDetailScreen(
                                 recipe = selected,
