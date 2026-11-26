@@ -8,6 +8,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.content.Context
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.FileProvider
 import java.io.File
 import java.util.UUID
@@ -70,7 +75,8 @@ private val destinations = listOf(
     AppDestination("Start", "⌂"),
     AppDestination("Rezepte", "▤"),
     AppDestination("Kategorien", "▦"),
-    AppDestination("Favoriten", "♡")
+    AppDestination("Favoriten", "♡"),
+    AppDestination("Browser", "🌐")
 )
 
 class MainActivity : ComponentActivity() {
@@ -111,6 +117,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
     var selectedRecipeId by rememberSaveable { mutableLongStateOf(0L) }
     var editingRecipeId by rememberSaveable { mutableLongStateOf(0L) }
     var selectedCategory by rememberSaveable { mutableStateOf("") }
+    var importStartUrl by rememberSaveable { mutableStateOf("") }
     val recipes by repository.observeRecipes().collectAsState(initial = emptyList())
     val categories = recipes.map { it.recipe.category.trim() }.filter(String::isNotBlank).distinct().sortedBy { it.lowercase() }
     val scope = rememberCoroutineScope()
@@ -137,11 +144,12 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
     ) { innerPadding ->
         Surface(Modifier.fillMaxSize().padding(innerPadding), color = Cream) {
             when (selectedTab) {
-                0 -> HomeScreen(recipes.size, darkMode, appVersion, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 }, { selectedTab = 4 })
+                0 -> HomeScreen(recipes.size, darkMode, appVersion, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 }, { selectedTab = 5 })
                 1 -> {
                     if (editingRecipeId == -2L) {
                         OnlineRecipeImportScreen(
-                            onCancel = { editingRecipeId = 0L },
+                            initialUrl = importStartUrl,
+                            onCancel = { editingRecipeId = 0L; importStartUrl = "" },
                             onSave = { imported ->
                                 scope.launch {
                                     val entity = RecipeEntity(
@@ -185,6 +193,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                                     }
                                     val newId = repository.saveRecipe(entity, imported.ingredients, imported.steps, importedNutrition)
                                     editingRecipeId = 0L
+                                    importStartUrl = ""
                                     selectedRecipeId = newId
                                 }
                             }
@@ -241,6 +250,13 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                     recipes = recipes.filter { it.recipe.isFavorite },
                     onOpen = { recipeId ->
                         selectedRecipeId = recipeId
+                        selectedTab = 1
+                    }
+                )
+                4 -> RecipeBrowserScreen(
+                    onImport = { pageUrl ->
+                        importStartUrl = pageUrl
+                        editingRecipeId = -2L
                         selectedTab = 1
                     }
                 )
@@ -345,8 +361,95 @@ private fun HomeActionCard(modifier: Modifier, symbol: String, title: String, su
 }
 
 @Composable
-private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedRecipe) -> Unit) {
-    var url by rememberSaveable { mutableStateOf("") }
+private fun RecipeBrowserScreen(onImport: (String) -> Unit) {
+    var address by rememberSaveable { mutableStateOf("https://www.chefkoch.de/") }
+    var currentUrl by rememberSaveable { mutableStateOf("https://www.chefkoch.de/") }
+    var pageTitle by rememberSaveable { mutableStateOf("Chefkoch") }
+    var canGoBack by remember { mutableStateOf(false) }
+    var canGoForward by remember { mutableStateOf(false) }
+    var webView by remember { mutableStateOf<WebView?>(null) }
+    var pageError by remember { mutableStateOf("") }
+    Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp)) {
+        Text("REZEPT-BROWSER", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        Text("Finde dein nächstes Lieblingsgericht", color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedTextField(
+                value = address,
+                onValueChange = { address = it },
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                label = { Text("Webadresse oder Suchbegriff") }
+            )
+            Button(onClick = {
+                val entered = address.trim()
+                val target = when {
+                    entered.startsWith("http://", true) || entered.startsWith("https://", true) -> entered
+                    entered.contains(".") && !entered.contains(" ") -> "https://$entered"
+                    else -> "https://www.google.com/search?q=" + Uri.encode(entered)
+                }
+                webView?.loadUrl(target)
+            }) { Text("Los") }
+        }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = { webView?.goBack() }, enabled = canGoBack) { Text("‹ Zurück") }
+            TextButton(onClick = { webView?.goForward() }, enabled = canGoForward) { Text("Vorwärts ›") }
+            TextButton(onClick = { webView?.reload() }) { Text("↻") }
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = { webView?.loadUrl("https://www.chefkoch.de/"); address = "https://www.chefkoch.de/" }) { Text("Chefkoch") }
+        }
+        if (pageError.isNotBlank()) Text(pageError, color = Color(0xFFB3261E), style = MaterialTheme.typography.bodySmall)
+        AndroidView(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            factory = { context ->
+                WebView(context).apply {
+                    settings.javaScriptEnabled = true
+                    settings.domStorageEnabled = true
+                    settings.allowFileAccess = false
+                    settings.allowContentAccess = false
+                    settings.javaScriptCanOpenWindowsAutomatically = false
+                    settings.setSupportMultipleWindows(false)
+                    webViewClient = object : WebViewClient() {
+                        override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
+                            val scheme = request.url.scheme?.lowercase()
+                            return scheme != "https" && scheme != "http"
+                        }
+                        override fun onPageStarted(view: WebView, url: String?, favicon: Bitmap?) {
+                            super.onPageStarted(view, url, favicon)
+                            if (!url.isNullOrBlank()) { currentUrl = url; address = url }
+                            pageError = ""
+                        }
+                        override fun onPageFinished(view: WebView, url: String?) {
+                            super.onPageFinished(view, url)
+                            if (!url.isNullOrBlank()) { currentUrl = url; address = url }
+                            pageTitle = view.title ?: "Rezeptseite"
+                            canGoBack = view.canGoBack()
+                            canGoForward = view.canGoForward()
+                        }
+                        override fun onReceivedError(view: WebView, request: WebResourceRequest, error: android.webkit.WebResourceError) {
+                            if (request.isForMainFrame) pageError = "Diese Seite konnte nicht geladen werden."
+                        }
+                    }
+                    webChromeClient = WebChromeClient()
+                    webView = this
+                    loadUrl(currentUrl)
+                }
+            },
+            update = { view -> webView = view }
+        )
+        Spacer(Modifier.height(8.dp))
+        Button(
+            onClick = { onImport(currentUrl) },
+            enabled = currentUrl.startsWith("https://", true) || currentUrl.startsWith("http://", true),
+            modifier = Modifier.fillMaxWidth()
+        ) { Text("＋ Dieses Rezept übernehmen") }
+        Text("Gehe auf eine Rezeptseite und öffne das gewünschte Gericht. Mit dem Knopf startest du den bekannten Import mit Kategorie-, Nährwert- und Bildauswahl.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
+private fun OnlineRecipeImportScreen(initialUrl: String = "", onCancel: () -> Unit, onSave: (ImportedRecipe) -> Unit) {
+    var url by rememberSaveable { mutableStateOf(initialUrl) }
     var imported by remember { mutableStateOf<ImportedRecipe?>(null) }
     var selectedCategory by rememberSaveable { mutableStateOf("") }
     var selectedImageUrl by rememberSaveable { mutableStateOf<String?>(null) }
