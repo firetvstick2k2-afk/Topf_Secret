@@ -11,6 +11,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,13 +27,17 @@ import de.topfsecret.app.data.local.RecipeWithDetails
 import de.topfsecret.app.data.local.TopfSecretDatabase
 import kotlinx.coroutines.launch
 
-private val Cream = Color(0xFFFFF8F0)
-private val Paper = Color(0xFFFFFDF9)
-private val Ink = Color(0xFF302019)
-private val MutedInk = Color(0xFF806E62)
-private val Copper = Color(0xFFE87524)
-private val PaleCopper = Color(0xFFFFE6D2)
-private val Sage = Color(0xFFE8EEE2)
+private data class AppPalette(val cream: Color, val paper: Color, val ink: Color, val mutedInk: Color, val copper: Color, val paleCopper: Color, val sage: Color)
+private val LightPalette = AppPalette(Color(0xFFFFF8F0), Color(0xFFFFFDF9), Color(0xFF302019), Color(0xFF806E62), Color(0xFFE87524), Color(0xFFFFE6D2), Color(0xFFE8EEE2))
+private val DarkPalette = AppPalette(Color(0xFF171310), Color(0xFF25201B), Color(0xFFF4E9DF), Color(0xFFB9A99C), Color(0xFFFF9A55), Color(0xFF493022), Color(0xFF303A30))
+private val LocalPalette = compositionLocalOf { LightPalette }
+private val Cream: Color @Composable get() = LocalPalette.current.cream
+private val Paper: Color @Composable get() = LocalPalette.current.paper
+private val Ink: Color @Composable get() = LocalPalette.current.ink
+private val MutedInk: Color @Composable get() = LocalPalette.current.mutedInk
+private val Copper: Color @Composable get() = LocalPalette.current.copper
+private val PaleCopper: Color @Composable get() = LocalPalette.current.paleCopper
+private val Sage: Color @Composable get() = LocalPalette.current.sage
 
 private data class AppDestination(val label: String, val symbol: String)
 private val destinations = listOf(
@@ -45,23 +51,31 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val repository = RecipeRepository(TopfSecretDatabase.getInstance(applicationContext).recipeDao())
-        setContent { TopfSecretTheme { ActivationGate { TopfSecretApp(repository) } } }
+        val preferences = getSharedPreferences("topf_secret_settings", MODE_PRIVATE)
+        setContent {
+            var darkMode by rememberSaveable { mutableStateOf(preferences.getBoolean("dark_mode", false)) }
+            TopfSecretTheme(darkMode) {
+                ActivationGate {
+                    TopfSecretApp(repository, darkMode) { enabled ->
+                        darkMode = enabled
+                        preferences.edit().putBoolean("dark_mode", enabled).apply()
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun TopfSecretTheme(content: @Composable () -> Unit) {
-    MaterialTheme(
-        colorScheme = lightColorScheme(
-            primary = Copper, onPrimary = Color.White, secondary = Color(0xFF8D4B2A),
-            background = Cream, surface = Paper, onSurface = Ink, onBackground = Ink
-        ),
-        content = content
-    )
+private fun TopfSecretTheme(darkMode: Boolean, content: @Composable () -> Unit) {
+    val palette = if (darkMode) DarkPalette else LightPalette
+    val scheme = if (darkMode) darkColorScheme(primary = palette.copper, secondary = Color(0xFFFFB879), background = palette.cream, surface = palette.paper, onSurface = palette.ink, onBackground = palette.ink)
+    else lightColorScheme(primary = palette.copper, onPrimary = Color.White, secondary = Color(0xFF8D4B2A), background = palette.cream, surface = palette.paper, onSurface = palette.ink, onBackground = palette.ink)
+    CompositionLocalProvider(LocalPalette provides palette) { MaterialTheme(colorScheme = scheme, content = content) }
 }
 
 @Composable
-private fun TopfSecretApp(repository: RecipeRepository) {
+private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var selectedRecipeId by rememberSaveable { mutableLongStateOf(0L) }
     var editingRecipeId by rememberSaveable { mutableLongStateOf(0L) }
@@ -89,7 +103,7 @@ private fun TopfSecretApp(repository: RecipeRepository) {
     ) { innerPadding ->
         Surface(Modifier.fillMaxSize().padding(innerPadding), color = Cream) {
             when (selectedTab) {
-                0 -> HomeScreen(recipes.size, { selectedTab = 1 }, { selectedTab = 2 })
+                0 -> HomeScreen(recipes.size, darkMode, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 })
                 1 -> {
                     if (editingRecipeId != 0L) {
                         val editing = recipes.firstOrNull { it.recipe.id == editingRecipeId }
@@ -136,7 +150,7 @@ private fun TopfSecretApp(repository: RecipeRepository) {
 }
 
 @Composable
-private fun HomeScreen(recipeCount: Int, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit) {
+private fun HomeScreen(recipeCount: Int, darkMode: Boolean, onDarkModeChange: (Boolean) -> Unit, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.Start
@@ -174,6 +188,13 @@ private fun HomeScreen(recipeCount: Int, onRecipesClick: () -> Unit, onCategorie
             HomeActionCard(Modifier.weight(1f), "🥕", "Kategorien", "Alles im Blick", Sage, onCategoriesClick)
         }
         Spacer(Modifier.height(22.dp))
+        Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(if (darkMode) "🌙 Dunkelmodus" else "☀️ Hellmodus", modifier = Modifier.weight(1f), color = Ink, fontWeight = FontWeight.SemiBold)
+                Switch(checked = darkMode, onCheckedChange = onDarkModeChange)
+            }
+        }
+        Spacer(Modifier.height(18.dp))
         Text("Hier entsteht euer digitales Kochbuch.", Modifier.fillMaxWidth(), color = MutedInk, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall)
     }
 }
