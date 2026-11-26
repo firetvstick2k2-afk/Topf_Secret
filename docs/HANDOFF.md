@@ -149,3 +149,12 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Der BLS-Hinweis enthält eine ausdrückliche Nicht-Unterstützungs-/Nicht-Affiliationsklausel. Weitere Quellen und Mitwirkende können ergänzt werden; persönliche Namensnennungen nur mit Zustimmung.
 - Rechtliche Umsetzung ist noch nicht abschließend geprüft: Vor Einbindung des BLS-Datensatzes müssen die Originaldateien, Metadaten, Lizenzhinweise und etwaige Änderungen/Aufbereitungen konkret dokumentiert werden. Für Open Food Facts ist die ODbL einschließlich etwaiger Share-Alike-Pflichten gesondert zu beachten.
 - Die neue UI ist noch nicht gebaut oder auf einem Gerät getestet.
+
+
+## BLS 4.0 – Import und Suche (Entwicklung)
+- Room-Schema v4 ergänzt Tabelle `bls_foods` samt DAO und Migration 3→4. Gespeichert werden BLS-Code, deutsche/englische Bezeichnung, Energie (ENERCC), Protein (PROT625), verfügbare Kohlenhydrate (CHO), Fett (FAT) je 100 g sowie je Makronährstoff die originale Datenherkunft und Referenz aus den jeweils folgenden XLSX-Spalten.
+- `BlsXlsxImporter` liest die offizielle BLS-4.0-Hauptdatei direkt aus einer vom Nutzer ausgewählten XLSX-Datei. Der Import verarbeitet das erste Tabellenblatt und erkennt die Spalten über die BLS-Codes; Werte, die fehlen oder nicht numerisch sind, bleiben null und werden nicht zu null Gramm umgedeutet.
+- Im Zutaten-/Produktsuchdialog gibt es Schaltflächen zum Import der BLS-XLSX-Datei und zur Suche in den lokal importierten BLS-Lebensmitteln. Ein Treffer kann als Zutat übernommen werden; BLS-Code und Quelle werden in der Rezeptzutat kenntlich gemacht. BLS-Datensätze werden nicht in den Barcode-Produktkatalog geschrieben.
+- Der Import speichert derzeit die vier für die bestehende Rezeptberechnung benötigten Makronährwerte; die übrigen 134 Nährstoffkomponenten werden noch nicht in Room übernommen. Datenherkunft/Referenzen der vier gespeicherten Werte bleiben erhalten.
+- BLS-Import ist noch nicht mit der Originaldatei auf einem Gerät verifiziert; Build und Test stehen aus. Vor Freigabe muss der Import mit der offiziellen BLS_4_0_Daten_2025_DE.xlsx getestet werden.
+- Android CI wurde so angepasst, dass Pushes auf `development` automatisch einen Build starten; Release-Veröffentlichung bleibt weiterhin manuell.
