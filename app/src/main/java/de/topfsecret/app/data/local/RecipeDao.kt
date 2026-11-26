@@ -24,6 +24,31 @@ interface RecipeDao {
     @Query("SELECT * FROM recipes WHERE category = :category ORDER BY title COLLATE NOCASE ASC")
     fun observeRecipesInCategory(category: String): Flow<List<RecipeWithDetails>>
 
+
+    @Transaction
+    @Query("SELECT * FROM recipes ORDER BY id ASC")
+    suspend fun getAllRecipesWithDetails(): List<RecipeWithDetails>
+
+    @Transaction
+    suspend fun importRecipeWithDetails(
+        recipe: RecipeEntity,
+        ingredients: List<IngredientEntity>,
+        steps: List<PreparationStepEntity>
+    ): Long {
+        val newId = insertRecipe(recipe.copy(id = 0))
+        if (ingredients.isNotEmpty()) {
+            insertIngredients(ingredients.mapIndexed { index, item ->
+                item.copy(id = 0, recipeId = newId, position = index)
+            })
+        }
+        if (steps.isNotEmpty()) {
+            insertSteps(steps.mapIndexed { index, item ->
+                item.copy(id = 0, recipeId = newId, position = index)
+            })
+        }
+        return newId
+    }
+
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insertRecipe(recipe: RecipeEntity): Long
 
