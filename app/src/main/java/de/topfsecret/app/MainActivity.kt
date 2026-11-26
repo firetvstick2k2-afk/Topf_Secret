@@ -41,6 +41,8 @@ import androidx.compose.ui.unit.sp
 import de.topfsecret.app.data.RecipeRepository
 import de.topfsecret.app.data.local.RecipeEntity
 import de.topfsecret.app.data.local.IngredientEntity
+import de.topfsecret.app.data.local.LocalFoodProductDao
+import de.topfsecret.app.data.local.LocalFoodProductEntity
 import de.topfsecret.app.nutrition.OpenFoodFactsClient
 import de.topfsecret.app.nutrition.OpenFoodFactsProduct
 import de.topfsecret.app.nutrition.IngredientMeasureConverter
@@ -74,7 +76,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val appContext = applicationContext
-        val repository = RecipeRepository(TopfSecretDatabase.getInstance(appContext).recipeDao())
+        val database = TopfSecretDatabase.getInstance(appContext)
+        val repository = RecipeRepository(database.recipeDao())
+        val productCatalog = database.localFoodProductDao()
         val preferences = getSharedPreferences("topf_secret_settings", MODE_PRIVATE)
         val appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "Unbekannt"
         setContent {
@@ -137,6 +141,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, darkMo
                         val editing = recipes.firstOrNull { it.recipe.id == editingRecipeId }
                         RecipeEditorScreen(
                             recipe = editing,
+                            productCatalog = productCatalog,
                             onCancel = { editingRecipeId = 0L },
                             onSave = { entity, ingredients, steps, nutritionByIngredientName ->
                                 scope.launch {
@@ -446,7 +451,7 @@ private fun FavoriteScreen(
 }
 
 @Composable
-private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit, onSave: (RecipeEntity, List<String>, List<String>, Map<String, OpenFoodFactsProduct>) -> Unit) {
+private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: LocalFoodProductDao, onCancel: () -> Unit, onSave: (RecipeEntity, List<String>, List<String>, Map<String, OpenFoodFactsProduct>) -> Unit) {
     val original = recipe?.recipe
     var title by rememberSaveable(original?.id) { mutableStateOf(original?.title.orEmpty()) }
     var description by rememberSaveable(original?.id) { mutableStateOf(original?.description.orEmpty()) }
@@ -491,6 +496,14 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
     var productSearchResults by remember { mutableStateOf<List<OpenFoodFactsProduct>>(emptyList()) }
     var productSearchLoading by remember { mutableStateOf(false) }
     var productSearchMessage by remember { mutableStateOf("") }
+    var editingProduct by remember { mutableStateOf(false) }
+    var editedBarcode by remember { mutableStateOf("") }
+    var editedName by remember { mutableStateOf("") }
+    var editedBrand by remember { mutableStateOf("") }
+    var editedKcal by remember { mutableStateOf("") }
+    var editedCarbs by remember { mutableStateOf("") }
+    var editedProtein by remember { mutableStateOf("") }
+    var editedFat by remember { mutableStateOf("") }
     val nutritionSnapshot = nutritionByIngredientName.toMap()
     val calculatedNutrition = remember(ingredients, nutritionSnapshot) {
         val lines = ingredients.lines().map(String::trim).filter(String::isNotEmpty)
@@ -598,19 +611,25 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                             productSearchMessage = barcodeError
                             showProductSearch = true
                         } else scope.launch {
-                            OpenFoodFactsClient.lookupBarcode(code).fold(
-                                onSuccess = {
-                                    barcodeLoading = false
-                                    if (it.hasNutrition) {
-                                        scannedProduct = it
-                                    } else {
-                                        productSearchQuery = it.name
-                                        productSearchMessage = "Produkt erkannt, aber es fehlen Nährwerte. Suche nach einer anderen Marke oder Variante."
-                                        showProductSearch = true
-                                    }
-                                },
-                                onFailure = { barcodeError = it.message ?: "Produkt konnte nicht geladen werden."; barcodeLoading = false; productSearchQuery = ""; productSearchMessage = barcodeError; showProductSearch = true }
-                            )
+                            val saved = productCatalog.findByBarcode(code)
+                            if (saved != null) {
+                                scannedProduct = OpenFoodFactsProduct(saved.barcode, saved.name, saved.brand, saved.caloriesKcalPer100, saved.carbohydratesGPer100, saved.proteinGPer100, saved.fatGPer100, saved.sourceUrl)
+                                barcodeLoading = false
+                            } else {
+                                OpenFoodFactsClient.lookupBarcode(code).fold(
+                                    onSuccess = {
+                                        barcodeLoading = false
+                                        if (it.hasNutrition) {
+                                            scannedProduct = it
+                                        } else {
+                                            productSearchQuery = it.name
+                                            productSearchMessage = "Produkt erkannt, aber es fehlen Nährwerte. Suche nach einer anderen Marke oder Variante."
+                                            showProductSearch = true
+                                        }
+                                    },
+                                    onFailure = { barcodeError = it.message ?: "Produkt konnte nicht geladen werden."; barcodeLoading = false; productSearchQuery = ""; productSearchMessage = barcodeError; showProductSearch = true }
+                                )
+                            }
                         }
                     }
                     .addOnCanceledListener { barcodeLoading = false }
@@ -698,15 +717,18 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                         productSearchLoading = true
                         productSearchMessage = ""
                         scope.launch {
+                            val localResults = productCatalog.search(productSearchQuery).map {
+                                OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl)
+                            }
                             OpenFoodFactsClient.searchProducts(productSearchQuery).fold(
-                                onSuccess = {
-                                    productSearchResults = it
-                                    productSearchMessage = if (it.isEmpty()) "Keine passenden Produkte gefunden. Du kannst die Zutat trotzdem ohne Produktdaten übernehmen." else ""
+                                onSuccess = { remote ->
+                                    productSearchResults = (localResults + remote.filterNot { item -> localResults.any { it.barcode == item.barcode } }).take(30)
+                                    productSearchMessage = if (productSearchResults.isEmpty()) "Keine passenden Produkte gefunden. Du kannst die Zutat trotzdem ohne Produktdaten übernehmen." else "Lokale geprüfte Produkte stehen zuerst."
                                     productSearchLoading = false
                                 },
                                 onFailure = {
-                                    productSearchResults = emptyList()
-                                    productSearchMessage = it.message ?: "Die Suche ist fehlgeschlagen."
+                                    productSearchResults = localResults
+                                    productSearchMessage = if (localResults.isNotEmpty()) "Online-Suche nicht erreichbar. Lokale Produkte werden angezeigt." else (it.message ?: "Die Suche ist fehlgeschlagen.")
                                     productSearchLoading = false
                                 }
                             )
@@ -745,29 +767,73 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
             onDismissRequest = { scannedProduct = null },
             title = { Text("Produkt gefunden") },
             text = {
-                Column {
-                    Text(product.name, fontWeight = FontWeight.Bold)
-                    product.brand?.takeIf(String::isNotBlank)?.let { Text(it, color = MutedInk) }
-                    Spacer(Modifier.height(8.dp))
-                    Text("Nährwerte je 100 g")
-                    Text("Energie: " + (product.caloriesKcalPer100?.let { it.prettyNumber() + " kcal" } ?: "nicht vorhanden"))
-                    Text("Kohlenhydrate: " + (product.carbohydratesGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
-                    Text("Eiweiß: " + (product.proteinGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
-                    Text("Fett: " + (product.fatGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
-                    Spacer(Modifier.height(6.dp))
-                    Text(if (product.hasNutrition) "Datenquelle: Open Food Facts" else "Für dieses Produkt sind keine Nährwerte hinterlegt.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                Column(Modifier.heightIn(max = 440.dp).verticalScroll(rememberScrollState())) {
+                    if (editingProduct) {
+                        OutlinedTextField(editedBarcode, { editedBarcode = it.filter(Char::isDigit).take(14) }, Modifier.fillMaxWidth(), label = { Text("Barcode") }, singleLine = true)
+                        OutlinedTextField(editedName, { editedName = it }, Modifier.fillMaxWidth(), label = { Text("Produktname") }, singleLine = true)
+                        OutlinedTextField(editedBrand, { editedBrand = it }, Modifier.fillMaxWidth(), label = { Text("Marke") }, singleLine = true)
+                        OutlinedTextField(editedKcal, { editedKcal = it }, Modifier.fillMaxWidth(), label = { Text("kcal je 100 g") }, singleLine = true)
+                        OutlinedTextField(editedCarbs, { editedCarbs = it }, Modifier.fillMaxWidth(), label = { Text("Kohlenhydrate g je 100 g") }, singleLine = true)
+                        OutlinedTextField(editedProtein, { editedProtein = it }, Modifier.fillMaxWidth(), label = { Text("Eiweiß g je 100 g") }, singleLine = true)
+                        OutlinedTextField(editedFat, { editedFat = it }, Modifier.fillMaxWidth(), label = { Text("Fett g je 100 g") }, singleLine = true)
+                        Text("Manuell korrigierte Werte werden als selbst geprüft lokal gespeichert.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    } else {
+                        Text(product.name, fontWeight = FontWeight.Bold)
+                        product.brand?.takeIf(String::isNotBlank)?.let { Text(it, color = MutedInk) }
+                        Spacer(Modifier.height(8.dp))
+                        Text("Nährwerte je 100 g")
+                        Text("Energie: " + (product.caloriesKcalPer100?.let { it.prettyNumber() + " kcal" } ?: "nicht vorhanden"))
+                        Text("Kohlenhydrate: " + (product.carbohydratesGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
+                        Text("Eiweiß: " + (product.proteinGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
+                        Text("Fett: " + (product.fatGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
+                        Spacer(Modifier.height(6.dp))
+                        Text("Quelle: Open Food Facts · vor Übernahme bitte Verpackung prüfen.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    }
                 }
             },
             confirmButton = {
-                TextButton(onClick = {
-                    nutritionByIngredientName[product.name] = product
-                    if (ingredients.lines().none { it.contains(product.name, ignoreCase = true) }) {
-                        ingredients = listOf(ingredients.trimEnd(), "100 g " + product.name).filter(String::isNotBlank).joinToString("\\n")
-                    }
-                    scannedProduct = null
-                }) { Text("Als Zutat übernehmen") }
+                if (editingProduct) {
+                    TextButton(onClick = {
+                        val correctedCode = editedBarcode.trim()
+                        val correctedName = editedName.trim()
+                        if (correctedCode.matches(Regex("[0-9]{8,14}")) && correctedName.isNotBlank()) {
+                            scope.launch {
+                                if (correctedCode != product.barcode) productCatalog.deleteByBarcode(product.barcode)
+                                val corrected = OpenFoodFactsProduct(correctedCode, correctedName, editedBrand.trim().ifBlank { null }, editedKcal.toDecimalOrNull(), editedCarbs.toDecimalOrNull(), editedProtein.toDecimalOrNull(), editedFat.toDecimalOrNull(), product.sourceUrl)
+                                productCatalog.save(LocalFoodProductEntity(corrected.barcode, corrected.name, corrected.brand, corrected.caloriesKcalPer100, corrected.carbohydratesGPer100, corrected.proteinGPer100, corrected.fatGPer100, corrected.sourceUrl, "Manuell geprüft", "VERIFIED_LOCAL"))
+                                scannedProduct = corrected
+                                editingProduct = false
+                            }
+                        }
+                    }) { Text("Korrektur speichern") }
+                } else {
+                    TextButton(onClick = {
+                        scope.launch {
+                            productCatalog.save(LocalFoodProductEntity(product.barcode, product.name, product.brand, product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, product.sourceUrl, "Open Food Facts", "UNVERIFIED"))
+                            nutritionByIngredientName[product.name] = product
+                            if (ingredients.lines().none { it.contains(product.name, ignoreCase = true) }) {
+                                ingredients = listOf(ingredients.trimEnd(), "100 g " + product.name).filter(String::isNotBlank).joinToString("\\n")
+                            }
+                            scannedProduct = null
+                        }
+                    }) { Text("Bestätigen & als Zutat übernehmen") }
+                }
             },
-            dismissButton = { TextButton(onClick = { scannedProduct = null }) { Text("Abbrechen") } }
+            dismissButton = {
+                Row {
+                    TextButton(onClick = {
+                        editedBarcode = product.barcode
+                        editedName = product.name
+                        editedBrand = product.brand.orEmpty()
+                        editedKcal = product.caloriesKcalPer100?.toString().orEmpty()
+                        editedCarbs = product.carbohydratesGPer100?.toString().orEmpty()
+                        editedProtein = product.proteinGPer100?.toString().orEmpty()
+                        editedFat = product.fatGPer100?.toString().orEmpty()
+                        editingProduct = true
+                    }) { Text("Angaben korrigieren") }
+                    TextButton(onClick = { scannedProduct = null; editingProduct = false }) { Text("Abbrechen") }
+                }
+            }
         )
     }
     if (showOnlineImageSearch) {
