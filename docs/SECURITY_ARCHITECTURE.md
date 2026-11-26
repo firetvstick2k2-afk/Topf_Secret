@@ -39,7 +39,7 @@ Die App führt die sichtbare Rezeptliste aus der gemeinsamen Datenbank und der p
 ## Bereits implementierte Grundlage
 
 - SQLCipher for Android `4.20.0` und AndroidX SQLite `2.7.0` sind als Abhängigkeiten eingebunden; die bestehende Room-2.8.3-Datenbank wird dadurch noch nicht umgestellt.
-- `SqlCipherRoomSmokeTest` prüft die Room-2-Integration mit einer isolierten Testdatenbank. GitHub Actions startet dafür einen API-35-Emulator und führt `connectedDebugAndroidTest` aus. Ein erfolgreicher CI-Lauf ist noch nicht bestätigt.
+- `SqlCipherRoomSmokeTest` prüft die Room-2-Integration mit einer isolierten Testdatenbank. GitHub Actions startet dafür einen API-35-Emulator und führt `connectedDebugAndroidTest` aus. Der erste Lauf blieb mit `adb: device 'emulator-5554' not found` hängen und wurde abgebrochen. Der Workflow ist deshalb vorläufig auf `ubuntu-22.04` festgesetzt; ein erfolgreicher CI-Lauf ist noch nicht bestätigt.
 
 - `app/src/main/java/de/topfsecret/app/security/RecoveryCodeGenerator.kt` erzeugt 24 zufällige Crockford-Base32-Symbole mit `SecureRandom`, formatiert sie als sechs Vierergruppen und normalisiert/validiert spätere Eingaben.
 - Unit-Tests liegen unter `app/src/test/java/de/topfsecret/app/security/RecoveryCodeGeneratorTest.kt`.
