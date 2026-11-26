@@ -152,3 +152,19 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Ursache: Migration 3→4 erstellte `index_bls_foods_germanName`, während `BlsFoodEntity` den Index nicht in `@Entity(indices = ...)` deklarierte. Room erkannte dadurch eine Abweichung zwischen erwartetem und tatsächlichem Schema.
 - Korrektur: Entity deklariert jetzt `Index(value = ["germanName"])`, passend zum bestehenden Migrations-SQL. Keine Änderung der Datenbankversion und keine Löschung vorhandener Daten.
 - Build und erneuter Gerätetest stehen aus.
+
+
+## BLS 4.0 – Offline-Vollintegration (Aktualisierung 2026-11-26)
+
+- Der offizielle Datensatz liegt als gzip-komprimiertes JSONL unter `app/src/main/assets/bls_foods_v4.jsonl.gz` und wird ohne Download oder Dateiauswahl direkt aus den App-Assets eingelesen.
+- Umfang: 7.140 Lebensmittel und 138 Nährstoffkomponenten je Lebensmittel. Jedes Nährstoff-Tripel (Wert, Datenherkunft, Referenz) bleibt in `nutrientsJson` erhalten; Datensatzhinweise werden in `note` gespeichert. Textmarker wie `&lt;LOQ`, `&lt;LOD` und `-` bleiben im Original-JSON und werden nicht zu Nullwerten.
+- Room-Schema v5 ergänzt diese Felder über Migration 4→5. Bestehende App-Daten bleiben erhalten.
+- `BlsDatasetSeeder` initialisiert den Datensatz beim App-Start offline und prüft die Vollständigkeit anhand der erwarteten 7.140 Einträge. Die Suche kann die Initialisierung bei Bedarf ebenfalls sicherstellen.
+- ENERCC, PROT625, CHO und FAT werden zusätzlich in die bestehenden Makrospalten gespiegelt; alle 138 Komponenten bleiben vollständig verfügbar.
+- Der manuelle XLSX-Import wurde entfernt; die BLS-Suche verwendet den gebündelten Offline-Datensatz.
+- **Status:** Code auf `development` committed; CI-Build, Migrationstest und Gerätetest sind noch offen. Erst nach erfolgreichen Prüfungen als fertig/verifiziert markieren.
+
+## Verbindliche CI-Trigger-Policy (2026-11-26)
+
+- Android-CI nur bei Pull Requests gegen `development` und manuellem Start über `workflow_dispatch`.
+- Kein automatischer Push-Build; ältere anderslautende Angaben in diesem Plan sind überholt.
