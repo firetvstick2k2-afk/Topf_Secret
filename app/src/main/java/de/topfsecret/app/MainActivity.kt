@@ -688,7 +688,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
             }) { Text("Produkt suchen") }
             }
         }
-        OutlinedTextField(ingredients, { ingredients = it }, Modifier.fillMaxWidth(), label = { Text("Zutaten – eine pro Zeile") }, placeholder = { Text("z. B. 500 g Kartoffeln\\n1 Zwiebel") }, minLines = 4)
+        OutlinedTextField(ingredients, { ingredients = it.replace("\\n", "\n") }, Modifier.fillMaxWidth(), label = { Text("Zutaten – eine pro Zeile") }, placeholder = { Text("z. B. 500 g Kartoffeln\n1 Zwiebel") }, minLines = 4)
         if (barcodeError.isNotBlank()) Text(barcodeError, color = Color(0xFFB3261E), style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(steps, { steps = it }, Modifier.fillMaxWidth(), label = { Text("Zubereitung – ein Schritt pro Zeile") }, placeholder = { Text("Kartoffeln schälen und würfeln.\nZwiebel glasig anbraten.") }, minLines = 4)
@@ -882,8 +882,8 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                         if (correctedCode.matches(Regex("[0-9]{8,14}")) && correctedName.isNotBlank()) {
                             scope.launch {
                                 if (correctedCode != product.barcode) productCatalog.deleteByBarcode(product.barcode)
-                                val corrected = OpenFoodFactsProduct(correctedCode, correctedName, editedBrand.trim().ifBlank { null }, editedKcal.toDecimalOrNull(), editedCarbs.toDecimalOrNull(), editedProtein.toDecimalOrNull(), editedFat.toDecimalOrNull(), product.sourceUrl)
-                                productCatalog.save(LocalFoodProductEntity(corrected.barcode, corrected.name, corrected.brand, corrected.caloriesKcalPer100, corrected.carbohydratesGPer100, corrected.proteinGPer100, corrected.fatGPer100, corrected.sourceUrl, "Manuell geprüft", "VERIFIED_LOCAL"))
+                                val corrected = OpenFoodFactsProduct(correctedCode, correctedName, editedBrand.trim().ifBlank { null }, editedKcal.toDecimalOrNull(), editedCarbs.toDecimalOrNull(), editedProtein.toDecimalOrNull(), editedFat.toDecimalOrNull(), product.sourceUrl, product.sugarsGPer100, product.fiberGPer100, product.saltGPer100, product.saturatedFatGPer100)
+                                productCatalog.save(LocalFoodProductEntity(corrected.barcode, corrected.name, corrected.brand, corrected.caloriesKcalPer100, corrected.carbohydratesGPer100, corrected.proteinGPer100, corrected.fatGPer100, corrected.sourceUrl, "Manuell geprüft", "VERIFIED_LOCAL", sugarsGPer100 = corrected.sugarsGPer100, fiberGPer100 = corrected.fiberGPer100, saltGPer100 = corrected.saltGPer100, saturatedFatGPer100 = corrected.saturatedFatGPer100))
                                 scannedProduct = corrected
                                 editingProduct = false
                             }
