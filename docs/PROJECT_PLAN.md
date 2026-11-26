@@ -68,7 +68,7 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte solle
 
 - Kotlin und Jetpack Compose.
 - Room 2.8.3 als lokale Datenzugriffsschicht.
-- SQLCipher for Android 4.20.0 ist eingebunden; Room 2.8.3 nutzt die SupportOpenHelperFactory und AndroidX SQLite 2.7.0. Ein isolierter Room-/SQLCipher-Instrumentierungstest ist für CI auf einem API-35-Emulator eingerichtet. Der Workflow ist wegen eines ADB-/Emulator-Ausfalls vorläufig auf `ubuntu-22.04` festgesetzt; ein erfolgreicher CI-Lauf und API-26-Gerätetest stehen noch aus.
+- SQLCipher for Android 4.20.0 ist eingebunden; Room 2.8.3 nutzt die SupportOpenHelperFactory und AndroidX SQLite 2.7.0. Ein isolierter Room-/SQLCipher-Instrumentierungstest ist für CI auf einem API-35-Emulator eingerichtet. Der Workflow ist wegen eines ADB-/Emulator-Ausfalls vorläufig auf `ubuntu-22.04` festgesetzt. Zusätzlich ist die AVD-Datengröße auf 6G begrenzt, das Boot-Timeout auf 900 Sekunden gesetzt und die Grafikoption explizit; ein erfolgreicher CI-Lauf und API-26-Gerätetest stehen noch aus.
 - Schlüsselmaterial mit Android Keystore schützen; optionale biometrische Freigabe über AndroidX BiometricPrompt.
 - Repository-/Use-Case-Schicht, damit Datenbank und Synchronisationsanbieter austauschbar bleiben.
 - Synchronisation erst nach Sicherheits- und Datenschutzkonzept integrieren.
