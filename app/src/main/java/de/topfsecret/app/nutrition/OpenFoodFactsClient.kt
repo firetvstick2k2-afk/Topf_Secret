@@ -48,6 +48,10 @@ object OpenFoodFactsClient {
                     val root = JSONObject(json)
                     val product = root.optJSONObject("product")
                         ?: error("Zu diesem Barcode wurden keine Produktdaten gefunden.")
+                    val returnedCode = product.optString("code").takeIf { it.isNotBlank() && it != "null" }
+                    if (returnedCode != null && returnedCode != barcode) {
+                        error("Warnung: Der zurückgelieferte Barcode stimmt nicht mit dem gescannten Code überein. Dieser Treffer wird nicht übernommen.")
+                    }
                     val name = product.optString("product_name_de")
                         .takeIf { it.isNotBlank() && it != "null" }
                         ?: product.optString("product_name").takeIf { it.isNotBlank() && it != "null" }
