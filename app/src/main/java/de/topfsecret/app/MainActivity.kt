@@ -486,6 +486,11 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
     var scannedProduct by remember { mutableStateOf<OpenFoodFactsProduct?>(null) }
     var barcodeError by remember { mutableStateOf("") }
     var barcodeLoading by remember { mutableStateOf(false) }
+    var showProductSearch by remember { mutableStateOf(false) }
+    var productSearchQuery by remember { mutableStateOf("") }
+    var productSearchResults by remember { mutableStateOf<List<OpenFoodFactsProduct>>(emptyList()) }
+    var productSearchLoading by remember { mutableStateOf(false) }
+    var productSearchMessage by remember { mutableStateOf("") }
     val nutritionSnapshot = nutritionByIngredientName.toMap()
     val calculatedNutrition = remember(ingredients, nutritionSnapshot) {
         val lines = ingredients.lines().map(String::trim).filter(String::isNotEmpty)
@@ -575,6 +580,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
         Spacer(Modifier.height(10.dp))
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Zutaten", color = Ink, fontWeight = FontWeight.Bold)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(enabled = !barcodeLoading, onClick = {
                 barcodeError = ""
                 barcodeLoading = true
@@ -591,7 +597,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                         } else scope.launch {
                             OpenFoodFactsClient.lookupBarcode(code).fold(
                                 onSuccess = { scannedProduct = it; barcodeLoading = false },
-                                onFailure = { barcodeError = it.message ?: "Produkt konnte nicht geladen werden."; barcodeLoading = false }
+                                onFailure = { barcodeError = it.message ?: "Produkt konnte nicht geladen werden."; barcodeLoading = false; productSearchQuery = ""; productSearchMessage = barcodeError; showProductSearch = true }
                             )
                         }
                     }
@@ -601,6 +607,13 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                         barcodeLoading = false
                     }
             }) { Text(if (barcodeLoading) "Suche…" else "Barcode scannen") }
+            OutlinedButton(onClick = {
+                productSearchQuery = ""
+                productSearchResults = emptyList()
+                productSearchMessage = ""
+                showProductSearch = true
+            }) { Text("Produkt suchen") }
+            }
         }
         OutlinedTextField(ingredients, { ingredients = it }, Modifier.fillMaxWidth(), label = { Text("Zutaten – eine pro Zeile") }, placeholder = { Text("z. B. 500 g Kartoffeln\\n1 Zwiebel") }, minLines = 4)
         if (barcodeError.isNotBlank()) Text(barcodeError, color = Color(0xFFB3261E), style = MaterialTheme.typography.bodySmall)
@@ -655,6 +668,62 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                 }
             }) { Text("Rezept speichern") }
         }
+    }
+    if (showProductSearch) {
+        AlertDialog(
+            onDismissRequest = { if (!productSearchLoading) showProductSearch = false },
+            title = { Text("Produkt suchen") },
+            text = {
+                Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
+                    Text("Suche nach Lebensmittel oder Marke, z. B. Semmelknödel oder Gut & Günstig.", color = MutedInk)
+                    Spacer(Modifier.height(8.dp))
+                    OutlinedTextField(value = productSearchQuery, onValueChange = { productSearchQuery = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Suchbegriff") }, singleLine = true)
+                    Spacer(Modifier.height(6.dp))
+                    Button(enabled = productSearchQuery.trim().length >= 2 && !productSearchLoading, onClick = {
+                        productSearchLoading = true
+                        productSearchMessage = ""
+                        scope.launch {
+                            OpenFoodFactsClient.searchProducts(productSearchQuery).fold(
+                                onSuccess = {
+                                    productSearchResults = it
+                                    productSearchMessage = if (it.isEmpty()) "Keine passenden Produkte gefunden. Du kannst die Zutat trotzdem ohne Produktdaten übernehmen." else ""
+                                    productSearchLoading = false
+                                },
+                                onFailure = {
+                                    productSearchResults = emptyList()
+                                    productSearchMessage = it.message ?: "Die Suche ist fehlgeschlagen."
+                                    productSearchLoading = false
+                                }
+                            )
+                        }
+                    }) { Text(if (productSearchLoading) "Suche…" else "Suchen") }
+                    if (productSearchMessage.isNotBlank()) {
+                        Spacer(Modifier.height(6.dp))
+                        Text(productSearchMessage, color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    }
+                    productSearchResults.forEach { item ->
+                        TextButton(modifier = Modifier.fillMaxWidth(), onClick = {
+                            scannedProduct = item
+                            showProductSearch = false
+                        }) {
+                            Column(Modifier.fillMaxWidth()) {
+                                Text(item.name, color = Ink, fontWeight = FontWeight.SemiBold)
+                                Text(listOfNotNull(item.brand, if (item.hasNutrition) "Nährwerte vorhanden" else "ohne Nährwerte").joinToString(" · "), color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = productSearchQuery.isNotBlank() && !productSearchLoading, onClick = {
+                    val name = productSearchQuery.trim()
+                    val existing = ingredients.lines().map(String::trim).filter(String::isNotBlank)
+                    if (existing.none { it.endsWith(name, ignoreCase = true) }) ingredients = (existing + name).joinToString("\n")
+                    showProductSearch = false
+                }) { Text("Zutat ohne Produktdaten übernehmen") }
+            },
+            dismissButton = { TextButton(onClick = { showProductSearch = false }) { Text("Schließen") } }
+        )
     }
     scannedProduct?.let { product ->
         AlertDialog(
