@@ -1,9 +1,8 @@
 name: Android CI
 
 on:
-  push:
-    branches:
-      - development
+  # Builds werden bewusst manuell über "Run workflow" gestartet.
+  # Pull Requests gegen development werden weiterhin automatisch geprüft.
   pull_request:
     branches:
       - development
