@@ -13,7 +13,8 @@ Stand: 2026-11-26
 
 ## Aktueller Stand
 - Android-Projektgrundgerüst mit Kotlin, Jetpack Compose und API-26-Mindestziel.
-- GitHub-Actions baut auf `development` erfolgreich ein Debug-APK und lädt es als Artefakt `topf-secret-debug-apk` hoch (14 Tage Aufbewahrung).
+- Android-CI baut ein Debug-APK und lädt es als Artefakt `topf-secret-debug-apk` hoch (14 Tage Aufbewahrung).
+- Pushes auf `development` lösen keinen Build mehr aus. Builds werden manuell über GitHub Actions → Android CI → Run workflow gestartet. Pull Requests gegen `development` lösen weiterhin automatisch einen Build aus.
 - Das vom Nutzer bestätigte Original-Logo liegt als `app/src/main/res/drawable-nodpi/topf_secret_logo.webp` vor.
 - Das passende quadratische App-Symbol liegt als `app/src/main/res/drawable-nodpi/ic_launcher.webp` vor.
 - Das Manifest verwendet das neue App-Symbol; die Compose-Startseite zeigt das vollständige Logo.
@@ -42,7 +43,7 @@ Stand: 2026-11-26
 - Absturzprotokolle können technische Geräteinformationen enthalten; vor dem Teilen keine persönlichen Inhalte ergänzen.
 
 ## Nächste Schritte
-1. Build mit Absturzprotokollierung auf dem betroffenen Gerät installieren und den Absturz reproduzieren.
+1. Manuellen Build mit Absturzprotokollierung starten, auf dem betroffenen Gerät installieren und den Absturz reproduzieren.
 2. Die erzeugte `TopfSecret_Crash_*.log` aus Downloads auswerten und die konkrete Ursache beheben.
 3. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
 4. App-Navigation und Designsystem aufbauen.
