@@ -17,6 +17,7 @@ data class ImportedRecipe(
     val ingredients: List<String>,
     val steps: List<String>,
     val sourceUrl: String,
+    val imageUrl: String? = null,
     val caloriesPerServing: Double? = null,
     val carbohydratesPerServing: Double? = null,
     val sugarsPerServing: Double? = null,
@@ -138,6 +139,22 @@ object OnlineRecipeImporter {
             return null
         }
         val calories = nutrient("calories")
+        val imageValue = json.opt("image")
+        val imageUrl = when (imageValue) {
+            is String -> imageValue
+            is JSONArray -> (0 until imageValue.length()).mapNotNull { index ->
+                when (val item = imageValue.opt(index)) {
+                    is String -> item
+                    is JSONObject -> item.optString("url").takeIf(String::isNotBlank)
+                    else -> null
+                }
+            }.firstOrNull()
+            is JSONObject -> imageValue.optString("url").takeIf(String::isNotBlank)
+            else -> null
+        }?.let { image ->
+            runCatching { URL(URL(sourceUrl), image).toString() }.getOrNull()
+                ?.takeIf { it.startsWith("https://", true) || it.startsWith("http://", true) }
+        }
         val sodium = nutrient("sodiumContent")
         val salt = nutrient("saltContent") ?: sodium?.let { it * 2.5 }
         return ImportedRecipe(
@@ -150,6 +167,7 @@ object OnlineRecipeImporter {
             ingredients = ingredients,
             steps = instructions,
             sourceUrl = sourceUrl,
+            imageUrl = imageUrl,
             caloriesPerServing = calories,
             carbohydratesPerServing = nutrient("carbohydrateContent"),
             sugarsPerServing = nutrient("sugarContent"),
