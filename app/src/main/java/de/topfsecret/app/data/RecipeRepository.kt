@@ -22,7 +22,7 @@ class RecipeRepository(private val recipeDao: RecipeDao) {
             val match = Regex("""^(\d+(?:[.,]\d+)?\s*(?:kg|g|mg|l|ml|cl|dl|EL|TL|Esslöffel|Teelöffel|Tasse(?:n)?|Stk\.?|Stück|Prise|Pck\.?|Packung|Bund|Dose|Becher)?)(?:\s+)(.+)$""", RegexOption.IGNORE_CASE).matchEntire(line)
             val amount = match?.groupValues?.get(1)?.trim().orEmpty()
             val name = match?.groupValues?.get(2)?.trim() ?: line
-            val product = nutritionByIngredientName[name]
+            val product = nutritionByIngredientName[name] ?: nutritionByIngredientName.entries.singleOrNull { (key, _) -> key.contains(name, ignoreCase = true) || name.contains(key, ignoreCase = true) }?.value
             IngredientEntity(
                 recipeId = recipe.id,
                 position = index,
