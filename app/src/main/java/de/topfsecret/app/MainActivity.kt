@@ -1,6 +1,16 @@
 package de.topfsecret.app
 
 import android.os.Bundle
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -430,6 +440,16 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
     var ingredients by rememberSaveable(original?.id) { mutableStateOf(recipe?.ingredients?.sortedBy { it.position }?.joinToString("\n") { listOf(it.amount, it.name).filter(String::isNotBlank).joinToString(" ") }.orEmpty()) }
     var steps by rememberSaveable(original?.id) { mutableStateOf(recipe?.steps?.sortedBy { it.position }?.joinToString("\n") { it.instruction }.orEmpty()) }
     var error by rememberSaveable(original?.id) { mutableStateOf(false) }
+    var imageUri by rememberSaveable(original?.id) { mutableStateOf(original?.imageUri.orEmpty()) }
+    val context = LocalContext.current
+    val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            runCatching {
+                context.contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            imageUri = it.toString()
+        }
+    }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
         Text(if (original == null) "NEUES LIEBLINGSREZEPT" else "REZEPT BEARBEITEN", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
@@ -448,6 +468,21 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
         }
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(description, { description = it }, Modifier.fillMaxWidth(), label = { Text("Kurze Beschreibung") }, minLines = 2)
+        Spacer(Modifier.height(14.dp))
+        Text("Rezeptbild", color = Ink, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(6.dp))
+        if (imageUri.isNotBlank()) {
+            RecipePhoto(imageUri, Modifier.fillMaxWidth().height(190.dp))
+            Spacer(Modifier.height(6.dp))
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { imagePicker.launch(arrayOf("image/*")) }) {
+                Text(if (imageUri.isBlank()) "Bild aus Galerie wählen" else "Bild ändern")
+            }
+            if (imageUri.isNotBlank()) {
+                TextButton(onClick = { imageUri = "" }) { Text("Entfernen", color = Color(0xFFB3261E)) }
+            }
+        }
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(ingredients, { ingredients = it }, Modifier.fillMaxWidth(), label = { Text("Zutaten – eine pro Zeile") }, placeholder = { Text("z. B. 500 g Kartoffeln\n1 Zwiebel") }, minLines = 4)
         Spacer(Modifier.height(10.dp))
@@ -478,6 +513,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                         servings = servings.toIntOrNull()?.coerceAtLeast(1) ?: 2,
                         preparationMinutes = prepMinutes.toIntOrNull(),
                         cookingMinutes = cookMinutes.toIntOrNull(),
+                        imageUri = imageUri.ifBlank { null },
                         caloriesPerServing = kcal.toDecimalOrNull(),
                         carbohydratesPerServing = carbs.toDecimalOrNull(),
                         proteinPerServing = protein.toDecimalOrNull(),
@@ -500,6 +536,10 @@ private fun RecipeDetailScreen(recipe: RecipeWithDetails, onBack: () -> Unit, on
         Text(recipe.recipe.category.uppercase().ifBlank { "EUER REZEPT" }, color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
         Spacer(Modifier.height(6.dp))
         Text(recipe.recipe.title, color = Ink, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
+        if (!recipe.recipe.imageUri.isNullOrBlank()) {
+            Spacer(Modifier.height(14.dp))
+            RecipePhoto(recipe.recipe.imageUri, Modifier.fillMaxWidth().height(230.dp))
+        }
         Spacer(Modifier.height(8.dp))
         Text(recipe.recipe.servings.toString() + " Portionen", color = MutedInk)
         val timeLabels = listOfNotNull(
@@ -583,3 +623,28 @@ private fun String.toDecimalOrNull(): Double? =
 
 private fun Double.prettyNumber(): String =
     if (this % 1.0 == 0.0) toInt().toString() else toString().replace('.', ',')
+
+
+@Composable
+private fun RecipePhoto(uri: String?, modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val bitmap by produceState<Bitmap?>(initialValue = null, uri) {
+        value = withContext(Dispatchers.IO) {
+            uri?.let { value ->
+                runCatching {
+                    context.contentResolver.openInputStream(Uri.parse(value))?.use { stream ->
+                        BitmapFactory.decodeStream(stream)
+                    }
+                }.getOrNull()
+            }
+        }
+    }
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap!!.asImageBitmap(),
+            contentDescription = "Rezeptbild",
+            modifier = modifier,
+            contentScale = ContentScale.Crop
+        )
+    }
+}
