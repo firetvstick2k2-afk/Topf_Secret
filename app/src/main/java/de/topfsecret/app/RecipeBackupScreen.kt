@@ -17,6 +17,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,7 +32,7 @@ import de.topfsecret.app.data.local.RecipeDao
 import kotlinx.coroutines.launch
 
 @Composable
-fun RecipeBackupScreen(context: Context, recipeDao: RecipeDao) {
+fun RecipeBackupScreen(context: Context, recipeDao: RecipeDao, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     var message by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
@@ -66,6 +67,7 @@ fun RecipeBackupScreen(context: Context, recipeDao: RecipeDao) {
         Modifier.fillMaxSize().padding(22.dp),
         verticalArrangement = Arrangement.Top
     ) {
+        TextButton(onClick = onBack) { Text("← Zurück") }
         Text("BACKUP & WIEDERHERSTELLUNG", color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.labelLarge)
         Spacer(Modifier.height(8.dp))
         Text("Deine Rezepte bleiben bei dir", style = MaterialTheme.typography.headlineSmall)
@@ -93,7 +95,7 @@ fun RecipeBackupScreen(context: Context, recipeDao: RecipeDao) {
                 Text("Wähle eine zuvor exportierte Topf-Secret-Backup.zip aus. Die enthaltenen Rezepte werden zusätzlich übernommen; vorhandene Einträge bleiben erhalten.")
                 Spacer(Modifier.height(12.dp))
                 OutlinedButton(
-                    onClick = { importLauncher.launch(arrayOf("application/zip", "application/octet-stream")) },
+                    onClick = { importLauncher.launch(arrayOf("*/*")) },
                     enabled = !busy,
                     modifier = Modifier.fillMaxWidth()
                 ) { Text("Backup auswählen") }
