@@ -43,6 +43,9 @@ import de.topfsecret.app.data.local.RecipeEntity
 import de.topfsecret.app.data.local.IngredientEntity
 import de.topfsecret.app.nutrition.OpenFoodFactsClient
 import de.topfsecret.app.nutrition.OpenFoodFactsProduct
+import de.topfsecret.app.nutrition.IngredientMeasureConverter
+import de.topfsecret.app.nutrition.NutritionPer100
+import de.topfsecret.app.nutrition.sumNutrition
 import de.topfsecret.app.data.local.RecipeWithDetails
 import de.topfsecret.app.data.local.TopfSecretDatabase
 import kotlinx.coroutines.launch
@@ -483,6 +486,21 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
     var scannedProduct by remember { mutableStateOf<OpenFoodFactsProduct?>(null) }
     var barcodeError by remember { mutableStateOf("") }
     var barcodeLoading by remember { mutableStateOf(false) }
+    val nutritionSnapshot = nutritionByIngredientName.toMap()
+    val calculatedNutrition = remember(ingredients, nutritionSnapshot) {
+        val lines = ingredients.lines().map(String::trim).filter(String::isNotEmpty)
+        val calculated = lines.mapNotNull { line ->
+            val match = Regex("""^(\d+(?:[.,]\d+)?\s*[\p{L}.]+)\s+(.+)$""", RegexOption.IGNORE_CASE).matchEntire(line)
+                ?: return@mapNotNull null
+            val amount = IngredientMeasureConverter.parseAmount(match.groupValues[1]) ?: return@mapNotNull null
+            val name = match.groupValues[2].trim()
+            val product = nutritionSnapshot[name] ?: return@mapNotNull null
+            NutritionPer100(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, IngredientMeasureConverter.Basis.GRAMS)
+                .forAmount(amount.first, amount.second, name)
+        }
+        val sum = calculated.sumNutrition()
+        sum.copy(uncalculatedIngredients = lines.size - sum.calculatedIngredients)
+    }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -589,6 +607,18 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(steps, { steps = it }, Modifier.fillMaxWidth(), label = { Text("Zubereitung – ein Schritt pro Zeile") }, placeholder = { Text("Kartoffeln schälen und würfeln.\nZwiebel glasig anbraten.") }, minLines = 4)
         Spacer(Modifier.height(16.dp))
+        if (calculatedNutrition.calculatedIngredients > 0) {
+            Card(colors = CardDefaults.cardColors(containerColor = PaleCopper), shape = RoundedCornerShape(14.dp)) {
+                Column(Modifier.fillMaxWidth().padding(12.dp)) {
+                    Text("Automatisch berechnete Nährwerte", color = Ink, fontWeight = FontWeight.Bold)
+                    Text("Gesamt: " + calculatedNutrition.caloriesKcal.prettyNumber() + " kcal · KH " + calculatedNutrition.carbohydratesG.prettyNumber() + " g · Eiweiß " + calculatedNutrition.proteinG.prettyNumber() + " g · Fett " + calculatedNutrition.fatG.prettyNumber() + " g", color = Ink, style = MaterialTheme.typography.bodySmall)
+                    val portionCount = servings.toIntOrNull()?.coerceAtLeast(1) ?: 2
+                    Text("Pro Portion: " + (calculatedNutrition.caloriesKcal / portionCount).prettyNumber() + " kcal · KH " + (calculatedNutrition.carbohydratesG / portionCount).prettyNumber() + " g · Eiweiß " + (calculatedNutrition.proteinG / portionCount).prettyNumber() + " g · Fett " + (calculatedNutrition.fatG / portionCount).prettyNumber() + " g", color = Ink, style = MaterialTheme.typography.bodySmall)
+                    Text(calculatedNutrition.calculatedIngredients.toString() + " von " + (calculatedNutrition.calculatedIngredients + calculatedNutrition.uncalculatedIngredients) + " Zutaten berechnet" + if (calculatedNutrition.estimatedMeasures) " · Küchenmaße/Dichte teilweise geschätzt" else "", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+            Spacer(Modifier.height(10.dp))
+        }
         Text("Nährwerte pro Portion (optional)", color = Ink, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         OutlinedTextField(kcal, { kcal = it }, Modifier.fillMaxWidth(), label = { Text("Kalorien (kcal)") }, singleLine = true)
@@ -615,10 +645,10 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                         preparationMinutes = prepMinutes.toIntOrNull(),
                         cookingMinutes = cookMinutes.toIntOrNull(),
                         imageUri = imageUri.ifBlank { null },
-                        caloriesPerServing = kcal.toDecimalOrNull(),
-                        carbohydratesPerServing = carbs.toDecimalOrNull(),
-                        proteinPerServing = protein.toDecimalOrNull(),
-                        fatPerServing = fat.toDecimalOrNull(),
+                        caloriesPerServing = if (calculatedNutrition.calculatedIngredients > 0) calculatedNutrition.caloriesKcal / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else kcal.toDecimalOrNull(),
+                        carbohydratesPerServing = if (calculatedNutrition.calculatedIngredients > 0) calculatedNutrition.carbohydratesG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else carbs.toDecimalOrNull(),
+                        proteinPerServing = if (calculatedNutrition.calculatedIngredients > 0) calculatedNutrition.proteinG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else protein.toDecimalOrNull(),
+                        fatPerServing = if (calculatedNutrition.calculatedIngredients > 0) calculatedNutrition.fatG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else fat.toDecimalOrNull(),
                         updatedAt = System.currentTimeMillis()
                     )
                     onSave(entity, ingredients.lines(), steps.lines(), nutritionByIngredientName.toMap())
