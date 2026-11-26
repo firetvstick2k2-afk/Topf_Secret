@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val repository = RecipeRepository(TopfSecretDatabase.getInstance(applicationContext).recipeDao())
-        setContent { TopfSecretTheme { TopfSecretApp(repository) } }
+        setContent { TopfSecretTheme { ActivationGate { TopfSecretApp(repository) } } }
     }
 }
 
