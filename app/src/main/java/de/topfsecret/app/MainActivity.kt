@@ -219,7 +219,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                             )
                         }
                     } else {
-                        RecipeListScreen(recipes, selectedCategory, { selectedCategory = "" }, { editingRecipeId = -1L }, { selectedRecipeId = it })
+                        RecipeListScreen(recipes, selectedCategory, { selectedCategory = "" }, { editingRecipeId = -1L }, { selectedRecipeId = it }, { editingRecipeId = -2L })
                     }
                 }
                 2 -> CategoryScreen(categories, recipes, onCategoryClick = { category ->
