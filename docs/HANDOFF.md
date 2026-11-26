@@ -332,3 +332,11 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Auswahl einer Karte übergibt aktuell die TheMealDB-Webadresse des Rezepts an den bestehenden strukturierten URL-Importer. Der Import hängt davon ab, ob die Rezeptdetailseite passende Schema.org-Daten liefert; API-direkter Detailimport mit Zutaten/Anweisungen ist ein nächster sinnvoller Schritt.
 - Chefkoch ist nicht als API-Quelle eingebunden; keine offizielle öffentliche Rezept-API bestätigt. Spätere Anbieter nur über zulässige APIs/Integrationen.
 - Version 0.9.0 / versionCode 16. **Build und Gerätetest stehen aus.** Testen: Feed-Laden, Kategorien, Suche, Kartenbilder, Rezeptübernahme und Verhalten bei Netzwerkfehlern.
+
+
+### G.15 TheMealDB: vollständiger Rezeptabruf (2026-11-26)
+- Entdecken-Karten übergeben TheMealDB-Rezept-IDs intern an den Rezeptimport; kein Umweg mehr über die öffentliche HTML-Detailseite und Schema.org-Parser.
+- Detaildaten werden direkt über TheMealDB `lookup.php?i=` geladen: Titel, Kategorie, Region, Bild, Zutaten mit Mengen und Zubereitungsschritte.
+- Vorhandene Vorschau, Kategorieauswahl, Zutatenverarbeitung und lokale Speicherfunktion werden wiederverwendet. Fehlende Nährwerte und Zeiten bleiben leer; Portionszahl vorerst Standardwert 2.
+- Chefkoch bleibt beim bestehenden Linkimport. Eine offizielle Chefkoch-Such-API ist weiterhin nicht bestätigt; keine automatisierte Chefkoch-Suche oder Seitenauslesung vortäuschen.
+- Version 0.9.1 / versionCode 17. Build und Gerätetest stehen aus.
