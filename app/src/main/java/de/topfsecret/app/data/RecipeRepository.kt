@@ -33,6 +33,10 @@ class RecipeRepository(private val recipeDao: RecipeDao) {
                 carbohydratesPer100 = product?.carbohydratesGPer100,
                 proteinPer100 = product?.proteinGPer100,
                 fatPer100 = product?.fatGPer100,
+                sugarsPer100 = product?.sugarsGPer100,
+                fiberPer100 = product?.fiberGPer100,
+                saltPer100 = product?.saltGPer100,
+                saturatedFatPer100 = product?.saturatedFatGPer100,
                 nutritionBasis = "100g",
                 nutritionSource = product?.sourceUrl
             )
