@@ -389,3 +389,9 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Auf der Startseite wird der Nutzer abhängig von der lokalen Gerätezeit begrüßt: morgens „Guten Morgen“, tagsüber „Guten Tag“, abends „Guten Abend“, nachts eine freundliche Nacht-Begrüßung – jeweils mit gespeichertem Namen.
 - Die Namensabfrage erscheint nur, solange noch kein Name gespeichert ist. Eine spätere Änderungsmöglichkeit kann in den Einstellungen ergänzt werden.
 - Version 0.9.6 / versionCode 22; CI-Build und Gerätetest offen.
+
+
+## Build-Fix: ML-Kit-Import (2026-11-27)
+- Android-CI-Lauf #55 (`45908052183`) schlug bei `:app:compileReleaseKotlin` fehl: `DownloadConditions` wurde aus dem falschen Paket importiert.
+- Import in `RecipeDiscoveryClient.kt` auf `com.google.mlkit.common.model.DownloadConditions` korrigiert. ML-Kit-Translate-Abhängigkeit bleibt `17.0.3`; keine Änderung an Datenbank, Rezeptdaten oder App-Version (0.9.6 / versionCode 22).
+- Fix auf `development` committed. Neuer CI-Build und anschließender Gerätetest stehen noch aus.
