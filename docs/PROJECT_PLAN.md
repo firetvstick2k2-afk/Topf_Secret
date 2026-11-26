@@ -7,9 +7,16 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte solle
 ## Funktionale Anforderungen
 
 ### A. Schutz und Privatsphäre
-- Integrierte PIN-Sperre beim Öffnen bzw. nach konfigurierbarer Inaktivität.
-- PIN niemals im Klartext speichern; sichere Ableitung/Prüfung und Schutz vor Rateversuchen.
-- Biometrische Entsperrung optional, niemals Voraussetzung.
+- Zwei lokale persönliche Profile (Nutzer und Ehefrau) mit jeweils eigener PIN und privatem Rezeptbereich.
+- Gemeinsame Rezepte sind für beide Profile sichtbar; bestehende Rezepte werden bei Einführung als gemeinsam übernommen.
+- PIN-Ersteinrichtung mit freier PIN-Wahl; PIN niemals im Klartext speichern und Fehlversuche begrenzen.
+- Optionale biometrische Entsperrung über Android BiometricPrompt (z. B. Fingerabdruck); PIN bleibt immer verfügbar.
+- Jeder Nutzer erhält einen eigenen, automatisch auf dem Gerät generierten Wiederherstellungscode.
+- Wiederherstellungscode: 24 Zeichen aus einem verwechselungsarmen Base32-Zeichensatz, in sechs Vierergruppen formatiert (120 Bit Zufall bei 32 Symbolen).
+- Bei der Einrichtung einmal vollständig anzeigen; Kopierfunktion anbieten und Speichern als Screenshot/Notiz ermöglichen. Fortfahren erst nach Bestätigung, dass der Code gesichert wurde.
+- Vollständigen Code nicht im Klartext speichern, loggen oder übertragen. Nur kryptografisch sichere Prüfdaten/Ableitungen speichern.
+- Der Wiederherstellungscode gilt nur für das jeweilige Profil und ermöglicht nach erfolgreicher Prüfung das Setzen einer neuen PIN.
+- Admin-Aktivierung bleibt getrennt von persönlichen Profilen und PINs.
 - Rezeptdaten und Bilder standardmäßig privat.
 - Öffentlicher GitHub-Code darf keine Zugangsdaten, echten Rezeptdaten oder privaten Backups enthalten.
 
@@ -68,7 +75,7 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte solle
 1. Projektgrundlage und CI-Build
 2. UI-Grundgerüst und Navigation
 3. Lokales Datenmodell und Room
-4. PIN-Sperre
+4. Sicherheitsarchitektur: persönliche Profile, getrennte private Daten, PIN, Biometrie und Wiederherstellung
 5. Rezeptverwaltung und Bilder
 6. Portionen- und Nährwertberechnung
 7. Backup/Restore
@@ -78,8 +85,9 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte solle
 
 ## Noch zu entscheiden
 
-- Supabase oder eigener Synchronisationsdienst
+- Konkrete kryptografische Architektur und Datenverschlüsselung für die getrennten privaten Rezeptbereiche
 - PIN-Länge und Sperrverhalten
+- Supabase oder eigener Synchronisationsdienst
 - Backup-Verschlüsselung standardmäßig optional oder verpflichtend
 - Nährwertdatenquelle und Lizenz
 - App-Sprache zunächst Deutsch oder mehrsprachig
