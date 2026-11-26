@@ -90,7 +90,8 @@ object RecipeDiscoveryClient {
                 ingredients = ingredients,
                 steps = instructions,
                 sourceUrl = source,
-                imageUrl = meal.optString("strMealThumb").takeIf { it.startsWith("http://") || it.startsWith("https://") }
+                imageUrl = meal.optString("strMealThumb").takeIf { it.startsWith("http://") || it.startsWith("https://") },
+                imageUrls = listOfNotNull(meal.optString("strMealThumb").takeIf { it.startsWith("http://") || it.startsWith("https://") })
             )
         } finally {
             connection.disconnect()
