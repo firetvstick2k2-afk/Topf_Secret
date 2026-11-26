@@ -69,8 +69,8 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 ## Roadmap
 
 1. Projektgrundlage, UI-Grundgerüst, Navigation und lokale Rezeptverwaltung – umgesetzt.
-2. Rezeptbilder aus Galerie auswählen und in Rezeptliste/-detail anzeigen – erste Umsetzung auf `development`; Kameraaufnahme und echte Dateiübernahme noch offen.
-3. Kameraaufnahme und robuste lokale Bildablage.
+2. Rezeptbilder aus Galerie und Kamera aufnehmen; Dateien in `filesDir/recipe_images` übernehmen und in Rezeptliste/-detail anzeigen – umgesetzt auf `development`; Build-/Gerätetest und Optimierung noch offen.
+3. Bildgrößenoptimierung und Regressionstests für Galerie- und Kameraformate.
 4. Portionen- und Nährwertberechnung erweitern.
 5. Vollständiger Backup-/Restore-Workflow inklusive Bilder.
 6. Web-Rezeptimport mit Vorschau.
