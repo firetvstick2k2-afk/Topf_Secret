@@ -219,3 +219,12 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Rezepteditor: automatische Berechnung und optionale manuelle Nährwertfelder liegen ebenfalls in einem standardmäßig eingeklappten Bereich unterhalb der Zubereitung.
 - Einheitliche Überschrift „Nährwertangaben“; Werte darin getrennt nach „Gesamtgericht“ und „Pro Portion“.
 - Keine Schemaänderung; Build/Tests und Gerätetest stehen noch aus.
+
+
+### G.7 Eigene Zutaten dauerhaft speichern und priorisieren (2026-11-26)
+- Neue Aktion „Zutat hinzufügen“ neben Barcode-Scan und Produktsuche. Das Zutatenfeld steht darunter.
+- Manuelle Nährwerterfassung mit Bezugsbasis 100 g oder 100 ml und allen angezeigten Nährwertfeldern; leere Werte bleiben unbekannt.
+- Speicherung im lokalen Room-Produktkatalog mit stabiler lokaler Kennung; Einträge bleiben über App-Neustarts hinweg und offline verfügbar.
+- Produktsuche priorisiert eigene Einträge vor BLS 4.0, weiteren lokalen Produkten und Online-Treffern. Dieselbe Priorität gilt bei fehlender Internetverbindung.
+- Room-Schema auf Version 7 erweitert; Migration 6→7 ergänzt `nutritionBasis` ohne bestehende Rezeptdaten zu löschen.
+- Build, Migrationstest und Gerätetest noch offen.
