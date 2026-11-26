@@ -750,7 +750,12 @@ private fun RecipeDetailScreen(recipe: RecipeWithDetails, onBack: () -> Unit, on
         if (recipe.ingredients.isEmpty()) Text("Noch keine Zutaten eingetragen.", color = MutedInk)
         else recipe.ingredients.sortedBy { it.position }.forEach {
             val line = listOf(it.amount, it.name).filter(String::isNotBlank).joinToString(" ")
-            Text("• " + line, color = Ink, modifier = Modifier.padding(vertical = 3.dp))
+            Column(Modifier.padding(vertical = 3.dp)) {
+                Text("• " + line, color = Ink)
+                if (!it.barcode.isNullOrBlank()) {
+                    Text("Barcode: " + it.barcode + " · Nährwertquelle: Open Food Facts", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                }
+            }
         }
         Spacer(Modifier.height(22.dp))
         Text("Zubereitung", color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
