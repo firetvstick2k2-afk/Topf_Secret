@@ -193,3 +193,13 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Noch offen: nächster manueller CI-Build und anschließender Gerätetest.
 
 - Runtime-Einlesung zusätzlich robust gemacht: Asset-Name `bls_foods_v4.jsonl`; GZIP-Magic-Bytes werden geprüft und je nach tatsächlichem APK-Inhalt wird entpackt oder direkt gelesen. CI prüft den entpackten JSONL-Inhalt unabhängig vom Packaging-Verhalten.
+
+### G.4 Zutatenzeilen und erweiterte Nährwerte (2026-11-26)
+- Fehlerursache für sichtbares `\\n` beim Übernehmen eines Suchtreffers gefunden und korrigiert: Produktübernahme fügt nun echte Zeilenumbrüche ein; Eingabe normalisiert literal escapte Zeilenumbrüche.
+- Jede Zutatenzeile wird separat analysiert. Nicht berechenbare Zeilen werden mit dem konkreten Grund ausgegeben; Stückmengen werden ohne bekanntes Gewicht nicht geschätzt.
+- Nährwertanzeige untereinander: Energie, Kohlenhydrate, davon Zucker, Ballaststoffe, Eiweiß, Fett, davon gesättigte Fettsäuren, Salz. Anzeige auf maximal zwei Nachkommastellen.
+- BLS 4.0 nutzt Codes SUGAR, FIBT, NACL und FASAT; OFF nutzt sugars_100g, fiber_100g, salt_100g und saturated-fat_100g. Fehlende Daten bleiben fehlend und werden nicht als Nullwerte dargestellt.
+- Room-Schema v6 ergänzt die Nährstofffelder für Zutaten, lokale Produkte und gespeicherte Rezeptwerte per nicht-destruktiver Migration 5→6.
+- Rezeptdetail zeigt zusätzliche Nährwerte pro Portion. Teilberechnungen werden als Teilmenge markiert und nicht als vollständige Rezeptwerte gespeichert.
+- App-Version 0.6.3 / versionCode 11.
+- Tests ergänzt; CI-/Geräteprüfung steht noch aus. Vor Release manuell auf development bauen und Migration mit vorhandenen Rezepten prüfen.
