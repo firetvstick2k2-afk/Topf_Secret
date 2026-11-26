@@ -217,3 +217,18 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 
 - Zusatzhärtung nach Diagnose: Der Seeder erkennt jetzt anhand der GZIP-Magic-Bytes, ob das unter `assets/bls_foods_v4.jsonl` ausgelieferte Asset noch gzip-komprimiert oder bereits entpackt ist. Beide Varianten werden korrekt verarbeitet.
 - CI extrahiert das Asset und hasht immer den entpackten JSONL-Inhalt; damit ist der Test unabhängig davon, ob AAPT den Quellinhalt beim Packaging entpackt oder nur den Namen ändert.
+
+## Zutatenzeilen und erweiterte Nährwertberechnung (2026-11-26)
+
+- Nutzergerätetest mit drei Screenshots zeigte, dass die Produktauswahl in der Zutatenliste den literalen Text `\\n` statt eines echten Zeilenumbruchs einfügte. Die Ursache lag in `joinToString("\\\\n")` bei der Produktübernahme. Beide Übernahmepfade verwenden nun echte Zeilenumbrüche; die Zutatenliste normalisiert zusätzlich eingefügte Escape-Sequenzen.
+- Rezepteditor analysiert nun jede nichtleere Zutatenzeile getrennt. Bei nicht berechenbaren Zutaten werden die Originalzeile und ein konkreter Grund angezeigt (z. B. fehlendes Stückgewicht, nicht unterstützte Einheit, fehlende Produktdaten oder nicht lesbare Mengenangabe).
+- Stückmengen wie „4 Semmelknödel“ werden ohne bekanntes Stückgewicht nicht geschätzt. Eine eindeutige Namensähnlichkeit zu einem ausgewählten Produkt/BLS-Treffer kann dessen Nährwertdaten weiterhin zuordnen, die Stückmenge bleibt aber unberechenbar.
+- Nährwertdarstellung im Editor erfolgt zeilenweise für Energie, Kohlenhydrate, davon Zucker, Ballaststoffe, Eiweiß, Fett, davon gesättigte Fettsäuren und Salz. Werte werden auf maximal zwei Nachkommastellen formatiert. Nicht vollständig verfügbare Detailwerte werden nicht als 0 ausgegeben.
+- BLS 4.0-Komponenten werden anhand der offiziellen Codes gelesen: `SUGAR` (Gesamtzucker), `FIBT` (Gesamtballaststoffe), `NACL` (Salzäquivalent) und `FASAT` (gesättigte Fettsäuren). Nichtnumerische Marker wie `<LOQ`, `<LOD` und `-` bleiben fehlend und werden nicht zu Nullwerten.
+- Open Food Facts liefert zusätzlich `sugars_100g`, `fiber_100g`, `salt_100g` und `saturated-fat_100g`, sofern vorhanden. Die Werte werden im lokalen Produktkatalog und an Rezeptzutaten gespeichert.
+- Room-Schema von Version 5 auf 6 erweitert; Migration ergänzt nullable Spalten für Zutaten, lokale Produkte und Rezept-Portionswerte. Keine Tabellen werden gelöscht und keine destructive migration wird verwendet.
+- Rezeptdetail zeigt die zusätzlich berechneten Werte pro Portion. Unvollständige Rezeptberechnungen werden als Teilmenge gekennzeichnet und nicht als vollständige Rezeptwerte gespeichert.
+- App-Version auf 0.6.3 / versionCode 11 angehoben, damit das Update über eine vorhandene Installation möglich ist.
+- Unit-Tests für zusätzliche Nährstoffskalierung, fehlende Nährwerte und Stückmengen ergänzt.
+- **Noch nicht verifiziert:** Android-CI-Build/Unit-Tests, Room-Migration auf einem Gerät mit bestehenden Rezepten, echte OFF-Antworten für zusätzliche Nährstoffe und Gerätetest der Zeilenübernahme. Vor Release manuellen Workflow auf `development` starten. Keine Deinstallation oder Datenbanklöschung.
+- Letzter dokumentierter CI-Trigger bleibt `workflow_dispatch` bzw. Pull Request gegen `development`; Pushes starten keinen Build.
