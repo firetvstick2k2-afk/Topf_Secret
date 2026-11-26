@@ -432,7 +432,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                         selectedTab = 1
                     }
                 )
-                6 -> RecipeBackupScreen(context, recipeDao)
+                6 -> RecipeBackupScreen(context, recipeDao, onBack = { selectedTab = 0 })
                 else -> AcknowledgementsScreen()
             }
         }
