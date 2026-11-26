@@ -266,3 +266,11 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Nur ausgewähltes Bild wird lokal gespeichert (offline verfügbar); Bildquelle wird zusammen mit der Rezeptquelle dokumentiert.
 - Download-Schutz: HTTP(S), Timeouts, Content-Type `image/*`, maximal 8 MB.
 - Version 0.7.2 / versionCode 14. Build und Gerätetest ausstehend.
+
+
+### G.13 Integrierter Rezept-Browser (2026-11-26)
+- Neuer Tab „Browser“ mit eingebettetem Android WebView, Chefkoch als Startseite, Adress-/Suchfeld sowie Zurück/Vorwärts/Aktualisieren.
+- Der Button „Dieses Rezept übernehmen“ übergibt die aktuelle Rezeptseiten-URL an den vorhandenen Importer. Kategorieauswahl, Quell-Nährwerte und Bildgalerie bleiben im bestehenden Import-Workflow.
+- WebView: JavaScript/DOM Storage an, File-/Content-Zugriff aus, Popups aus, nur HTTP(S)-Navigation. Keine Umgehung von Zugangsbeschränkungen.
+- Unterstützung hängt weiterhin davon ab, ob die Webseite maschinenlesbare Rezeptdaten anbietet.
+- Version 0.8.0 / versionCode 15. Build und Gerätetest ausstehend.
