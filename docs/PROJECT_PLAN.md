@@ -282,3 +282,11 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Karte übergibt die Rezeptdetail-Webadresse an den vorhandenen Importer. API-direkter Import vollständiger Rezeptdetails ist als nächste Ausbaustufe vorgesehen; aktuell hängt Import von strukturierten Daten auf der Detailseite ab.
 - Chefkoch-API noch nicht eingebunden; keine nicht autorisierte Seitenauslesung.
 - Version 0.9.0 / versionCode 16. Build und Gerätetest ausstehend.
+
+
+### G.15 TheMealDB: vollständiger Rezeptabruf (2026-11-26)
+- Entdecken-Karten übergeben TheMealDB-Rezept-IDs intern an den Rezeptimport; kein Umweg mehr über die öffentliche HTML-Detailseite und Schema.org-Parser.
+- Detaildaten werden direkt über TheMealDB `lookup.php?i=` geladen: Titel, Kategorie, Region, Bild, Zutaten mit Mengen und Zubereitungsschritte.
+- Vorhandene Vorschau, Kategorieauswahl, Zutatenverarbeitung und lokale Speicherfunktion werden wiederverwendet. Fehlende Nährwerte und Zeiten bleiben leer; Portionszahl vorerst Standardwert 2.
+- Chefkoch bleibt beim bestehenden Linkimport. Eine offizielle Chefkoch-Such-API ist weiterhin nicht bestätigt; keine automatisierte Chefkoch-Suche oder Seitenauslesung vortäuschen.
+- Version 0.9.1 / versionCode 17. Build und Gerätetest stehen aus.
