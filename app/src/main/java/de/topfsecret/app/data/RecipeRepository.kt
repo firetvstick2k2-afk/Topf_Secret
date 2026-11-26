@@ -13,7 +13,7 @@ class RecipeRepository(private val recipeDao: RecipeDao) {
 
     suspend fun saveRecipe(recipe: RecipeEntity, ingredientLines: List<String>, stepLines: List<String>): Long {
         val ingredients = ingredientLines.map(String::trim).filter(String::isNotEmpty).mapIndexed { index, line ->
-            val match = Regex("""^(\\d+(?:[.,]\\d+)?\\s*(?:kg|g|mg|l|ml|cl|dl|EL|TL|Esslöffel|Teelöffel|Tasse(?:n)?|Stk\\.?|Stück|Prise|Pck\\.?|Packung|Bund|Dose|Becher)?)(?:\\s+)(.+)$""", RegexOption.IGNORE_CASE).matchEntire(line)
+            val match = Regex("""^(\d+(?:[.,]\d+)?\s*(?:kg|g|mg|l|ml|cl|dl|EL|TL|Esslöffel|Teelöffel|Tasse(?:n)?|Stk\.?|Stück|Prise|Pck\.?|Packung|Bund|Dose|Becher)?)(?:\s+)(.+)$""", RegexOption.IGNORE_CASE).matchEntire(line)
             IngredientEntity(recipeId = recipe.id, position = index, amount = match?.groupValues?.get(1)?.trim().orEmpty(), name = match?.groupValues?.get(2)?.trim() ?: line)
         }
         val steps = stepLines.map(String::trim).filter(String::isNotEmpty).mapIndexed { index, line ->
