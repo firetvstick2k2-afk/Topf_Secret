@@ -151,7 +151,15 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                                         servings = imported.servings,
                                         preparationMinutes = imported.preparationMinutes,
                                         cookingMinutes = imported.cookingMinutes,
-                                        sourceUrl = imported.sourceUrl
+                                        sourceUrl = imported.sourceUrl,
+                                        caloriesPerServing = imported.caloriesPerServing,
+                                        carbohydratesPerServing = imported.carbohydratesPerServing,
+                                        sugarsPerServing = imported.sugarsPerServing,
+                                        fiberPerServing = imported.fiberPerServing,
+                                        proteinPerServing = imported.proteinPerServing,
+                                        fatPerServing = imported.fatPerServing,
+                                        saturatedFatPerServing = imported.saturatedFatPerServing,
+                                        saltPerServing = imported.saltPerServing
                                     )
                                     de.topfsecret.app.nutrition.BlsDatasetSeeder.ensureSeeded(context, blsFoodDao)
                                     val importedNutrition = mutableMapOf<String, OpenFoodFactsProduct>()
@@ -339,6 +347,7 @@ private fun HomeActionCard(modifier: Modifier, symbol: String, title: String, su
 private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedRecipe) -> Unit) {
     var url by rememberSaveable { mutableStateOf("") }
     var imported by remember { mutableStateOf<ImportedRecipe?>(null) }
+    var selectedCategory by rememberSaveable { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
@@ -365,7 +374,7 @@ private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedReci
                 imported = null
                 scope.launch {
                     runCatching { OnlineRecipeImporter.importFromUrl(url) }
-                        .onSuccess { imported = it }
+                        .onSuccess { imported = it; selectedCategory = it.category.ifBlank { "Importiert" } }
                         .onFailure { error = it.message ?: "Der Rezeptlink konnte nicht gelesen werden." }
                     loading = false
                 }
@@ -383,6 +392,14 @@ private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedReci
                     Text("VORSCHAU", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
                     Text(recipe.title, color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
                     if (recipe.description.isNotBlank()) Text(recipe.description, color = MutedInk)
+                    OutlinedTextField(
+                        value = selectedCategory,
+                        onValueChange = { selectedCategory = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Kategorie für dieses Rezept") },
+                        placeholder = { Text("z. B. Suppen, Hauptgerichte, Desserts") },
+                        singleLine = true
+                    )
                     Text("${recipe.servings} Portionen · Vorbereitung: ${recipe.preparationMinutes?.let { "$it Min." } ?: "–"} · Kochzeit: ${recipe.cookingMinutes?.let { "$it Min." } ?: "–"}", color = Ink)
                     Text("Zutaten (${recipe.ingredients.size})", color = Ink, fontWeight = FontWeight.Bold)
                     recipe.ingredients.forEach { Text("• $it", color = Ink, style = MaterialTheme.typography.bodyMedium) }
@@ -390,7 +407,7 @@ private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedReci
                     recipe.steps.forEachIndexed { index, step -> Text("${index + 1}. $step", color = Ink, style = MaterialTheme.typography.bodyMedium) }
                     Text("Quelle: ${recipe.sourceUrl}", color = MutedInk, style = MaterialTheme.typography.bodySmall)
                     Text("Bitte prüfe die übernommenen Angaben. Das Originalbild wird nicht kopiert; der Quellenlink bleibt am Rezept erhalten.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
-                    Button(onClick = { onSave(recipe) }, modifier = Modifier.fillMaxWidth()) { Text("In meine Rezepte übernehmen") }
+                    Button(onClick = { onSave(recipe.copy(category = selectedCategory.trim().ifBlank { "Importiert" })) }, modifier = Modifier.fillMaxWidth()) { Text("In meine Rezepte übernehmen") }
                 }
             }
         }
