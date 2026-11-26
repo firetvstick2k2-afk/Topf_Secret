@@ -502,6 +502,8 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
             }
         }
     }
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var scannedProduct by remember { mutableStateOf<OpenFoodFactsProduct?>(null) }
     var barcodeError by remember { mutableStateOf("") }
     var barcodeLoading by remember { mutableStateOf(false) }
@@ -548,8 +550,6 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
         val sum = calculated.sumNutrition()
         sum.copy(uncalculatedIngredients = lines.size - sum.calculatedIngredients)
     }
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { selected ->
             scope.launch {
