@@ -331,3 +331,9 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 
 **Status:** Vereinbart und dokumentiert, nicht implementiert. Zuerst die bestehende Admin-App/Entdecken-Funktion weiterentwickeln; Lizenzmanager und Release-Aufteilung sind spätere eigene Arbeitspakete.
 
+
+
+### H. Startanimation / Markenauftritt (2026-11-26)
+- Kurze, witzige Startanimation mit eigenem Compose-gezeichnetem Kochtopf: Einflug/Pop-in, verschmitztes Gesicht, angehobener Deckel, Dampf und anschließender Topf-Secret-Schriftzug.
+- Läuft vor der Aktivierungsprüfung, ist offlinefähig und benötigt keine zusätzliche Animationsbibliothek.
+- Version 0.9.4 / versionCode 20. Implementiert auf `development`; CI-Build und Gerätetest stehen noch aus.
