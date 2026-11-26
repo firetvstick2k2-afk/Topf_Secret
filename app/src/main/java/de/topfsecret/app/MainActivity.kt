@@ -548,7 +548,13 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
             else if (listOf(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100).all { it == null }) issues += line to "Für diese Zutat fehlen verwertbare Grundnährwerte."
             else calculated += result
         }
-        calculated.sumNutrition().copy(uncalculatedIngredients = issues.size) to issues
+        calculated.sumNutrition().copy(
+            uncalculatedIngredients = issues.size,
+            sugarsComplete = calculated.all { it.sugarsComplete } && issues.isEmpty(),
+            fiberComplete = calculated.all { it.fiberComplete } && issues.isEmpty(),
+            saltComplete = calculated.all { it.saltComplete } && issues.isEmpty(),
+            saturatedFatComplete = calculated.all { it.saturatedFatComplete } && issues.isEmpty()
+        ) to issues
     }
     val calculatedNutrition = nutritionEvaluation.first
     val uncalculatedReasons = nutritionEvaluation.second
@@ -1033,12 +1039,12 @@ private fun NutritionValueLines(values: NutritionPer100.Totals) {
     val rows = listOf(
         "Energie" to "${values.caloriesKcal.prettyNumber()} kcal",
         "Kohlenhydrate" to "${values.carbohydratesG.prettyNumber()} g",
-        "davon Zucker" to "${values.sugarsG.prettyNumber()} g",
-        "Ballaststoffe" to "${values.fiberG.prettyNumber()} g",
+        "davon Zucker" to if (values.sugarsComplete) "${values.sugarsG.prettyNumber()} g" else "nicht vollständig verfügbar",
+        "Ballaststoffe" to if (values.fiberComplete) "${values.fiberG.prettyNumber()} g" else "nicht vollständig verfügbar",
         "Eiweiß" to "${values.proteinG.prettyNumber()} g",
         "Fett" to "${values.fatG.prettyNumber()} g",
-        "davon gesättigte Fettsäuren" to "${values.saturatedFatG.prettyNumber()} g",
-        "Salz" to "${values.saltG.prettyNumber()} g"
+        "davon gesättigte Fettsäuren" to if (values.saturatedFatComplete) "${values.saturatedFatG.prettyNumber()} g" else "nicht vollständig verfügbar",
+        "Salz" to if (values.saltComplete) "${values.saltG.prettyNumber()} g" else "nicht vollständig verfügbar"
     )
     rows.forEach { (label, value) -> Text("$label: $value", color = Ink, style = MaterialTheme.typography.bodySmall) }
 }
