@@ -410,7 +410,7 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
                 Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(14.dp)) {
                     Text("JETZT ENTDECKEN", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                     Text(hero.title, color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Button(onClick = { onImport("https://www.themealdb.com/meal/${hero.id}") }) { Text("Rezept ansehen & übernehmen") }
+                    Button(onClick = { onImport("themealdb://${hero.id}") }) { Text("Rezept ansehen & übernehmen") }
                 }
             }
             Spacer(Modifier.height(18.dp))
@@ -431,7 +431,7 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
                             Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
                                 Text(meal.title, color = Ink, fontWeight = FontWeight.Bold, maxLines = 2, minLines = 2)
                                 Text(listOf(meal.category, meal.area).filter(String::isNotBlank).joinToString(" · ").ifBlank { "Rezeptidee" }, color = MutedInk, style = MaterialTheme.typography.labelSmall, maxLines = 1)
-                                TextButton(onClick = { onImport("https://www.themealdb.com/meal/${meal.id}") }, modifier = Modifier.fillMaxWidth()) { Text("Ansehen & übernehmen") }
+                                TextButton(onClick = { onImport("themealdb://${meal.id}") }, modifier = Modifier.fillMaxWidth()) { Text("Ansehen & übernehmen") }
                             }
                         }
                     }
@@ -547,8 +547,8 @@ private fun OnlineRecipeImportScreen(initialUrl: String = "", onCancel: () -> Un
     ) {
         TextButton(onClick = onCancel) { Text("‹ Zurück zu den Rezepten", color = Copper) }
         Text("ONLINE-REZEPT", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
-        Text("Rezept per Link übernehmen", color = Ink, fontSize = 27.sp, fontWeight = FontWeight.Bold)
-        Text("Füge den Link einer Rezeptseite ein. Topf Secret sucht nach strukturierten Rezeptangaben (Schema.org) und zeigt dir die gefundenen Daten vor dem Speichern.", color = MutedInk)
+        Text(if (initialUrl.startsWith("themealdb://")) "Rezept ansehen & übernehmen" else "Rezept per Link übernehmen", color = Ink, fontSize = 27.sp, fontWeight = FontWeight.Bold)
+        Text(if (initialUrl.startsWith("themealdb://")) "Das vollständige Rezept wird direkt aus TheMealDB geladen. Prüfe Zutaten und Zubereitung und wähle vor dem Speichern deine Kategorie." else "Füge den Link einer Rezeptseite ein. Topf Secret sucht nach strukturierten Rezeptangaben (Schema.org) und zeigt dir die gefundenen Daten vor dem Speichern.", color = MutedInk)
         OutlinedTextField(
             value = url,
             onValueChange = { url = it; imported = null; error = "" },
@@ -563,7 +563,7 @@ private fun OnlineRecipeImportScreen(initialUrl: String = "", onCancel: () -> Un
                 error = ""
                 imported = null
                 scope.launch {
-                    runCatching { OnlineRecipeImporter.importFromUrl(url) }
+                    runCatching { if (url.startsWith("themealdb://")) RecipeDiscoveryClient.details(url.removePrefix("themealdb://")) else OnlineRecipeImporter.importFromUrl(url) }
                         .onSuccess { imported = it; selectedCategory = it.category.ifBlank { "Importiert" }; selectedImageUrl = it.imageUrl }
                         .onFailure { error = it.message ?: "Der Rezeptlink konnte nicht gelesen werden." }
                     loading = false
