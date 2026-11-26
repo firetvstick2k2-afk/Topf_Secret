@@ -225,6 +225,7 @@ private suspend fun searchCommonsDishImages(query: String): List<CommonsDishImag
     }
 
     found.values
+        .filter { dishRelevanceScore(it.title, query) > 0 }
         .sortedByDescending { dishRelevanceScore(it.title, query) }
         .take(30)
 }
@@ -240,13 +241,20 @@ private val dishTerms = listOf(
     "gericht", "eintopf", "suppe", "soup", "stew", "food", "meal",
     "dish", "cooked", "gekocht", "zubereitet", "recipe", "rezept",
     "mit pinkel", "mit wurst", "traditional", "küche", "cuisine",
-    "essen", "serviert", "served", "plate", "teller"
+    "essen", "serviert", "served", "plate", "teller",
+    "schnitzel", "braten", "auflauf", "lasagne", "lasagna", "pizza",
+    "pasta", "nudeln", "salat", "salad", "casserole", "roast",
+    "burger", "sandwich", "risotto", "pfanne", "gebraten", "grilled",
+    "baked", "kuchen", "cake", "dessert", "desserts", "pudding",
+    "gratin", "quiche", "tarte", "sauce", "sosse", "sauerkraut"
 )
 
 private fun dishRelevanceScore(title: String, query: String): Int {
     val normalizedTitle = title.lowercase()
     val normalizedQuery = query.lowercase()
     var score = dishTerms.count { normalizedTitle.contains(it) } * 5
+    // A title must contain a food/dish clue; matching only the raw ingredient is not enough.
+    if (score == 0) return 0
     val queryWords = normalizedQuery.split(Regex("[^\\p{L}\\p{N}]+"))
         .filter { it.length >= 3 }
     score += queryWords.count { normalizedTitle.contains(it) } * 2
