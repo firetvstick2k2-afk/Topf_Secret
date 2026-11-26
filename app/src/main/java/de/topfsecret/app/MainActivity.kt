@@ -26,6 +26,7 @@ import kotlinx.coroutines.withContext
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -368,7 +369,7 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
     var meals by remember { mutableStateOf<List<DiscoveryRecipe>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
-    val categories = listOf("Beliebt", "Chicken", "Beef", "Seafood", "Vegetarian", "Pasta", "Dessert", "Starter")
+    val categories = listOf("Für dich", "Chicken", "Beef", "Seafood", "Vegetarian", "Pasta", "Dessert", "Starter")
     fun load(category: String, search: String = "") {
         selectedCategory = category
         loading = true
@@ -377,7 +378,7 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
             runCatching {
                 when {
                     search.isNotBlank() -> RecipeDiscoveryClient.search(search)
-                    category == "Beliebt" -> RecipeDiscoveryClient.popular()
+                    category == "Für dich" -> RecipeDiscoveryClient.popular()
                     else -> RecipeDiscoveryClient.byCategory(category)
                 }
             }.onSuccess { meals = it }
@@ -385,7 +386,7 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
             loading = false
         }
     }
-    LaunchedEffect(Unit) { load("Beliebt") }
+    LaunchedEffect(Unit) { load("Für dich") }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 20.dp)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
             Text("TOPF SECRET ORIGINALS", color = Copper, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
@@ -402,7 +403,7 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
             }
         }
         Spacer(Modifier.height(14.dp))
-        if (selectedCategory == "Beliebt" && query.isBlank() && meals.isNotEmpty()) {
+        if (selectedCategory == "Für dich" && query.isBlank() && meals.isNotEmpty()) {
             val hero = meals.first()
             Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(220.dp)) {
                 RecipePhoto(hero.imageUrl, Modifier.fillMaxSize())
