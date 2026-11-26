@@ -1,7 +1,7 @@
 # Topf Secret – Sicherheitsarchitektur für lokale Profile
 
 Stand: 2026-11-26  
-Status: Architekturentscheidung als Grundlage für die Implementierung; noch nicht implementiert.
+Status: Architektur dokumentiert; der reine Recovery-Code-Generator ist implementiert, Profil-/Schlüssel-/Datenbankfunktionen sind noch nicht implementiert.
 
 ## Ziele
 
@@ -35,6 +35,13 @@ Die App führt die sichtbare Rezeptliste aus der gemeinsamen Datenbank und der p
 - Der Wiederherstellungscode öffnet ausschließlich die Schlüsselhüllen des zugehörigen Profils. Nach erfolgreicher Wiederherstellung kann die Person eine neue PIN festlegen; die Datenbankschlüssel werden anschließend mit dem neuen PIN-Schlüssel erneut verpackt.
 - Der vollständige Wiederherstellungscode wird nur während der Einrichtung angezeigt. Kopieren und manuelles Speichern (z. B. Screenshot/Notiz) werden angeboten; vor dem Fortfahren ist eine ausdrückliche Bestätigung erforderlich. Der Code wird nicht in Logs geschrieben oder an einen Server gesendet.
 - Ein Profil kann optional einen eigenen biometrischen Schlüssel im Android Keystore registrieren. Dieser schützt die Schlüsselhülle des Profils und wird über BiometricPrompt freigegeben. PIN und Wiederherstellungscode bleiben als Rückfallwege verfügbar. Wird eine Biometrie ungültig (z. B. nach Änderung der registrierten Fingerabdrücke), muss die Person per PIN oder Wiederherstellungscode erneut freischalten und Biometrie neu einrichten.
+
+## Bereits implementierte Grundlage
+
+- `app/src/main/java/de/topfsecret/app/security/RecoveryCodeGenerator.kt` erzeugt 24 zufällige Crockford-Base32-Symbole mit `SecureRandom`, formatiert sie als sechs Vierergruppen und normalisiert/validiert spätere Eingaben.
+- Unit-Tests liegen unter `app/src/test/java/de/topfsecret/app/security/RecoveryCodeGeneratorTest.kt`.
+- GitHub Actions führt die Release-Unit-Tests vor dem APK-Build aus. Ein erfolgreicher CI-Lauf für diese Änderung ist noch nicht bestätigt.
+- Der Generator zeigt oder speichert selbst keinen Code; die spätere Onboarding-Oberfläche muss den Klartext nur einmal anzeigen und kopierbar machen.
 
 ## Fehlversuche und Sperre
 
