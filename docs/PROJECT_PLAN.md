@@ -21,11 +21,13 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Eigene Bilder und Quellenangabe.
 
 ### B. Bilder
-- Bilder aus Galerie auswählen; Kameraaufnahme als nächster Ausbau.
+- Bilder aus Galerie und Kamera auswählen; zusätzlich passende Gerichtefotos online suchen.
 - Bildauswahl dauerhaft dem jeweiligen Rezept zuordnen.
 - Bildvorschau in Rezeptliste und Rezeptdetail.
 - Lokale Speicherung bzw. dauerhaft gesicherter Zugriff ohne unnötige Berechtigungen.
 - Bilder im vollständigen Backup einschließen.
+- Online-Suche ausschließlich für Gerichtefotos über Wikimedia Commons; Treffer mit Vorschau sowie Lizenz-/Urheberangaben.
+- Ausgewählte Vorschaubilder samt lokalem Quellen-/Lizenzbeleg im privaten App-Speicher ablegen; keine Google-Bildersuche scrapen.
 
 ### C. Web-Rezeptimport
 - Teilen-Menü (Android Sharesheet) und manuelle URL-Eingabe.
@@ -70,12 +72,13 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 
 1. Projektgrundlage, UI-Grundgerüst, Navigation und lokale Rezeptverwaltung – umgesetzt.
 2. Rezeptbilder aus Galerie und Kamera aufnehmen; Dateien in `filesDir/recipe_images` übernehmen und in Rezeptliste/-detail anzeigen – umgesetzt auf `development`; Build-/Gerätetest und Optimierung noch offen.
-3. Bildgrößenoptimierung und Regressionstests für Galerie- und Kameraformate.
-4. Portionen- und Nährwertberechnung erweitern.
-5. Vollständiger Backup-/Restore-Workflow inklusive Bilder.
-6. Web-Rezeptimport mit Vorschau.
-7. Sichere Synchronisation für zwei Personen.
-8. Geräte- und Regressionstests, Release.
+3. Online-Gerichtebildersuche über Wikimedia Commons mit Treffer-Vorschau, Lizenz-/Urheberanzeige, lokalem Download und Quellenbeleg – implementiert auf `development`; Build-/Gerätetest noch offen.
+4. Bildgrößenoptimierung und Regressionstests für Galerie-, Kamera- und Onlinebilder.
+5. Portionen- und Nährwertberechnung erweitern.
+6. Vollständiger Backup-/Restore-Workflow inklusive Bilder und Quellenbelege.
+7. Web-Rezeptimport mit Vorschau.
+8. Sichere Synchronisation für zwei Personen.
+9. Geräte- und Regressionstests, Release.
 
 ## Noch zu entscheiden
 
