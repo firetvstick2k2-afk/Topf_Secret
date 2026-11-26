@@ -560,7 +560,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                 key.contains(name, ignoreCase = true) || name.contains(key, ignoreCase = true)
             }?.value
             if (product == null) { issues += line to "Für diese Zutat liegen keine Nährwertdaten vor."; return@forEach }
-            val nutrition = NutritionPer100(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, if (product.nutritionBasis == "100ml") IngredientMeasureConverter.Basis.MILLILITRES else IngredientMeasureConverter.Basis.GRAMS, product.sugarsGPer100, product.fiberGPer100, product.saltGPer100, product.saturatedFatGPer100, product.nutritionBasis)
+            val nutrition = NutritionPer100(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, if (product.nutritionBasis == "100ml") IngredientMeasureConverter.Basis.MILLILITRES else IngredientMeasureConverter.Basis.GRAMS, product.sugarsGPer100, product.fiberGPer100, product.saltGPer100, product.saturatedFatGPer100)
             val result = nutrition.forAmount(quantity, unit, name)
             if (result == null) issues += line to if (unit.lowercase(java.util.Locale.GERMAN) in setOf("stück", "stk", "stk.")) "Aufgrund der Mengenangabe nicht berechenbar: Stückgewicht fehlt." else "Die Einheit '$unit' hat kein hinterlegtes Referenzgewicht und kann deshalb nicht berechnet werden."
             else if (listOf(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100).all { it == null }) issues += line to "Für diese Zutat fehlen verwertbare Grundnährwerte."
@@ -916,7 +916,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                         Text(product.name, fontWeight = FontWeight.Bold)
                         product.brand?.takeIf(String::isNotBlank)?.let { Text(it, color = MutedInk) }
                         Spacer(Modifier.height(8.dp))
-                        Text("Nährwerte je 100 g")
+                        Text("Nährwerte je " + if (product.nutritionBasis == "100ml") "100 ml" else "100 g")
                         Text("Energie: " + (product.caloriesKcalPer100?.let { it.prettyNumber() + " kcal" } ?: "nicht vorhanden"))
                         Text("Kohlenhydrate: " + (product.carbohydratesGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
                         Text("Eiweiß: " + (product.proteinGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
@@ -926,7 +926,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                         Text("Salz: " + (product.saltGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
                         Text("davon gesättigte Fettsäuren: " + (product.saturatedFatGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
                         Spacer(Modifier.height(6.dp))
-                        Text(if (product.barcode.startsWith("BLS:")) "Quelle: Bundeslebensmittelschlüssel (BLS) 4.0 · Durchschnittswerte je 100 g." else "Quelle: Open Food Facts · vor Übernahme bitte Verpackung prüfen.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                        Text(if (product.barcode.startsWith("BLS:")) "Quelle: Bundeslebensmittelschlüssel (BLS) 4.0 · Durchschnittswerte je 100 g." else if (product.barcode.startsWith("CUSTOM:")) "Quelle: selbst eingetragen · eigene Angaben prüfen." else "Quelle: Open Food Facts · vor Übernahme bitte Verpackung prüfen.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             },
@@ -956,7 +956,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                             }
                             nutritionByIngredientName[product.name] = product
                             if (ingredients.lines().none { it.contains(product.name, ignoreCase = true) }) {
-                                val updated = listOf(ingredients.trimEnd(), "100 g " + product.name).filter(String::isNotBlank).joinToString("\n") + "\n"
+                                val updated = listOf(ingredients.trimEnd(), (if (product.nutritionBasis == "100ml") "100 ml " else "100 g ") + product.name).filter(String::isNotBlank).joinToString("\n") + "\n"
                                 ingredientsField = TextFieldValue(updated, androidx.compose.ui.text.TextRange(updated.length))
                             }
                             scannedProduct = null
