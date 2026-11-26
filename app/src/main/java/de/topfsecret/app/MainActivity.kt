@@ -259,7 +259,13 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
     var description by rememberSaveable(original?.id) { mutableStateOf(original?.description.orEmpty()) }
     var category by rememberSaveable(original?.id) { mutableStateOf(original?.category.orEmpty()) }
     var servings by rememberSaveable(original?.id) { mutableStateOf((original?.servings ?: 2).toString()) }
-    var ingredients by rememberSaveable(original?.id) { mutableStateOf(recipe?.ingredients?.sortedBy { it.position }?.joinToString("\n") { it.name }.orEmpty()) }
+    var prepMinutes by rememberSaveable(original?.id) { mutableStateOf(original?.preparationMinutes?.toString().orEmpty()) }
+    var cookMinutes by rememberSaveable(original?.id) { mutableStateOf(original?.cookingMinutes?.toString().orEmpty()) }
+    var kcal by rememberSaveable(original?.id) { mutableStateOf(original?.caloriesPerServing?.toString().orEmpty()) }
+    var carbs by rememberSaveable(original?.id) { mutableStateOf(original?.carbohydratesPerServing?.toString().orEmpty()) }
+    var protein by rememberSaveable(original?.id) { mutableStateOf(original?.proteinPerServing?.toString().orEmpty()) }
+    var fat by rememberSaveable(original?.id) { mutableStateOf(original?.fatPerServing?.toString().orEmpty()) }
+    var ingredients by rememberSaveable(original?.id) { mutableStateOf(recipe?.ingredients?.sortedBy { it.position }?.joinToString("\n") { listOf(it.amount, it.name).filter(String::isNotBlank).joinToString(" ") }.orEmpty()) }
     var steps by rememberSaveable(original?.id) { mutableStateOf(recipe?.steps?.sortedBy { it.position }?.joinToString("\n") { it.instruction }.orEmpty()) }
     var error by rememberSaveable(original?.id) { mutableStateOf(false) }
 
@@ -274,11 +280,27 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(servings, { servings = it.filter(Char::isDigit) }, Modifier.fillMaxWidth(), label = { Text("Portionen") }, singleLine = true)
         Spacer(Modifier.height(10.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedTextField(prepMinutes, { prepMinutes = it.filter(Char::isDigit) }, Modifier.weight(1f), label = { Text("Vorbereitung (Min.)") }, singleLine = true)
+            OutlinedTextField(cookMinutes, { cookMinutes = it.filter(Char::isDigit) }, Modifier.weight(1f), label = { Text("Kochzeit (Min.)") }, singleLine = true)
+        }
+        Spacer(Modifier.height(10.dp))
         OutlinedTextField(description, { description = it }, Modifier.fillMaxWidth(), label = { Text("Kurze Beschreibung") }, minLines = 2)
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(ingredients, { ingredients = it }, Modifier.fillMaxWidth(), label = { Text("Zutaten – eine pro Zeile") }, placeholder = { Text("z. B. 500 g Kartoffeln\n1 Zwiebel") }, minLines = 4)
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(steps, { steps = it }, Modifier.fillMaxWidth(), label = { Text("Zubereitung – ein Schritt pro Zeile") }, placeholder = { Text("Kartoffeln schälen und würfeln.\nZwiebel glasig anbraten.") }, minLines = 4)
+        Spacer(Modifier.height(16.dp))
+        Text("Nährwerte pro Portion (optional)", color = Ink, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(kcal, { kcal = it }, Modifier.fillMaxWidth(), label = { Text("Kalorien (kcal)") }, singleLine = true)
+        Spacer(Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedTextField(carbs, { carbs = it }, Modifier.weight(1f), label = { Text("Kohlenhydrate (g)") }, singleLine = true)
+            OutlinedTextField(protein, { protein = it }, Modifier.weight(1f), label = { Text("Eiweiß (g)") }, singleLine = true)
+        }
+        Spacer(Modifier.height(8.dp))
+        OutlinedTextField(fat, { fat = it }, Modifier.fillMaxWidth(), label = { Text("Fett (g)") }, singleLine = true)
         if (error) {
             Spacer(Modifier.height(6.dp))
             Text("Bitte gib dem Rezept mindestens einen Namen.", color = Color(0xFFB3261E))
@@ -292,6 +314,12 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                     val entity = (original ?: RecipeEntity(title = title.trim())).copy(
                         title = title.trim(), description = description.trim(), category = category.trim(),
                         servings = servings.toIntOrNull()?.coerceAtLeast(1) ?: 2,
+                        preparationMinutes = prepMinutes.toIntOrNull(),
+                        cookingMinutes = cookMinutes.toIntOrNull(),
+                        caloriesPerServing = kcal.toDecimalOrNull(),
+                        carbohydratesPerServing = carbs.toDecimalOrNull(),
+                        proteinPerServing = protein.toDecimalOrNull(),
+                        fatPerServing = fat.toDecimalOrNull(),
                         updatedAt = System.currentTimeMillis()
                     )
                     onSave(entity, ingredients.lines(), steps.lines())
@@ -312,6 +340,31 @@ private fun RecipeDetailScreen(recipe: RecipeWithDetails, onBack: () -> Unit, on
         Text(recipe.recipe.title, color = Ink, fontSize = 30.sp, lineHeight = 36.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         Text(recipe.recipe.servings.toString() + " Portionen", color = MutedInk)
+        val timeLabels = listOfNotNull(
+            recipe.recipe.preparationMinutes?.let { "Vorbereitung: " + it + " Min." },
+            recipe.recipe.cookingMinutes?.let { "Kochzeit: " + it + " Min." }
+        )
+        if (timeLabels.isNotEmpty()) {
+            Spacer(Modifier.height(8.dp))
+            Text(timeLabels.joinToString("  ·  "), color = MutedInk)
+        }
+        val nutritionLabels = listOfNotNull(
+            recipe.recipe.caloriesPerServing?.let { "⚡ " + it.prettyNumber() + " kcal" },
+            recipe.recipe.carbohydratesPerServing?.let { "Kohlenhydrate " + it.prettyNumber() + " g" },
+            recipe.recipe.proteinPerServing?.let { "Eiweiß " + it.prettyNumber() + " g" },
+            recipe.recipe.fatPerServing?.let { "Fett " + it.prettyNumber() + " g" }
+        )
+        if (nutritionLabels.isNotEmpty()) {
+            Spacer(Modifier.height(12.dp))
+            Card(colors = CardDefaults.cardColors(containerColor = PaleCopper), shape = RoundedCornerShape(16.dp)) {
+                Column(Modifier.fillMaxWidth().padding(14.dp)) {
+                    Text("Nährwerte pro Portion", color = Ink, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(5.dp))
+                    nutritionLabels.forEach { Text(it, color = Ink, style = MaterialTheme.typography.bodyMedium) }
+                    Text("Angaben sind Richtwerte.", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        }
         if (recipe.recipe.description.isNotBlank()) {
             Spacer(Modifier.height(14.dp))
             Text(recipe.recipe.description, color = Ink, style = MaterialTheme.typography.bodyLarge)
@@ -320,7 +373,10 @@ private fun RecipeDetailScreen(recipe: RecipeWithDetails, onBack: () -> Unit, on
         Text("Zutaten", color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         if (recipe.ingredients.isEmpty()) Text("Noch keine Zutaten eingetragen.", color = MutedInk)
-        else recipe.ingredients.sortedBy { it.position }.forEach { Text("• " + it.name, color = Ink, modifier = Modifier.padding(vertical = 3.dp)) }
+        else recipe.ingredients.sortedBy { it.position }.forEach {
+            val line = listOf(it.amount, it.name).filter(String::isNotBlank).joinToString(" ")
+            Text("• " + line, color = Ink, modifier = Modifier.padding(vertical = 3.dp))
+        }
         Spacer(Modifier.height(22.dp))
         Text("Zubereitung", color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
@@ -358,3 +414,10 @@ private fun PlaceholderScreen(eyebrow: String, title: String, description: Strin
         }
     }
 }
+
+
+private fun String.toDecimalOrNull(): Double? =
+    trim().replace(',', '.').takeIf(String::isNotBlank)?.toDoubleOrNull()
+
+private fun Double.prettyNumber(): String =
+    if (this % 1.0 == 0.0) toInt().toString() else toString().replace('.', ',')
