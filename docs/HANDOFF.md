@@ -232,3 +232,6 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Unit-Tests für zusätzliche Nährstoffskalierung, fehlende Nährwerte und Stückmengen ergänzt.
 - **Noch nicht verifiziert:** Android-CI-Build/Unit-Tests, Room-Migration auf einem Gerät mit bestehenden Rezepten, echte OFF-Antworten für zusätzliche Nährstoffe und Gerätetest der Zeilenübernahme. Vor Release manuellen Workflow auf `development` starten. Keine Deinstallation oder Datenbanklöschung.
 - Letzter dokumentierter CI-Trigger bleibt `workflow_dispatch` bzw. Pull Request gegen `development`; Pushes starten keinen Build.
+
+- Nachprüfung der Stück-/Packungs-/Haushaltsmaße: Stück, Stk., Prise, Packung, Bund, Dose und Becher werden als eigene Einheiten erkannt und ohne Referenzgewicht nicht stillschweigend in Gramm umgerechnet. Die Fehlermeldung nennt die betroffene Einheit.
+- Letzter Code-Stand vor dieser Dokumentationsaktualisierung: `ad56eeba9ae9cacec734b354c8c09518bd000421` auf `development`. Build #44 (Commit `2ae8f7c`) liegt vor diesen Änderungen und bestätigt sie nicht. Der nächste manuelle CI-Lauf muss Tests, APK-Build und BLS-Assetprüfung für den neuen Stand ausführen.
