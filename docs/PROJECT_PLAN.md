@@ -228,3 +228,15 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Produktsuche priorisiert eigene Einträge vor BLS 4.0, weiteren lokalen Produkten und Online-Treffern. Dieselbe Priorität gilt bei fehlender Internetverbindung.
 - Room-Schema auf Version 7 erweitert; Migration 6→7 ergänzt `nutritionBasis` ohne bestehende Rezeptdaten zu löschen.
 - Build, Migrationstest und Gerätetest noch offen.
+
+
+### G.8 Verifikation: Datenbank und Nährwertangaben (2026-11-26)
+- Nutzerbestätigung: aktueller Build und Gerätetest erfolgreich. Room-Datenbank inkl. Migration 6→7, BLS 4.0, lokale Produkte und Nährwertberechnung sind als integriert und getestet markiert.
+- Berechnung umfasst Gesamtgericht und Portionen sowie Kohlenhydrate, Zucker, Ballaststoffe, Eiweiß, Fett, gesättigte Fettsäuren und Salz. Eigene Zutaten bleiben lokal gespeichert und werden in der Suche priorisiert.
+
+### G.9 Geplante Erweiterung: öffentliche Online-Rezepte
+- Gewünscht ist eine Online-Rezeptsuche mit Detailansicht und Übernahme in die lokale Rezeptsammlung.
+- Chefkoch nicht scrapen: die recherchierten Chefkoch-AGB untersagen automatisches Auslesen und den Aufbau eigener Suchsysteme. Keine öffentliche Entwickler-API wurde verifiziert. Chefkoch beschreibt Link-/Rezeptimport-Funktionen in seinem eigenen Kochbuch.
+- API-Kandidaten: TheMealDB, Spoonacular, Edamam; vor Auswahl sind aktuelle Lizenz-, Attribution-, Preis- und Caching-Regeln zu prüfen.
+- Alternativ Share-to-App/URL-Import über erlaubte strukturierte Recipe-Daten (Schema.org), mit Quelllink, manueller Kontrolle und ohne unzulässige Volltext-/Bildkopie.
+- Noch nicht implementiert; zunächst Quelle und erlaubtes Importmodell auswählen.
