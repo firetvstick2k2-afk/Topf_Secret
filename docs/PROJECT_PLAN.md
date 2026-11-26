@@ -212,3 +212,10 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Rezeptdetail berechnet aus persistierten Zutaten und Nährwerten mit derselben Mengen- und Nährwertlogik wie der Editor erneut Gesamtgericht und Portionen. Nicht berechenbare Zutaten werden als Teilmenge transparent gemacht.
 - Falsche manuelle Rückfallwerte werden nicht mehr als automatische Rezeptberechnung ausgegeben, sobald eine automatische Teilberechnung vorliegt. Manuelle Altwerte bleiben nur dann sichtbar, wenn keine Zutat automatisch berechenbar ist.
 - Keine Datenbankschemaänderung, keine Datenlöschung. Build, Tests und Gerätetest stehen für diesen Commit noch aus.
+
+
+### G.6 Nährwertangaben als optionaler Klappbereich (2026-11-26)
+- Rezeptdetail: Nährwertblock aus dem oberen Rezeptbereich entfernt und unterhalb von Beschreibung, Zeiten, Zutaten und Zubereitung verschoben. Anzeige standardmäßig eingeklappt; Button blendet den Bereich ein/aus.
+- Rezepteditor: automatische Berechnung und optionale manuelle Nährwertfelder liegen ebenfalls in einem standardmäßig eingeklappten Bereich unterhalb der Zubereitung.
+- Einheitliche Überschrift „Nährwertangaben“; Werte darin getrennt nach „Gesamtgericht“ und „Pro Portion“.
+- Keine Schemaänderung; Build/Tests und Gerätetest stehen noch aus.
