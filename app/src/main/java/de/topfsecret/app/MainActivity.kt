@@ -135,7 +135,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
     ) { innerPadding ->
         Surface(Modifier.fillMaxSize().padding(innerPadding), color = Cream) {
             when (selectedTab) {
-                0 -> HomeScreen(recipes.size, darkMode, appVersion, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 })
+                0 -> HomeScreen(recipes.size, darkMode, appVersion, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 }, { selectedTab = 4 })
                 1 -> {
                     if (editingRecipeId != 0L) {
                         val editing = recipes.firstOrNull { it.recipe.id == editingRecipeId }
@@ -184,26 +184,38 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                     selectedRecipeId = 0L
                     editingRecipeId = 0L
                 })
-                else -> FavoriteScreen(
+                3 -> FavoriteScreen(
                     recipes = recipes.filter { it.recipe.isFavorite },
                     onOpen = { recipeId ->
                         selectedRecipeId = recipeId
                         selectedTab = 1
                     }
                 )
+                else -> AcknowledgementsScreen()
             }
         }
     }
 }
 
 @Composable
-private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit) {
+private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit, onSourcesClick: () -> Unit) {
     var showInfoDialog by rememberSaveable { mutableStateOf(false) }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.Start
     ) {
+        var menuExpanded by remember { mutableStateOf(false) }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Box {
+                IconButton(onClick = { menuExpanded = true }) { Text("☰", color = Copper, fontSize = 25.sp) }
+                DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                    DropdownMenuItem(text = { Text("Start") }, onClick = { menuExpanded = false })
+                    DropdownMenuItem(text = { Text("Rezepte") }, onClick = { menuExpanded = false; onRecipesClick() })
+                    DropdownMenuItem(text = { Text("Kategorien") }, onClick = { menuExpanded = false; onCategoriesClick() })
+                    DropdownMenuItem(text = { Text("Quellen & Danksagungen") }, onClick = { menuExpanded = false; onSourcesClick() })
+                    DropdownMenuItem(text = { Text("Über Topf Secret") }, onClick = { menuExpanded = false; showInfoDialog = true })
+                }
+            }
             Image(painterResource(R.drawable.topf_secret_logo), "Topf Secret", Modifier.size(76.dp))
             Spacer(Modifier.width(14.dp))
             Column(Modifier.weight(1f)) {
@@ -1003,5 +1015,63 @@ private fun deleteManagedRecipeImage(context: Context, storedUri: String?) {
             candidate.delete()
             File(imageDirectory, candidate.name + ".source.txt").delete()
         }
+    }
+}
+
+
+@Composable
+private fun AcknowledgementsScreen() {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(22.dp)) {
+        Text("TRANSPARENZ & DANKE", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        Spacer(Modifier.height(8.dp))
+        Text("Quellen & Danksagungen", color = Ink, fontSize = 27.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(10.dp))
+        Text("Topf Secret nutzt offene Daten und freie Projekte. Wir bedanken uns bei den Einrichtungen, Entwicklerinnen und Entwicklern sowie allen Mitwirkenden, die solche Ressourcen möglich machen.", color = MutedInk, style = MaterialTheme.typography.bodyLarge, lineHeight = 24.sp)
+        Spacer(Modifier.height(20.dp))
+        Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
+            Column(Modifier.padding(18.dp)) {
+                Text("Bundeslebensmittelschlüssel (BLS) 4.0", color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+                Text("Herausgeber: Max Rubner-Institut – Bundesforschungsinstitut für Ernährung und Lebensmittel.", color = MutedInk)
+                Spacer(Modifier.height(8.dp))
+                Text("Max Rubner-Institut (2025): Bundeslebensmittelschlüssel (BLS), Version 4.0 – Deutsche Nährstoffdatenbank. Karlsruhe. DOI: 10.25826/Data20251217-134202-0", color = Ink, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(8.dp))
+                Text("Lizenz: Creative Commons Namensnennung 4.0 International (CC BY 4.0). Änderungen und Aufbereitungen werden kenntlich gemacht.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(8.dp))
+                Text("Website: blsdb.de · Lizenz: creativecommons.org/licenses/by/4.0/", color = Copper, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(10.dp))
+                Text("Das Max Rubner-Institut ist nicht Betreiber, Herausgeber oder Unterstützer der App Topf Secret und hat diese App nicht geprüft oder freigegeben.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
+            Column(Modifier.padding(18.dp)) {
+                Text("Open Food Facts", color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+                Text("Produktinformationen können aus der gemeinschaftlich gepflegten Datenbank Open Food Facts stammen. Datenbanklizenz: Open Database License (ODbL) 1.0. Quellen- und Lizenzhinweise werden bei der jeweiligen Datenverwendung beachtet.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(8.dp))
+                Text("Website: openfoodfacts.org · Lizenz: opendatacommons.org/licenses/odbl/1-0/", color = Copper, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
+            Column(Modifier.padding(18.dp)) {
+                Text("Wikimedia Commons", color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+                Text("Für die Gerichtebildersuche werden Medien von Wikimedia Commons verwendet. Lizenz und Urheberangaben unterscheiden sich je Datei und werden deshalb direkt beim jeweiligen Bild angezeigt und als Quellenbeleg gespeichert.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                Spacer(Modifier.height(8.dp))
+                Text("Website: commons.wikimedia.org", color = Copper, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Card(shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
+            Column(Modifier.padding(18.dp)) {
+                Text("Weitere Mitwirkende", color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(8.dp))
+                Text("Diese Seite wird ergänzt, sobald weitere Datenquellen, Bibliotheken oder Personen zur Entwicklung beitragen und einer namentlichen Nennung zugestimmt haben.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        Spacer(Modifier.height(20.dp))
+        Text("Topf Secret ist ein unabhängiges Projekt. Die Nennung einer Quelle bedeutet keine Empfehlung oder Unterstützung durch den jeweiligen Rechteinhaber.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
     }
 }
