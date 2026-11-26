@@ -22,7 +22,8 @@ data class OpenFoodFactsProduct(
 ) {
     val hasNutrition: Boolean
         get() = caloriesKcalPer100 != null || carbohydratesGPer100 != null ||
-            proteinGPer100 != null || fatGPer100 != null || sugarsGPer100 != null ||\n            fiberGPer100 != null || saltGPer100 != null || saturatedFatGPer100 != null
+            proteinGPer100 != null || fatGPer100 != null || sugarsGPer100 != null ||
+            fiberGPer100 != null || saltGPer100 != null || saturatedFatGPer100 != null
 }
 
 object OpenFoodFactsClient {
