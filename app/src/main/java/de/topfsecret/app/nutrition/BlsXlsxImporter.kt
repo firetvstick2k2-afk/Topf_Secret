@@ -17,7 +17,7 @@ import java.util.zip.ZipFile
  * their original per-value origin and reference fields are retained.
  */
 object BlsXlsxImporter {
-    suspend fun import(context: Context, uri: Uri, dao: BlsFoodDao): Result<Int> =
+    suspend fun importWorkbook(context: Context, uri: Uri, dao: BlsFoodDao): Result<Int> =
         withContext(Dispatchers.IO) {
             runCatching {
                 val file = File(context.cacheDir, "bls-import-${System.currentTimeMillis()}.xlsx")
