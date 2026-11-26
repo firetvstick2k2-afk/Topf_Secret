@@ -14,7 +14,7 @@ Stand: 2026-11-26
 ## Aktueller Stand
 - Android-Projektgrundgerüst mit Kotlin, Jetpack Compose und API-26-Mindestziel.
 - Erste App-Struktur umgesetzt: Startseite im warmen Creme-/Kupfer-/Dunkelbraun-Design und Bottom-Navigation für Start, Rezepte, Kategorien und Favoriten.
-- Die Startseite zeigt das Topf-Secret-Logo, Begrüßung, Markenbereich und Navigationseinstiege. Der Rezepte-Bereich ist jetzt mit der lokalen Datenbank verbunden; Kategorien sind noch ein Platzhalter und Favoriten können in der Rezeptdetailansicht markiert werden.
+- Die Startseite zeigt das Topf-Secret-Logo, Begrüßung, Markenbereich und Navigationseinstiege. Der Rezepte-Bereich ist mit der lokalen Datenbank verbunden. Die Kategorieansicht listet jetzt alle tatsächlich verwendeten Kategorien samt Rezeptanzahl und öffnet die jeweilige gefilterte Rezeptliste.
 - Navigation nutzt Compose-Zustand und benötigt noch keine zusätzliche Navigation-Bibliothek.
 - Rezepteditor erweitert: Vorbereitungszeit und Kochzeit sowie kcal, Kohlenhydrate, Eiweiß und Fett je Portion können optional erfasst und in der Detailansicht angezeigt werden. Nährwerte werden ausdrücklich als Richtwerte gekennzeichnet.
 - Zutatenzeilen erkennen einfache Mengen-/Einheitenangaben am Zeilenanfang (z. B. `500 g Kartoffeln`, `2 EL Öl`) und speichern Menge und Zutatenname getrennt. Beim Bearbeiten werden beide Bestandteile wieder zusammengesetzt.
@@ -24,7 +24,7 @@ Stand: 2026-11-26
 - Der Quellstand wurde auf Version 0.6.0 (`versionCode = 8`) angehoben. Build und Gerätetest für diese Erweiterung stehen noch aus.
 - Room `2.8.3` ist eingebunden (Kotlin KAPT als Compiler-Anbindung). Die lokale Datenbank `topf_secret.db` wird bei Bedarf über `TopfSecretDatabase.getInstance(context)` erstellt.
 - Datenmodell v1: `RecipeEntity` mit Titel, Beschreibung, Kategorie, Portionen, Zeiten, Bild-/Quellen-URI, Notizen, optionalen Nährwert-Schätzwerten pro Portion, Favoritenstatus und Zeitstempeln. Zutaten (`IngredientEntity`) und Zubereitungsschritte (`PreparationStepEntity`) sind normalisiert und per Fremdschlüssel mit Cascade Delete verknüpft.
-- `RecipeDao` bietet Flow-Beobachtung aller Rezepte, einzelner Rezepte und Kategorien sowie transaktionales Speichern mit Ersetzen der Zutaten und Schritte. Der Rezepte-Bereich ist mit Room verbunden; Rezeptliste, Detailansicht und Eingabemaske unterstützen den ersten lokalen CRUD-Ablauf. Migrationen über Datenbankversion 1 hinaus sind noch nicht umgesetzt.
+- `RecipeDao` bietet Flow-Beobachtung aller Rezepte, einzelner Rezepte und Kategorien sowie transaktionales Speichern mit Ersetzen der Zutaten und Schritte. Der Rezepte-Bereich ist mit Room verbunden; Rezeptliste, Detailansicht und Eingabemaske unterstützen den ersten lokalen CRUD-Ablauf. Die Rezeptliste bietet eine Live-Suche über Rezeptname, Kategorie, Beschreibung und Zutatenname sowie einen Kategorienfilter. Kategorien werden aus den gespeicherten Rezepten abgeleitet; dafür war keine Room-Schemaänderung nötig. Migrationen über Datenbankversion 1 hinaus sind noch nicht umgesetzt.
 - Pushes auf `development` lösen keinen Build mehr aus. Builds werden manuell über GitHub Actions → Android CI → Run workflow gestartet. Pull Requests gegen `development` lösen weiterhin automatisch einen Build aus.
 - CI erstellt ein signiertes Release-APK und benennt es vor der Veröffentlichung nach der GitHub-Buildnummer, z. B. `topf_secret_#18.apk`.
 - Manuelle Builds (`workflow_dispatch`) veröffentlichen die APK als direkt herunterladbares `.apk`-Asset in einem GitHub-Release mit Tag `build-<Run-Nummer>` (als Pre-Release markiert). Dadurch entfällt das ZIP-Verpacken durch GitHub Actions für den regulären Download. Pull-Request-Builds veröffentlichen keine Releases.
@@ -79,7 +79,7 @@ Stand: 2026-11-26
 3. Nach dem Import-Fix einen neuen signierten Release-Build starten, APK-Signatur prüfen und Aktivierungsseite auf dem Gerät testen; eine Deinstallation nur dann durchführen, wenn die Signatur nicht mit der installierten Version übereinstimmt.
 4. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
 5. Version 0.6.0 in GitHub Actions bauen und auf dem Gerät testen: Hell-/Dunkelmodus über das Symbol oben rechts inklusive Neustart, Kontrast der „Guten Appetit“-Karte, Rezeptzeiten, Nährwerte, Zutatenmengen sowie Anlegen/Bearbeiten/Löschen und Datenpersistenz.
-6. Suche, Filter und Kategorien mit den gespeicherten Rezepten verbinden.
+6. Rezept-Suche, Kategorienübersicht und Kategorienfilter sind im Quellstand umgesetzt; GitHub-Actions-Build und Gerätetest stehen noch aus.
 7. PIN-Sperre implementieren und testen.
 
 ## Letzter Hinweis
