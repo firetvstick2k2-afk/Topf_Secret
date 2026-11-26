@@ -541,6 +541,16 @@ private fun OnlineRecipeImportScreen(initialUrl: String = "", onCancel: () -> Un
     var error by remember { mutableStateOf("") }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    LaunchedEffect(initialUrl) {
+        if (initialUrl.startsWith("themealdb://") && imported == null && !loading) {
+            loading = true
+            error = ""
+            runCatching { RecipeDiscoveryClient.details(initialUrl.removePrefix("themealdb://")) }
+                .onSuccess { imported = it; selectedCategory = it.category.ifBlank { "Importiert" }; selectedImageUrl = it.imageUrl }
+                .onFailure { error = it.message ?: "Das Rezept konnte nicht geladen werden." }
+            loading = false
+        }
+    }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
