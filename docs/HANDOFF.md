@@ -406,3 +406,10 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Import fügt Rezepte mit neuen lokalen IDs hinzu und überschreibt keine bestehenden Rezepte. Doppelte Rezepte (gleicher Titel und gleiche Quell-URL) werden übersprungen. Lokale Bilder werden in den App-Bildordner kopiert; vorhandene Bildquellen werden mitgesichert.
 - Room-Schema bleibt Version 7; keine Migration und kein Löschen bestehender Daten.
 - Version 0.9.7 / versionCode 23. Implementierung committed auf `development`; Android-CI-Build, Tests und Wiederherstellungstest auf Gerät stehen noch aus. Vor einer Neuinstallation muss ein Backup erstellt und dessen Import praktisch geprüft werden.
+
+
+## CI-Korrektur: verwaiste Übersetzungsreferenz entfernt (2026-11-27)
+- GitHub Actions Lauf #45910259779 scheiterte bei `:app:compileReleaseKotlin` in `RecipeDiscoveryClient.kt:89` mit `Unresolved reference 'translated'`.
+- Ursache: Nach dem Entfernen von ML Kit Translation blieb in `details()` die Zuweisung `title = translated.title` zurück, obwohl kein `translated`-Objekt mehr existiert.
+- Korrektur: Rezepttitel wird direkt aus `meal.optString("strMeal")` übernommen. Das entspricht der festgelegten Entscheidung, TheMealDB-Inhalte unverändert in Originalsprache anzuzeigen.
+- Commit auf `development`: `8349915c5990f9378a3fe6c07cfe9eb19ee96343`. Erneuter CI-Build und Gerätetest stehen noch aus; bis zum erfolgreichen Build keine App-Daten löschen oder Wiederherstellungstest starten.
