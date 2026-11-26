@@ -303,3 +303,12 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Quell-Nährwerte werden als Werte pro Portion in vorhandenen RecipeEntity-Feldern gespeichert und in der Vorschau angezeigt. In der Rezeptdetailansicht bleiben sie von der eigenen Zutatenberechnung getrennt sichtbar, damit abweichende Daten nicht vermischt werden.
 - Fehlen strukturierte Nährwerte in der Quelle, wird nichts erfunden; die bestehende Zutatenberechnung aus BLS/lokalen Produkten bleibt verfügbar.
 - App-Version 0.7.1 / versionCode 13. Änderungen implementiert, aber Build und Gerätetest stehen noch aus.
+
+
+## Online-Rezeptimport – Bildgalerie und Bildauswahl (2026-11-26)
+
+- Der Importer sammelt jetzt mehrere Bildkandidaten aus den strukturierten Schema.org-Rezeptdaten (`image`), den Open-Graph-/Twitter-Meta-Tags (`og:image`, `twitter:image`) sowie Bild-Tags (`img src`/`data-src`). Relative URLs werden gegen die finale Rezeptseiten-URL aufgelöst; es werden höchstens 24 Kandidaten angeboten.
+- Die Vorschau zeigt die gefundenen Bilder einzeln. Der Nutzer wählt ausdrücklich das gewünschte Gerichtsfoto aus; ein Werbe-/anderes Seitenbild kann dadurch abgewählt werden. Ohne Bild kann das Rezept weiterhin importiert werden.
+- Beim Speichern wird nur das ausgewählte Bild geladen und lokal unter `filesDir/recipe_images` abgelegt, damit es offline verfügbar bleibt. Bild- und Rezeptquellen-URL werden in einer Begleitdatei festgehalten; das Rezept speichert den lokalen Bildpfad und den Rezeptquellen-Link.
+- Download mit HTTP(S)-Beschränkung, Timeouts, Bild-Content-Type-Prüfung und 8-MB-Limit. Die Bildanzeige in der Vorschau lädt die Kandidaten temporär von der Quellseite.
+- Version 0.7.2 / versionCode 14. **Build und Gerätetest stehen aus.** Prüfen: Chefkoch-Seite mit mehreren Bildern, Auswahl des richtigen Bildes, Speichern/offline-Neustart, Seite ohne Bilder, ungültige/zu große Bildquelle.
