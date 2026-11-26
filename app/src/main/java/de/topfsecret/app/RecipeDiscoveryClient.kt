@@ -20,7 +20,7 @@ object RecipeDiscoveryClient {
 
     suspend fun search(query: String): List<DiscoveryRecipe> = request("search.php?s=${java.net.URLEncoder.encode(query, "UTF-8")}")
     suspend fun byCategory(category: String): List<DiscoveryRecipe> = request("filter.php?c=${java.net.URLEncoder.encode(category, "UTF-8")}")
-    suspend fun popular(): List<DiscoveryRecipe> = request("search.php?f=a")
+    suspend fun popular(): List<DiscoveryRecipe> = request("filter.php?c=Chicken")
 
     private suspend fun request(path: String): List<DiscoveryRecipe> = withContext(Dispatchers.IO) {
         val connection = (URL(BASE + path).openConnection() as HttpURLConnection).apply {
