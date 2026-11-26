@@ -19,6 +19,7 @@ class SqlCipherRoomSmokeTest {
 
     @Test
     fun roomDatabaseIsEncryptedAndCanBeReopenedWithSameKey() = runBlocking {
+        System.loadLibrary("sqlcipher")
         val context = ApplicationProvider.getApplicationContext<Context>()
         val databaseName = "sqlcipher_room_smoke_test.db"
         context.deleteDatabase(databaseName)
