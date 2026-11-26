@@ -281,3 +281,16 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - API-Kandidaten für weitere Prüfung: TheMealDB (öffentliche API, App-Store-Veröffentlichung erfordert Supporter-Key), Spoonacular (Attribution und strenge Cache-/Speicherbeschränkungen), Edamam (Web-Rezeptdaten meist ohne Kochanleitung; Originalquelle verlinken; Lizenz- und Caching-Regeln beachten).
 - Alternative: Teilen eines Rezeptlinks an Topf Secret und Import nur aus explizit freigegebenen Quellen oder über strukturierte Recipe-Daten (Schema.org) mit Quellenlink und manueller Prüfung. Keine unzulässige Übernahme fremder Volltexte/Bilder.
 - Vor Implementierung Anbieterbedingungen, Preise, API-Schlüsselverwaltung und erlaubte lokale Speicherung konkret prüfen.
+
+
+## Online-Rezeptimport – erste Ausbaustufe (2026-11-26)
+
+- App-Version für den nächsten Build auf 0.7.0 / versionCode 12 angehoben; CI-Release-Metadaten angepasst.
+- In der Rezeptübersicht gibt es „Online-Rezept über Link importieren“.
+- Neuer Importer liest ausschließlich strukturierte Schema.org/Recipe-Daten aus JSON-LD einer vom Nutzer eingegebenen HTTP(S)-Seite. Er übernimmt Titel, Beschreibung, Kategorie, Portionen, Vorbereitungs-/Kochzeit, Zutaten und Anweisungen, soweit von der Seite bereitgestellt.
+- Vor dem Speichern wird eine Vorschau angezeigt. Der Nutzer bestätigt die Übernahme ausdrücklich. Das Originalbild und der vollständige Seitentext werden nicht kopiert; die endgültige URL wird als Quellenlink am Rezept gespeichert.
+- Importierte Zutaten werden bestmöglich gegen den lokalen Produktkatalog und BLS 4.0 abgeglichen (exakte Namensübereinstimmung). Nur passende Treffer liefern direkt Nährwerte; alle anderen Zutaten bleiben im Rezept und können nachträglich zugeordnet werden.
+- Der Import ist bewusst kein allgemeiner Web-Scraper und funktioniert nur auf Seiten mit strukturierten Rezeptdaten. Chefkoch-spezifisches automatisches Auslesen sowie API-Integrationen sind nicht Bestandteil dieser ersten Stufe.
+- Sicherheit/Robustheit: HTTP(S) only, Verbindungs- und Lese-Timeouts, Größenlimit 1.5 MB, HTTP-Statusprüfung; keine neue Bibliothek.
+- **Noch nicht verifiziert:** Android-Build, Parser-Tests und Geräteprüfung. Vor Freigabe insbesondere prüfen: unterstützte Schema.org-Seite, Seite ohne JSON-LD, Redirect, Sonderzeichen/UTF-8, BLS-Zutatenabgleich und Datenbankpersistenz.
+- Implementierungscommits: Parser 83b6087a / Schema-Typ-Fix 4da75be8; UI-/Flow-Commits 57983ab1, e9428961, db05edd3, d9e1a5f1, d705093e, 7d709976; Version 01a63c6e, CI-Metadaten 1a8cd9e2.
