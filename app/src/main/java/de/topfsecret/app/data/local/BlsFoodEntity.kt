@@ -1,5 +1,6 @@
 package de.topfsecret.app.data.local
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Entity
 import androidx.room.Insert
@@ -24,7 +25,9 @@ data class BlsFoodEntity(
     val kcalReference: String?,
     val proteinReference: String?,
     val carbohydratesReference: String?,
-    val fatReference: String?
+    val fatReference: String?,
+    @ColumnInfo(defaultValue = "'{}'") val nutrientsJson: String = "{}",
+    val note: String? = null
 )
 
 @Dao
