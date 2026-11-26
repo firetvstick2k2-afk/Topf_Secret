@@ -26,11 +26,12 @@ Stand: 2026-11-26
 - Datenmodell v1: `RecipeEntity` mit Titel, Beschreibung, Kategorie, Portionen, Zeiten, Bild-/Quellen-URI, Notizen, optionalen Nährwert-Schätzwerten pro Portion, Favoritenstatus und Zeitstempeln. Zutaten (`IngredientEntity`) und Zubereitungsschritte (`PreparationStepEntity`) sind normalisiert und per Fremdschlüssel mit Cascade Delete verknüpft.
 - `RecipeDao` bietet Flow-Beobachtung aller Rezepte, einzelner Rezepte und Kategorien sowie transaktionales Speichern mit Ersetzen der Zutaten und Schritte. Der Rezepte-Bereich ist mit Room verbunden; Rezeptliste, Detailansicht und Eingabemaske unterstützen den ersten lokalen CRUD-Ablauf. Migrationen über Datenbankversion 1 hinaus sind noch nicht umgesetzt.
 - Pushes auf `development` lösen keinen Build mehr aus. Builds werden manuell über GitHub Actions → Android CI → Run workflow gestartet. Pull Requests gegen `development` lösen weiterhin automatisch einen Build aus.
-- CI erstellt ein signiertes Release-APK. Vor dem Upload wird es nach dem GitHub-Workflow-Build nummeriert umbenannt, z. B. `topf_secret_#18.apk`. Das Actions-Artefakt trägt denselben Namen ohne `.apk` und wird 14 Tage aufbewahrt. GitHub verpackt herunterladbare Actions-Artefakte technisch weiterhin in ein ZIP; darin liegt die direkt installierbare APK mit dem genannten Dateinamen.
+- CI erstellt ein signiertes Release-APK und benennt es vor der Veröffentlichung nach der GitHub-Buildnummer, z. B. `topf_secret_#18.apk`.
+- Manuelle Builds (`workflow_dispatch`) veröffentlichen die APK als direkt herunterladbares `.apk`-Asset in einem GitHub-Release mit Tag `build-<Run-Nummer>` (als Pre-Release markiert). Dadurch entfällt das ZIP-Verpacken durch GitHub Actions für den regulären Download. Pull-Request-Builds veröffentlichen keine Releases.
 - Aktuelle App-Version im Quellstand: `versionCode = 8`, `versionName = 0.6.0`.
 - Build 15 war erfolgreich. Build 16 scheiterte zunächst wegen eines falschen `KeyboardOptions`-Imports; der Import wurde auf `androidx.compose.foundation.text.KeyboardOptions` korrigiert.
 - Der Nutzer bestätigte anschließend den erfolgreichen Build 17 und dass die Aktivierung den eingegebenen Key nach App-Neustart speichert.
-- Workflow-Änderung: Release-APK wird mit der laufenden GitHub-Buildnummer benannt (`topf_secret_#<Run-Nummer>.apk`), bevor sie als Actions-Artefakt hochgeladen wird.
+- Workflow-Änderung: Release-APK wird mit der laufenden GitHub-Buildnummer benannt (`topf_secret_#<Run-Nummer>.apk`) und bei manuellem Start als direkter APK-Download in GitHub Releases veröffentlicht.
 - Neues App-Symbol liegt unter `app/src/main/res/drawable-nodpi/topf_secret_app_icon.png`; `AndroidManifest.xml` verweist für `icon` und `roundIcon` auf `@drawable/topf_secret_app_icon`.
 - Das vollständige Startlogo wurde als PNG unter `app/src/main/res/drawable-nodpi/topf_secret_logo.png` hochgeladen; der Kotlin-Ressourcenname bleibt `R.drawable.topf_secret_logo`.
 - Die vorherige JPEG-Datei `topf_secret_logo.jpg` war unvollständig (APK enthielt 7.500 Bytes und der JPEG-Decoder meldete fehlende Bytes am Dateiende). Sie wurde aus `development` entfernt. Die frühere Annahme, die Dateiendung sei alleinige Ursache, war nicht korrekt.
@@ -74,7 +75,7 @@ Stand: 2026-11-26
 
 ## Nächste Schritte
 1. Die vier GitHub Actions Secrets sicher hinterlegen.
-2. Manuellen Workflow starten und signiertes Release-APK bauen.
+2. Manuellen Workflow starten; die signierte APK wird danach im GitHub-Bereich Releases als direkte `.apk`-Datei veröffentlicht.
 3. Nach dem Import-Fix einen neuen signierten Release-Build starten, APK-Signatur prüfen und Aktivierungsseite auf dem Gerät testen; eine Deinstallation nur dann durchführen, wenn die Signatur nicht mit der installierten Version übereinstimmt.
 4. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
 5. Version 0.6.0 in GitHub Actions bauen und auf dem Gerät testen: Hell-/Dunkelmodus über das Symbol oben rechts inklusive Neustart, Kontrast der „Guten Appetit“-Karte, Rezeptzeiten, Nährwerte, Zutatenmengen sowie Anlegen/Bearbeiten/Löschen und Datenpersistenz.
