@@ -264,3 +264,20 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Datenbankmigration 6→7 ergänzt die Bezugsbasis der lokalen Produkte; bestehende Rezepte und Produktdaten bleiben erhalten.
 - Nährwertbasis 100 ml wird für flüssige Zutaten bei der Berechnung als Volumenbasis berücksichtigt. Build/Tests und Gerätetest für die neuen Commits stehen noch aus.
 - Relevante Commits: `0e4f4022`, `a21cbbc7`, `953097df`, `56a03a74`, `79f445d4`, `fd429fac`, `b497093f`.
+
+
+## Verifiziert: Datenbank und Nährwertberechnung (2026-11-26)
+
+- Nutzer hat den aktuellen Android-Build und den Praxistest auf dem Gerät ausdrücklich als erfolgreich bestätigt („Hat alles bestens geklappt“).
+- Room-Datenbank einschließlich Migration 6→7, BLS-4.0-Datenintegration, lokale Produktdaten und Nährwertangaben sind damit als integriert und getestet dokumentiert.
+- Nährwertberechnung für Rezepte einschließlich Gesamtgericht/Portionen sowie Zucker, Ballaststoffe, Salz und gesättigte Fettsäuren wurde vom Nutzer im Gerätetest bestätigt.
+- Eigene Zutaten mit Nährwerten je 100 g/100 ml können dauerhaft lokal gespeichert werden und stehen priorisiert in der Produktsuche.
+- Diese Bestätigung gilt für den vom Nutzer getesteten Build. Der anschließende Online-Rezeptimport ist nur als Konzept/Planung besprochen und noch nicht implementiert.
+
+## Planung: Online-Rezeptsuche und Rezeptübernahme
+
+- Gewünschter Funktionsbereich: öffentliche Rezeptquellen durchsuchen, Rezeptdetails prüfen und – soweit Lizenz/Quelle dies erlaubt – in lokale Topf-Secret-Rezepte übernehmen.
+- Chefkoch nicht automatisch scrapen: die verfügbaren Chefkoch-AGB untersagen automatisches Auslesen und den Aufbau eigener Suchsysteme auf Basis der Seiteninhalte. Chefkoch bietet laut eigener Hilfe private Rezept-/Linkablage und einen Rezeptimport als PLUS-Funktion; eine öffentliche Entwickler-API wurde in der Recherche nicht verifiziert.
+- API-Kandidaten für weitere Prüfung: TheMealDB (öffentliche API, App-Store-Veröffentlichung erfordert Supporter-Key), Spoonacular (Attribution und strenge Cache-/Speicherbeschränkungen), Edamam (Web-Rezeptdaten meist ohne Kochanleitung; Originalquelle verlinken; Lizenz- und Caching-Regeln beachten).
+- Alternative: Teilen eines Rezeptlinks an Topf Secret und Import nur aus explizit freigegebenen Quellen oder über strukturierte Recipe-Daten (Schema.org) mit Quellenlink und manueller Prüfung. Keine unzulässige Übernahme fremder Volltexte/Bilder.
+- Vor Implementierung Anbieterbedingungen, Preise, API-Schlüsselverwaltung und erlaubte lokale Speicherung konkret prüfen.
