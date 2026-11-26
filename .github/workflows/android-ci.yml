@@ -14,8 +14,7 @@ permissions:
 jobs:
   build:
     name: Build signed release APK
-    # Emulator-Instrumentierungstests sind auf neueren GitHub-Runner-Images
-    # zeitweise hängen geblieben. Bis zur Klärung verwenden wir 22.04.
+    # Emulator-Instrumentierungstests werden vorerst auf Ubuntu 22.04 ausgeführt.
     runs-on: ubuntu-22.04
     steps:
       - name: Check out source
@@ -37,6 +36,12 @@ jobs:
         with:
           gradle-version: '8.13'
 
+      - name: Report runner disk space
+        run: |
+          echo "Disk space before Android emulator setup:"
+          df -h /
+          df -h "$HOME"
+
       - name: Run SQLCipher Room instrumentation test
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -44,6 +49,9 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_2
+          disk-size: 6G
+          emulator-boot-timeout: 900
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           disable-animations: true
           script: gradle --no-daemon connectedDebugAndroidTest
 
