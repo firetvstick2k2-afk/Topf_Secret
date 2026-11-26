@@ -85,7 +85,7 @@ class MainActivity : ComponentActivity() {
             var darkMode by rememberSaveable { mutableStateOf(preferences.getBoolean("dark_mode", false)) }
             TopfSecretTheme(darkMode) {
                 ActivationGate {
-                    TopfSecretApp(appContext, repository, darkMode, appVersion) { enabled ->
+                    TopfSecretApp(appContext, repository, productCatalog, darkMode, appVersion) { enabled ->
                         darkMode = enabled
                         preferences.edit().putBoolean("dark_mode", enabled).apply()
                     }
@@ -104,7 +104,7 @@ private fun TopfSecretTheme(darkMode: Boolean, content: @Composable () -> Unit) 
 }
 
 @Composable
-private fun TopfSecretApp(context: Context, repository: RecipeRepository, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit) {
+private fun TopfSecretApp(context: Context, repository: RecipeRepository, productCatalog: LocalFoodProductDao, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var selectedRecipeId by rememberSaveable { mutableLongStateOf(0L) }
     var editingRecipeId by rememberSaveable { mutableLongStateOf(0L) }
@@ -809,7 +809,10 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                 } else {
                     TextButton(onClick = {
                         scope.launch {
-                            productCatalog.save(LocalFoodProductEntity(product.barcode, product.name, product.brand, product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, product.sourceUrl, "Open Food Facts", "UNVERIFIED"))
+                            val existing = productCatalog.findByBarcode(product.barcode)
+                            val quality = if (existing?.quality == "VERIFIED_LOCAL") "VERIFIED_LOCAL" else "UNVERIFIED"
+                            val sourceName = existing?.sourceName ?: "Open Food Facts"
+                            productCatalog.save(LocalFoodProductEntity(product.barcode, product.name, product.brand, product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, product.sourceUrl, sourceName, quality))
                             nutritionByIngredientName[product.name] = product
                             if (ingredients.lines().none { it.contains(product.name, ignoreCase = true) }) {
                                 ingredients = listOf(ingredients.trimEnd(), "100 g " + product.name).filter(String::isNotBlank).joinToString("\\n")
