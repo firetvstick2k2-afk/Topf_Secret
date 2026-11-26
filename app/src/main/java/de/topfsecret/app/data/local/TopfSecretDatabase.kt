@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [RecipeEntity::class, IngredientEntity::class, PreparationStepEntity::class, LocalFoodProductEntity::class, BlsFoodEntity::class], version = 5, exportSchema = true)
+@Database(entities = [RecipeEntity::class, IngredientEntity::class, PreparationStepEntity::class, LocalFoodProductEntity::class, BlsFoodEntity::class], version = 6, exportSchema = true)
 abstract class TopfSecretDatabase : RoomDatabase() {
     abstract fun recipeDao(): RecipeDao
     abstract fun localFoodProductDao(): LocalFoodProductDao
@@ -76,10 +76,22 @@ abstract class TopfSecretDatabase : RoomDatabase() {
                 db.execSQL("ALTER TABLE bls_foods ADD COLUMN note TEXT")
             }
         }
+        private val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE ingredients ADD COLUMN sugarsPer100 REAL")
+                db.execSQL("ALTER TABLE ingredients ADD COLUMN fiberPer100 REAL")
+                db.execSQL("ALTER TABLE ingredients ADD COLUMN saltPer100 REAL")
+                db.execSQL("ALTER TABLE ingredients ADD COLUMN saturatedFatPer100 REAL")
+                db.execSQL("ALTER TABLE local_food_products ADD COLUMN sugarsGPer100 REAL")
+                db.execSQL("ALTER TABLE local_food_products ADD COLUMN fiberGPer100 REAL")
+                db.execSQL("ALTER TABLE local_food_products ADD COLUMN saltGPer100 REAL")
+                db.execSQL("ALTER TABLE local_food_products ADD COLUMN saturatedFatGPer100 REAL")
+            }
+        }
         @Volatile private var INSTANCE: TopfSecretDatabase? = null
         fun getInstance(context: Context): TopfSecretDatabase = INSTANCE ?: synchronized(this) {
             INSTANCE ?: Room.databaseBuilder(context.applicationContext, TopfSecretDatabase::class.java, "topf_secret.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build().also { INSTANCE = it }
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6).build().also { INSTANCE = it }
         }
     }
 }
