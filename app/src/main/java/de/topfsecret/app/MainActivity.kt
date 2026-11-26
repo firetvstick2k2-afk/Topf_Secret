@@ -64,14 +64,15 @@ private val destinations = listOf(
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val repository = RecipeRepository(TopfSecretDatabase.getInstance(applicationContext).recipeDao())
+        val appContext = applicationContext
+        val repository = RecipeRepository(TopfSecretDatabase.getInstance(appContext).recipeDao())
         val preferences = getSharedPreferences("topf_secret_settings", MODE_PRIVATE)
         val appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "Unbekannt"
         setContent {
             var darkMode by rememberSaveable { mutableStateOf(preferences.getBoolean("dark_mode", false)) }
             TopfSecretTheme(darkMode) {
                 ActivationGate {
-                    TopfSecretApp(repository, darkMode, appVersion) { enabled ->
+                    TopfSecretApp(appContext, repository, darkMode, appVersion) { enabled ->
                         darkMode = enabled
                         preferences.edit().putBoolean("dark_mode", enabled).apply()
                     }
@@ -90,7 +91,7 @@ private fun TopfSecretTheme(darkMode: Boolean, content: @Composable () -> Unit) 
 }
 
 @Composable
-private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit) {
+private fun TopfSecretApp(context: Context, repository: RecipeRepository, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var selectedRecipeId by rememberSaveable { mutableLongStateOf(0L) }
     var editingRecipeId by rememberSaveable { mutableLongStateOf(0L) }
@@ -132,7 +133,7 @@ private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, appVe
                                 scope.launch {
                                     val newId = repository.saveRecipe(entity, ingredients, steps)
                                     if (editing != null && editing.recipe.imageUri != entity.imageUri) {
-                                        deleteManagedRecipeImage(this@MainActivity@onCreate, editing.recipe.imageUri)
+                                        deleteManagedRecipeImage(context, editing.recipe.imageUri)
                                     }
                                     editingRecipeId = 0L
                                     selectedRecipeId = newId
