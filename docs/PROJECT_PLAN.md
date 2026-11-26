@@ -350,3 +350,9 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Erststart fragt nach dem Vornamen; lokale Speicherung auf dem Gerät, keine Übermittlung an einen Server.
 - Startseite begrüßt abhängig von der lokalen Uhrzeit mit Morgen-, Tages-, Abend- oder Nachtgruß und dem gespeicherten Namen.
 - In Version 0.9.6 / versionCode 22 umgesetzt; CI-Build und Gerätetest stehen aus. Option zur späteren Namensänderung in Einstellungen als möglicher Folgeschritt.
+
+
+### H.3 Build-Fix: ML-Kit-Import (2026-11-27)
+- CI-Build #55 scheiterte bei der Kotlin-Kompilierung, weil `DownloadConditions` aus dem falschen Paket importiert wurde.
+- Korrektur auf `com.google.mlkit.common.model.DownloadConditions`; ML Kit Translation bleibt Version `17.0.3`.
+- Keine Änderung an App-Version, Datenbank oder Rezeptdaten. Fix committed auf `development`; erneuter CI-Build und Gerätetest offen.
