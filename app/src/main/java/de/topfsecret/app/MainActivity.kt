@@ -478,7 +478,8 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
     var carbs by rememberSaveable(original?.id) { mutableStateOf(original?.carbohydratesPerServing?.toString().orEmpty()) }
     var protein by rememberSaveable(original?.id) { mutableStateOf(original?.proteinPerServing?.toString().orEmpty()) }
     var fat by rememberSaveable(original?.id) { mutableStateOf(original?.fatPerServing?.toString().orEmpty()) }
-    var ingredients by rememberSaveable(original?.id) { mutableStateOf(recipe?.ingredients?.sortedBy { it.position }?.joinToString("\n") { listOf(it.amount, it.name).filter(String::isNotBlank).joinToString(" ") }.orEmpty()) }
+    var ingredientsField by rememberSaveable(original?.id, stateSaver = TextFieldValue.Saver) { mutableStateOf(TextFieldValue(recipe?.ingredients?.sortedBy { it.position }?.joinToString("\n") { listOf(it.amount, it.name).filter(String::isNotBlank).joinToString(" ") }.orEmpty())) }
+    val ingredients = ingredientsField.text
     var steps by rememberSaveable(original?.id) { mutableStateOf(recipe?.steps?.sortedBy { it.position }?.joinToString("\n") { it.instruction }.orEmpty()) }
     var error by rememberSaveable(original?.id) { mutableStateOf(false) }
     var imageUri by rememberSaveable(original?.id) { mutableStateOf(original?.imageUri.orEmpty()) }
@@ -689,7 +690,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
             }) { Text("Produkt suchen") }
             }
         }
-        OutlinedTextField(ingredients, { ingredients = it.replace("\\n", "\n") }, Modifier.fillMaxWidth(), label = { Text("Zutaten – eine pro Zeile") }, placeholder = { Text("z. B. 500 g Kartoffeln\n1 Zwiebel") }, minLines = 4)
+        OutlinedTextField(value = ingredientsField, onValueChange = { ingredientsField = it.copy(text = it.text.replace("\\\\n", "\n")) }, modifier = Modifier.fillMaxWidth(), label = { Text("Zutaten – eine pro Zeile") }, placeholder = { Text("z. B. 500 g Kartoffeln\n1 Zwiebel") }, minLines = 4)
         if (barcodeError.isNotBlank()) Text(barcodeError, color = Color(0xFFB3261E), style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(steps, { steps = it }, Modifier.fillMaxWidth(), label = { Text("Zubereitung – ein Schritt pro Zeile") }, placeholder = { Text("Kartoffeln schälen und würfeln.\nZwiebel glasig anbraten.") }, minLines = 4)
@@ -835,7 +836,10 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                 TextButton(enabled = productSearchQuery.isNotBlank() && !productSearchLoading, onClick = {
                     val name = productSearchQuery.trim()
                     val existing = ingredients.lines().map(String::trim).filter(String::isNotBlank)
-                    if (existing.none { it.endsWith(name, ignoreCase = true) }) ingredients = (existing + name).joinToString("\n")
+                    if (existing.none { it.endsWith(name, ignoreCase = true) }) {
+                        val updated = (existing + name).joinToString("\n") + "\n"
+                        ingredientsField = TextFieldValue(updated, androidx.compose.ui.text.TextRange(updated.length))
+                    }
                     showProductSearch = false
                 }) { Text("Zutat ohne Produktdaten übernehmen") }
             },
@@ -901,7 +905,8 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                             }
                             nutritionByIngredientName[product.name] = product
                             if (ingredients.lines().none { it.contains(product.name, ignoreCase = true) }) {
-                                ingredients = listOf(ingredients.trimEnd(), "100 g " + product.name).filter(String::isNotBlank).joinToString("\n")
+                                val updated = listOf(ingredients.trimEnd(), "100 g " + product.name).filter(String::isNotBlank).joinToString("\n") + "\n"
+                                ingredientsField = TextFieldValue(updated, androidx.compose.ui.text.TextRange(updated.length))
                             }
                             scannedProduct = null
                         }
