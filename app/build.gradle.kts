@@ -15,6 +15,7 @@ android {
         targetSdk = 36
         versionCode = 8
         versionName = "0.6.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
@@ -58,7 +59,11 @@ dependencies {
     val roomVersion = "2.8.3"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
+    implementation("androidx.sqlite:sqlite:2.7.0")
+    implementation("net.zetetic:sqlcipher-android:4.20.0@aar")
     kapt("androidx.room:room-compiler:$roomVersion")
 
     testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test:runner:1.7.0")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
 }
