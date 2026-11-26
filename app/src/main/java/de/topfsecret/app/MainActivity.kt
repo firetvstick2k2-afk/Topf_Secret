@@ -592,8 +592,11 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                     .addOnSuccessListener { barcode ->
                         val code = barcode.rawValue
                         if (code.isNullOrBlank()) {
-                            barcodeError = "Kein Barcode erkannt."
+                            barcodeError = "Kein Barcode erkannt. Du kannst das Produkt stattdessen suchen."
                             barcodeLoading = false
+                            productSearchQuery = ""
+                            productSearchMessage = barcodeError
+                            showProductSearch = true
                         } else scope.launch {
                             OpenFoodFactsClient.lookupBarcode(code).fold(
                                 onSuccess = { scannedProduct = it; barcodeLoading = false },
@@ -605,6 +608,9 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                     .addOnFailureListener { error ->
                         barcodeError = error.message ?: "Der Barcode-Scanner konnte nicht gestartet werden."
                         barcodeLoading = false
+                        productSearchQuery = ""
+                        productSearchMessage = barcodeError
+                        showProductSearch = true
                     }
             }) { Text(if (barcodeLoading) "Suche…" else "Barcode scannen") }
             OutlinedButton(onClick = {
