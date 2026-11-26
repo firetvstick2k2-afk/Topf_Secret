@@ -240,3 +240,14 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - API-Kandidaten: TheMealDB, Spoonacular, Edamam; vor Auswahl sind aktuelle Lizenz-, Attribution-, Preis- und Caching-Regeln zu prüfen.
 - Alternativ Share-to-App/URL-Import über erlaubte strukturierte Recipe-Daten (Schema.org), mit Quelllink, manueller Kontrolle und ohne unzulässige Volltext-/Bildkopie.
 - Noch nicht implementiert; zunächst Quelle und erlaubtes Importmodell auswählen.
+
+
+### G.10 Online-Rezeptimport – MVP implementiert, Test offen (2026-11-26)
+- Rezeptübersicht enthält den Einstieg „Online-Rezept über Link importieren“.
+- Eingabe einer Rezeptseiten-URL; der Importer liest strukturierte Schema.org/Recipe-JSON-LD-Daten. Vorschau mit Titel, Beschreibung, Portionen, Zeiten, Zutaten und Zubereitung; Nutzer bestätigt vor dem Speichern.
+- Quelle wird in RecipeEntity.sourceUrl festgehalten. Keine Kopie des Originalbildes oder des vollständigen Seitentextes.
+- Zutatenabgleich mit lokalem Produktkatalog und BLS 4.0 bei exakter Namensübereinstimmung; nicht zugeordnete Zutaten bleiben zur späteren Bearbeitung erhalten.
+- Kein Chefkoch-spezifisches Scraping und noch keine externe Rezept-API. Nicht jede Webseite bietet maschinenlesbare Recipe-Daten; UI weist auf diese Einschränkung hin.
+- Technische Schutzmaßnahmen: nur HTTP(S), Timeout, max. 1.5 MB, HTTP-Statusprüfung; keine zusätzliche Library.
+- Version 0.7.0 / versionCode 12.
+- **Status: implementiert, aber nicht gebaut/getestet.** Vor Nutzerfreigabe Android-CI und Gerätetest durchführen und mehrere echte Rezeptseiten prüfen.
