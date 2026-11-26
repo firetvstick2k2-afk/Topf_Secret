@@ -37,7 +37,7 @@ class RecipeRepository(private val recipeDao: RecipeDao) {
                 fiberPer100 = product?.fiberGPer100,
                 saltPer100 = product?.saltGPer100,
                 saturatedFatPer100 = product?.saturatedFatGPer100,
-                nutritionBasis = "100g",
+                nutritionBasis = product?.nutritionBasis ?: "100g",
                 nutritionSource = product?.sourceUrl
             )
         }
