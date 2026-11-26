@@ -14,9 +14,9 @@ Stand: 2026-11-26
 ## Aktueller Stand
 - Android-Projektgrundgerüst mit Kotlin, Jetpack Compose und API-26-Mindestziel.
 - Erste App-Struktur umgesetzt: Startseite im warmen Creme-/Kupfer-/Dunkelbraun-Design und Bottom-Navigation für Start, Rezepte, Kategorien und Favoriten.
-- Die Startseite zeigt das Topf-Secret-Logo, Begrüßung, Markenbereich und Navigationseinstiege. Der Rezepte-Bereich ist mit der lokalen Datenbank verbunden. Die Kategorieansicht listet jetzt alle tatsächlich verwendeten Kategorien samt Rezeptanzahl und öffnet die jeweilige gefilterte Rezeptliste.
+- Die Startseite zeigt das Topf-Secret-Logo, Begrüßung, Markenbereich und Navigationseinstiege. Der Rezepte-Bereich ist mit der lokalen Datenbank verbunden. Die Kategorieansicht listet alle tatsächlich verwendeten Kategorien samt Rezeptanzahl und öffnet die jeweilige gefilterte Rezeptliste. Die Favoritenansicht zeigt alle als Favorit markierten Rezepte; ein Eintrag öffnet die zugehörige Rezeptdetailansicht.
 - Navigation nutzt Compose-Zustand und benötigt noch keine zusätzliche Navigation-Bibliothek.
-- Rezepteditor erweitert: Vorbereitungszeit und Kochzeit sowie kcal, Kohlenhydrate, Eiweiß und Fett je Portion können optional erfasst und in der Detailansicht angezeigt werden. Nährwerte werden ausdrücklich als Richtwerte gekennzeichnet.
+- Rezepteditor erweitert: Vorbereitungszeit und Kochzeit sowie kcal, Kohlenhydrate, Eiweiß und Fett je Portion können optional erfasst und in der Detailansicht angezeigt werden. Diese Felder sind keine Pflichtfelder; Nährwerte werden ausdrücklich als Richtwerte gekennzeichnet.
 - Zutatenzeilen erkennen einfache Mengen-/Einheitenangaben am Zeilenanfang (z. B. `500 g Kartoffeln`, `2 EL Öl`) und speichern Menge und Zutatenname getrennt. Beim Bearbeiten werden beide Bestandteile wieder zusammengesetzt.
 - Hell-/Dunkelmodus ist über ein Symbol oben rechts in der Kopfzeile umstellbar (Mond/Sonne). Die Auswahl wird lokal in den App-Einstellungen gespeichert und bleibt nach einem Neustart erhalten.
 - Die Startseiten-Karte „Guten Appetit“ verwendet im Hell- und Dunkelmodus jeweils einen kontrastreichen dunklen Braunton mit heller Schrift; sie übernimmt nicht mehr versehentlich die dynamische Textfarbe als Hintergrund.
@@ -79,7 +79,7 @@ Stand: 2026-11-26
 3. Nach dem Import-Fix einen neuen signierten Release-Build starten, APK-Signatur prüfen und Aktivierungsseite auf dem Gerät testen; eine Deinstallation nur dann durchführen, wenn die Signatur nicht mit der installierten Version übereinstimmt.
 4. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
 5. Version 0.6.0 in GitHub Actions bauen und auf dem Gerät testen: Hell-/Dunkelmodus über das Symbol oben rechts inklusive Neustart, Kontrast der „Guten Appetit“-Karte, Rezeptzeiten, Nährwerte, Zutatenmengen sowie Anlegen/Bearbeiten/Löschen und Datenpersistenz.
-6. Rezept-Suche, Kategorienübersicht und Kategorienfilter sind im Quellstand umgesetzt; GitHub-Actions-Build und Gerätetest stehen noch aus.
+6. Rezept-Suche, Kategorienübersicht, Kategorienfilter und Favoritenübersicht sind im Quellstand umgesetzt; GitHub-Actions-Build und Gerätetest stehen noch aus.
 7. PIN-Sperre implementieren und testen.
 
 ## Letzter Hinweis
