@@ -327,7 +327,11 @@ private fun RecipeListScreen(
             } else visibleRecipes.forEach { item ->
                 Card(onClick = { onOpen(item.recipe.id) }, modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
                     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(if (item.recipe.isFavorite) "❤️" else "🍽️", fontSize = 27.sp)
+                        if (!item.recipe.imageUri.isNullOrBlank()) {
+                            RecipePhoto(item.recipe.imageUri, Modifier.size(58.dp))
+                        } else {
+                            Text(if (item.recipe.isFavorite) "❤️" else "🍽️", fontSize = 27.sp)
+                        }
                         Spacer(Modifier.width(14.dp))
                         Column(Modifier.weight(1f)) {
                             Text(item.recipe.title, color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
