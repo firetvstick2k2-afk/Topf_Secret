@@ -1,8 +1,8 @@
 package de.topfsecret.app
 
 import android.os.Bundle
-import com.google.android.gms.mlkit.codescanner.GmsBarcodeScanning
-import com.google.android.gms.mlkit.codescanner.GmsBarcodeScannerOptions
+import com.google.mlkit.vision.codescanner.GmsBarcodeScanning
+import com.google.mlkit.vision.codescanner.GmsBarcodeScannerOptions
 import com.google.mlkit.vision.barcode.common.Barcode
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
