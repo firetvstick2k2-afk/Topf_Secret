@@ -135,3 +135,13 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - BLS-Integration: Daten lokal/offline durchsuchbar machen; deutsche Lebensmittelbezeichnungen und Nährwerte übernehmen; Datenherkunft und fehlende Werte erhalten; Quellenstatus in der Zutaten-/Nährwertansicht anzeigen.
 - Vor Veröffentlichung der BLS-Datenintegration Lizenzhinweise exakt umsetzen, Änderungen/Aufbereitungen kennzeichnen und klarstellen, dass das Max Rubner-Institut Topf Secret nicht unterstützt oder geprüft hat. Open-Food-Facts-ODbL-Anforderungen separat behandeln.
 - Status: Menü und Quellen-/Danksagungsseite auf development angelegt; Build und Gerätetest ausstehend. Der eigentliche BLS-Datenimport ist noch nicht implementiert.
+
+
+## H. Quellen, Lizenzen und BLS-Import
+- Startseiten-Drei-Striche-Menü führt zur Seite „Quellen & Danksagungen“; Quellenkarten nennen BLS 4.0/Max Rubner-Institut, Open Food Facts/ODbL und Wikimedia Commons mit dateispezifischen Bildlizenzen. Weitere Quellen und Personen können ergänzt werden; Personen nur mit Zustimmung.
+- BLS 4.0: lokale Room-Tabelle `bls_foods`, Schema v4, Migration 3→4. XLSX-Import aus der offiziellen, vom Nutzer ausgewählten Datei. Importer liest `xl/sharedStrings.xml` und `xl/worksheets/sheet1.xml`, erkennt BLS-Code, deutsche/englische Bezeichnung sowie ENERCC, PROT625, CHO und FAT. Zu den vier gespeicherten Nährwerten bleiben die jeweiligen Datenherkunfts- und Referenzfelder erhalten. Fehlende/nichtnumerische Werte bleiben null.
+- Die Rezept-Zutatensuche bietet BLS-Dateiimport und lokale BLS-Suche. Auswahl übernimmt BLS-Grundnahrungsmittel mit Nährwerten je 100 g; BLS-Codes werden als BLS-Code statt als Barcode gekennzeichnet. BLS-Treffer werden nicht als OFF-Barcodeprodukt gespeichert.
+- Begrenzung des ersten Schritts: 4 von 138 Nährstoffen werden in die aktuelle Room-Suche übernommen (kcal, Protein, verfügbare Kohlenhydrate, Fett). Die vollständige 138-Komponenten-Übernahme ist noch nicht umgesetzt.
+- Offizielle BLS-Dokumentation: 7.140 Lebensmittel, 138 Nährstoffe, je Nährstoff Wert plus Datenherkunft plus Referenz; CC BY 4.0 und MRI-Zitierangabe. Die Lizenzseite nennt Max Rubner-Institut als Herausgeber. Vor Release Import anhand der offiziellen XLSX-Datei prüfen und Quellen-/Änderungshinweis beibehalten.
+- Android CI startet jetzt automatisch bei Push auf `development`; GitHub Release bleibt manuell.
+- Build und Gerätetest der neuen Datenbankmigration, XLSX-Import- und Suchfunktion stehen noch aus.
