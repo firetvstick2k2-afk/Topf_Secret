@@ -16,12 +16,17 @@ Stand: 2026-11-26
 - Erste App-Struktur umgesetzt: Startseite im warmen Creme-/Kupfer-/Dunkelbraun-Design und Bottom-Navigation für Start, Rezepte, Kategorien und Favoriten.
 - Die Startseite zeigt das Topf-Secret-Logo, Begrüßung, Markenbereich und Navigationseinstiege. Der Rezepte-Bereich ist jetzt mit der lokalen Datenbank verbunden; Kategorien sind noch ein Platzhalter und Favoriten können in der Rezeptdetailansicht markiert werden.
 - Navigation nutzt Compose-Zustand und benötigt noch keine zusätzliche Navigation-Bibliothek.
+- Rezepteditor erweitert: Vorbereitungszeit und Kochzeit sowie kcal, Kohlenhydrate, Eiweiß und Fett je Portion können optional erfasst und in der Detailansicht angezeigt werden. Nährwerte werden ausdrücklich als Richtwerte gekennzeichnet.
+- Zutatenzeilen erkennen einfache Mengen-/Einheitenangaben am Zeilenanfang (z. B. `500 g Kartoffeln`, `2 EL Öl`) und speichern Menge und Zutatenname getrennt. Beim Bearbeiten werden beide Bestandteile wieder zusammengesetzt.
+- Hell-/Dunkelmodus ist über einen Schalter auf der Startseite umstellbar. Die Auswahl wird lokal in den App-Einstellungen gespeichert und bleibt nach einem Neustart erhalten.
+- Für diese Erweiterung war keine Room-Schemaänderung nötig; Datenbankversion 1 bleibt bestehen.
+- Der Quellstand wurde auf Version 0.6.0 (`versionCode = 8`) angehoben. Build und Gerätetest für diese Erweiterung stehen noch aus.
 - Room `2.8.3` ist eingebunden (Kotlin KAPT als Compiler-Anbindung). Die lokale Datenbank `topf_secret.db` wird bei Bedarf über `TopfSecretDatabase.getInstance(context)` erstellt.
 - Datenmodell v1: `RecipeEntity` mit Titel, Beschreibung, Kategorie, Portionen, Zeiten, Bild-/Quellen-URI, Notizen, optionalen Nährwert-Schätzwerten pro Portion, Favoritenstatus und Zeitstempeln. Zutaten (`IngredientEntity`) und Zubereitungsschritte (`PreparationStepEntity`) sind normalisiert und per Fremdschlüssel mit Cascade Delete verknüpft.
 - `RecipeDao` bietet Flow-Beobachtung aller Rezepte, einzelner Rezepte und Kategorien sowie transaktionales Speichern mit Ersetzen der Zutaten und Schritte. Der Rezepte-Bereich ist mit Room verbunden; Rezeptliste, Detailansicht und Eingabemaske unterstützen den ersten lokalen CRUD-Ablauf. Migrationen über Datenbankversion 1 hinaus sind noch nicht umgesetzt.
 - Pushes auf `development` lösen keinen Build mehr aus. Builds werden manuell über GitHub Actions → Android CI → Run workflow gestartet. Pull Requests gegen `development` lösen weiterhin automatisch einen Build aus.
 - CI erstellt ein signiertes Release-APK. Vor dem Upload wird es nach dem GitHub-Workflow-Build nummeriert umbenannt, z. B. `topf_secret_#18.apk`. Das Actions-Artefakt trägt denselben Namen ohne `.apk` und wird 14 Tage aufbewahrt. GitHub verpackt herunterladbare Actions-Artefakte technisch weiterhin in ein ZIP; darin liegt die direkt installierbare APK mit dem genannten Dateinamen.
-- Aktuelle App-Version im Quellstand: `versionCode = 7`, `versionName = 0.5.0`.
+- Aktuelle App-Version im Quellstand: `versionCode = 8`, `versionName = 0.6.0`.
 - Build 15 war erfolgreich. Build 16 scheiterte zunächst wegen eines falschen `KeyboardOptions`-Imports; der Import wurde auf `androidx.compose.foundation.text.KeyboardOptions` korrigiert.
 - Der Nutzer bestätigte anschließend den erfolgreichen Build 17 und dass die Aktivierung den eingegebenen Key nach App-Neustart speichert.
 - Workflow-Änderung: Release-APK wird mit der laufenden GitHub-Buildnummer benannt (`topf_secret_#<Run-Nummer>.apk`), bevor sie als Actions-Artefakt hochgeladen wird.
@@ -71,10 +76,9 @@ Stand: 2026-11-26
 2. Manuellen Workflow starten und signiertes Release-APK bauen.
 3. Nach dem Import-Fix einen neuen signierten Release-Build starten, APK-Signatur prüfen und Aktivierungsseite auf dem Gerät testen; eine Deinstallation nur dann durchführen, wenn die Signatur nicht mit der installierten Version übereinstimmt.
 4. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
-5. Rezeptverwaltung mit Room ist angebunden; Build und Geräteeinsatz testen, insbesondere Anlegen/Bearbeiten/Löschen und App-Neustart/Persistenz.
-6. Rezeptmodell um Mengen-/Einheitenfelder, Zeiten und Nährwert-Eingabe erweitern.
-7. Suche, Filter und Kategorien mit den gespeicherten Rezepten verbinden.
-8. PIN-Sperre implementieren und testen.
+5. Version 0.6.0 in GitHub Actions bauen und auf dem Gerät testen: Hell-/Dunkelmodus inklusive Neustart, Rezeptzeiten, Nährwerte, Zutatenmengen sowie Anlegen/Bearbeiten/Löschen und Datenpersistenz.
+6. Suche, Filter und Kategorien mit den gespeicherten Rezepten verbinden.
+7. PIN-Sperre implementieren und testen.
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
