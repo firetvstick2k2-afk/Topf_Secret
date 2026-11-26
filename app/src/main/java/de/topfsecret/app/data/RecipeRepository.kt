@@ -25,10 +25,12 @@ class RecipeRepository(
             .map(String::trim)
             .filter(String::isNotEmpty)
             .mapIndexed { index, line ->
+                val match = Regex("""^(\d+(?:[.,]\d+)?\s*(?:kg|g|mg|l|ml|cl|EL|TL|Stk\.?|Prise|Pck\.?|Bund|Dose|Tasse|Becher)?)(?:\s+)(.+)$""", RegexOption.IGNORE_CASE).matchEntire(line)
                 IngredientEntity(
                     recipeId = recipe.id,
                     position = index,
-                    name = line
+                    amount = match?.groupValues?.get(1)?.trim().orEmpty(),
+                    name = match?.groupValues?.get(2)?.trim() ?: line
                 )
             }
 
