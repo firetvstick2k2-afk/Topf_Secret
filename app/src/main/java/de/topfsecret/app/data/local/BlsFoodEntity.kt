@@ -3,11 +3,12 @@ package de.topfsecret.app.data.local
 import androidx.room.Dao
 import androidx.room.Entity
 import androidx.room.Insert
+import androidx.room.Index
 import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import androidx.room.Query
 
-@Entity(tableName = "bls_foods")
+@Entity(tableName = "bls_foods", indices = [Index(value = ["germanName"])])
 data class BlsFoodEntity(
     @PrimaryKey val code: String,
     val germanName: String,
