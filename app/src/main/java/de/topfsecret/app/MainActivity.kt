@@ -503,7 +503,8 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                         sugarsGPer100 = item.sugarsPer100,
                         fiberGPer100 = item.fiberPer100,
                         saltGPer100 = item.saltPer100,
-                        saturatedFatGPer100 = item.saturatedFatPer100
+                        saturatedFatGPer100 = item.saturatedFatPer100,
+                        nutritionBasis = item.nutritionBasis
                     ))
                 }
             }
@@ -515,6 +516,18 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
     var barcodeError by remember { mutableStateOf("") }
     var barcodeLoading by remember { mutableStateOf(false) }
     var showProductSearch by remember { mutableStateOf(false) }
+    var showCustomIngredientDialog by remember { mutableStateOf(false) }
+    var customIngredientName by remember { mutableStateOf("") }
+    var customIngredientBrand by remember { mutableStateOf("") }
+    var customIngredientBasis by remember { mutableStateOf("100g") }
+    var customKcal by remember { mutableStateOf("") }
+    var customCarbs by remember { mutableStateOf("") }
+    var customSugar by remember { mutableStateOf("") }
+    var customFiber by remember { mutableStateOf("") }
+    var customProtein by remember { mutableStateOf("") }
+    var customFat by remember { mutableStateOf("") }
+    var customSatFat by remember { mutableStateOf("") }
+    var customSalt by remember { mutableStateOf("") }
     var productSearchQuery by remember { mutableStateOf("") }
     var productSearchResults by remember { mutableStateOf<List<OpenFoodFactsProduct>>(emptyList()) }
     var productSearchLoading by remember { mutableStateOf(false) }
@@ -547,7 +560,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                 key.contains(name, ignoreCase = true) || name.contains(key, ignoreCase = true)
             }?.value
             if (product == null) { issues += line to "Für diese Zutat liegen keine Nährwertdaten vor."; return@forEach }
-            val nutrition = NutritionPer100(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, IngredientMeasureConverter.Basis.GRAMS, product.sugarsGPer100, product.fiberGPer100, product.saltGPer100, product.saturatedFatGPer100)
+            val nutrition = NutritionPer100(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, if (product.nutritionBasis == "100ml") IngredientMeasureConverter.Basis.MILLILITRES else IngredientMeasureConverter.Basis.GRAMS, product.sugarsGPer100, product.fiberGPer100, product.saltGPer100, product.saturatedFatGPer100, product.nutritionBasis)
             val result = nutrition.forAmount(quantity, unit, name)
             if (result == null) issues += line to if (unit.lowercase(java.util.Locale.GERMAN) in setOf("stück", "stk", "stk.")) "Aufgrund der Mengenangabe nicht berechenbar: Stückgewicht fehlt." else "Die Einheit '$unit' hat kein hinterlegtes Referenzgewicht und kann deshalb nicht berechnet werden."
             else if (listOf(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100).all { it == null }) issues += line to "Für diese Zutat fehlen verwertbare Grundnährwerte."
@@ -633,16 +646,15 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
             Text("Das Bild konnte nicht übernommen werden. Bitte erneut versuchen.", color = Color(0xFFB3261E), style = MaterialTheme.typography.bodySmall)
         }
         Spacer(Modifier.height(10.dp))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Zutaten", color = Ink, fontWeight = FontWeight.Bold)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(enabled = !barcodeLoading, onClick = {
+        Text("Zutaten", color = Ink, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            OutlinedButton(enabled = !barcodeLoading, modifier = Modifier.weight(1f), onClick = {
                 barcodeError = ""
                 barcodeLoading = true
                 val options = GmsBarcodeScannerOptions.Builder()
                     .setBarcodeFormats(Barcode.FORMAT_EAN_13, Barcode.FORMAT_EAN_8, Barcode.FORMAT_UPC_A, Barcode.FORMAT_UPC_E)
-                    .enableAutoZoom()
-                    .build()
+                    .enableAutoZoom().build()
                 GmsBarcodeScanning.getClient(context, options).startScan()
                     .addOnSuccessListener { barcode ->
                         val code = barcode.rawValue
@@ -655,42 +667,25 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                         } else scope.launch {
                             val saved = productCatalog.findByBarcode(code)
                             if (saved != null) {
-                                scannedProduct = OpenFoodFactsProduct(saved.barcode, saved.name, saved.brand, saved.caloriesKcalPer100, saved.carbohydratesGPer100, saved.proteinGPer100, saved.fatGPer100, saved.sourceUrl, saved.sugarsGPer100, saved.fiberGPer100, saved.saltGPer100, saved.saturatedFatGPer100)
+                                scannedProduct = OpenFoodFactsProduct(saved.barcode, saved.name, saved.brand, saved.caloriesKcalPer100, saved.carbohydratesGPer100, saved.proteinGPer100, saved.fatGPer100, saved.sourceUrl, saved.sugarsGPer100, saved.fiberGPer100, saved.saltGPer100, saved.saturatedFatGPer100, saved.nutritionBasis)
                                 barcodeLoading = false
                             } else {
                                 OpenFoodFactsClient.lookupBarcode(code).fold(
-                                    onSuccess = {
-                                        barcodeLoading = false
-                                        if (it.hasNutrition) {
-                                            scannedProduct = it
-                                        } else {
-                                            productSearchQuery = it.name
-                                            productSearchMessage = "Produkt erkannt, aber es fehlen Nährwerte. Suche nach einer anderen Marke oder Variante."
-                                            showProductSearch = true
-                                        }
-                                    },
+                                    onSuccess = { barcodeLoading = false; if (it.hasNutrition) scannedProduct = it else { productSearchQuery = it.name; productSearchMessage = "Produkt erkannt, aber es fehlen Nährwerte."; showProductSearch = true } },
                                     onFailure = { barcodeError = it.message ?: "Produkt konnte nicht geladen werden."; barcodeLoading = false; productSearchQuery = ""; productSearchMessage = barcodeError; showProductSearch = true }
                                 )
                             }
                         }
                     }
                     .addOnCanceledListener { barcodeLoading = false }
-                    .addOnFailureListener { error ->
-                        barcodeError = error.message ?: "Der Barcode-Scanner konnte nicht gestartet werden."
-                        barcodeLoading = false
-                        productSearchQuery = ""
-                        productSearchMessage = barcodeError
-                        showProductSearch = true
-                    }
-            }) { Text(if (barcodeLoading) "Suche…" else "Barcode scannen") }
-            OutlinedButton(onClick = {
-                productSearchQuery = ""
-                productSearchResults = emptyList()
-                productSearchMessage = ""
-                showProductSearch = true
+                    .addOnFailureListener { error -> barcodeError = error.message ?: "Der Barcode-Scanner konnte nicht gestartet werden."; barcodeLoading = false; productSearchQuery = ""; productSearchMessage = barcodeError; showProductSearch = true }
+            }) { Text(if (barcodeLoading) "Scanne…" else "Barcode scannen") }
+            OutlinedButton(modifier = Modifier.weight(1f), onClick = {
+                productSearchQuery = ""; productSearchResults = emptyList(); productSearchMessage = ""; showProductSearch = true
             }) { Text("Produkt suchen") }
-            }
+            OutlinedButton(modifier = Modifier.weight(1f), onClick = { showCustomIngredientDialog = true }) { Text("Zutat hinzufügen") }
         }
+        Spacer(Modifier.height(8.dp))
         OutlinedTextField(value = ingredientsField, onValueChange = { ingredientsField = it.copy(text = it.text.replace("\\\\n", "\n")) }, modifier = Modifier.fillMaxWidth(), label = { Text("Zutaten – eine pro Zeile") }, placeholder = { Text("z. B. 500 g Kartoffeln\n1 Zwiebel") }, minLines = 4)
         if (barcodeError.isNotBlank()) Text(barcodeError, color = Color(0xFFB3261E), style = MaterialTheme.typography.bodySmall)
         Spacer(Modifier.height(10.dp))
@@ -797,7 +792,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                                 }
                             }.onSuccess { blsProducts ->
                                 val localResults = productCatalog.search(productSearchQuery).map {
-                                    OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl, it.sugarsGPer100, it.fiberGPer100, it.saltGPer100, it.saturatedFatGPer100)
+                                    OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl, it.sugarsGPer100, it.fiberGPer100, it.saltGPer100, it.saturatedFatGPer100, it.nutritionBasis)
                                 }
                                 OpenFoodFactsClient.searchProducts(productSearchQuery).fold(
                                     onSuccess = { remote ->
@@ -814,7 +809,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                                 )
                             }.onFailure { error ->
                                 val localResults = productCatalog.search(productSearchQuery).map {
-                                    OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl)
+                                    OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl, it.sugarsGPer100, it.fiberGPer100, it.saltGPer100, it.saturatedFatGPer100, it.nutritionBasis)
                                 }
                                 productSearchResults = localResults
                                 productSearchMessage = "BLS konnte nicht geladen werden: ${error.message ?: "unbekannter Fehler"}"
@@ -851,6 +846,55 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                 }) { Text("Zutat ohne Produktdaten übernehmen") }
             },
             dismissButton = { TextButton(onClick = { showProductSearch = false }) { Text("Schließen") } }
+        )
+    }
+    if (showCustomIngredientDialog) {
+        AlertDialog(
+            onDismissRequest = { showCustomIngredientDialog = false },
+            title = { Text("Eigene Zutat hinzufügen") },
+            text = {
+                Column(Modifier.heightIn(max = 520.dp).verticalScroll(rememberScrollState())) {
+                    Text("Speichert die Zutat dauerhaft auf diesem Gerät. Du findest sie später wieder unter „Produkt suchen“.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    OutlinedTextField(customIngredientName, { customIngredientName = it }, Modifier.fillMaxWidth(), label = { Text("Name der Zutat *") }, singleLine = true)
+                    OutlinedTextField(customIngredientBrand, { customIngredientBrand = it }, Modifier.fillMaxWidth(), label = { Text("Marke / Hersteller (optional)") }, singleLine = true)
+                    Spacer(Modifier.height(8.dp))
+                    Text("Nährwerte beziehen sich auf:", color = Ink, fontWeight = FontWeight.SemiBold)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FilterChip(selected = customIngredientBasis == "100g", onClick = { customIngredientBasis = "100g" }, label = { Text("100 g") })
+                        FilterChip(selected = customIngredientBasis == "100ml", onClick = { customIngredientBasis = "100ml" }, label = { Text("100 ml") })
+                    }
+                    Text("Bitte Werte von der Verpackung je 100 g bzw. 100 ml übernehmen. Bei festen Lebensmitteln meist 100 g, bei Getränken meist 100 ml. Fehlende Angaben leer lassen.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    OutlinedTextField(customKcal, { customKcal = it }, Modifier.fillMaxWidth(), label = { Text("Energie (kcal)") }, singleLine = true)
+                    OutlinedTextField(customCarbs, { customCarbs = it }, Modifier.fillMaxWidth(), label = { Text("Kohlenhydrate (g)") }, singleLine = true)
+                    OutlinedTextField(customSugar, { customSugar = it }, Modifier.fillMaxWidth(), label = { Text("davon Zucker (g)") }, singleLine = true)
+                    OutlinedTextField(customFiber, { customFiber = it }, Modifier.fillMaxWidth(), label = { Text("Ballaststoffe (g)") }, singleLine = true)
+                    OutlinedTextField(customProtein, { customProtein = it }, Modifier.fillMaxWidth(), label = { Text("Eiweiß (g)") }, singleLine = true)
+                    OutlinedTextField(customFat, { customFat = it }, Modifier.fillMaxWidth(), label = { Text("Fett (g)") }, singleLine = true)
+                    OutlinedTextField(customSatFat, { customSatFat = it }, Modifier.fillMaxWidth(), label = { Text("davon gesättigte Fettsäuren (g)") }, singleLine = true)
+                    OutlinedTextField(customSalt, { customSalt = it }, Modifier.fillMaxWidth(), label = { Text("Salz (g)") }, singleLine = true)
+                }
+            },
+            confirmButton = {
+                TextButton(enabled = customIngredientName.isNotBlank(), onClick = {
+                    val name = customIngredientName.trim()
+                    val code = "CUSTOM:" + UUID.randomUUID().toString()
+                    val source = "local://custom"
+                    val product = OpenFoodFactsProduct(code, name, customIngredientBrand.trim().ifBlank { null },
+                        customKcal.toDecimalOrNull(), customCarbs.toDecimalOrNull(), customProtein.toDecimalOrNull(), customFat.toDecimalOrNull(),
+                        source, customSugar.toDecimalOrNull(), customFiber.toDecimalOrNull(), customSalt.toDecimalOrNull(), customSatFat.toDecimalOrNull(), customIngredientBasis)
+                    scope.launch {
+                        productCatalog.save(LocalFoodProductEntity(code, name, product.brand, product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, source, "Eigene Zutat", "USER_CREATED",
+                            sugarsGPer100 = product.sugarsGPer100, fiberGPer100 = product.fiberGPer100, saltGPer100 = product.saltGPer100, saturatedFatGPer100 = product.saturatedFatGPer100, nutritionBasis = product.nutritionBasis))
+                        nutritionByIngredientName[name] = product
+                        val unit = if (customIngredientBasis == "100ml") "100 ml " else "100 g "
+                        val updated = (ingredients.lines().map(String::trim).filter(String::isNotBlank) + unit + name).joinToString("\n") + "\n"
+                        ingredientsField = TextFieldValue(updated, androidx.compose.ui.text.TextRange(updated.length))
+                        showCustomIngredientDialog = false
+                        customIngredientName = ""; customIngredientBrand = ""; customKcal = ""; customCarbs = ""; customSugar = ""; customFiber = ""; customProtein = ""; customFat = ""; customSatFat = ""; customSalt = ""; customIngredientBasis = "100g"
+                    }
+                }) { Text("Speichern & übernehmen") }
+            },
+            dismissButton = { TextButton(onClick = { showCustomIngredientDialog = false }) { Text("Abbrechen") } }
         )
     }
     scannedProduct?.let { product ->
