@@ -23,7 +23,8 @@ object BlsDatasetSeeder {
 
     suspend fun ensureSeeded(context: Context, dao: BlsFoodDao): Int = mutex.withLock {
         val existing = dao.count()
-        if (existing == EXPECTED_FOOD_COUNT) return@withLock existing
+        val legacyRows = dao.countWithoutFullNutrients()
+        if (existing == EXPECTED_FOOD_COUNT && legacyRows == 0) return@withLock existing
 
         // The table contains only the bundled BLS reference dataset. A partial
         // prior seed is discarded and retried, never treated as complete.
