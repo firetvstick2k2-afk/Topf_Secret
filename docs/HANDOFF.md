@@ -13,9 +13,12 @@ Stand: 2026-11-26
 
 ## Aktueller Stand
 - Android-Projektgrundgerüst mit Kotlin, Jetpack Compose und API-26-Mindestziel.
+- Erste App-Struktur umgesetzt: Startseite im warmen Creme-/Kupfer-/Dunkelbraun-Design und Bottom-Navigation für Start, Rezepte, Kategorien und Favoriten.
+- Die Startseite zeigt das Topf-Secret-Logo, Begrüßung, Markenbereich und Navigationseinstiege. Rezepte, Kategorien und Favoriten sind derzeit bewusst als Platzhalter gekennzeichnet; Datenbank und Rezeptfunktionen folgen.
+- Navigation nutzt Compose-Zustand und benötigt noch keine zusätzliche Navigation-Bibliothek.
 - Pushes auf `development` lösen keinen Build mehr aus. Builds werden manuell über GitHub Actions → Android CI → Run workflow gestartet. Pull Requests gegen `development` lösen weiterhin automatisch einen Build aus.
 - CI erstellt nun ein signiertes Release-APK als Artefakt `topf-secret-release-apk` (14 Tage Aufbewahrung).
-- Aktuelle App-Version im Quellstand: `versionCode = 3`, `versionName = 0.1.2`.
+- Aktuelle App-Version im Quellstand: `versionCode = 4`, `versionName = 0.2.0`.
 - Neues App-Symbol liegt unter `app/src/main/res/drawable-nodpi/topf_secret_app_icon.png`; `AndroidManifest.xml` verweist für `icon` und `roundIcon` auf `@drawable/topf_secret_app_icon`.
 - Das vollständige Startlogo wurde als PNG unter `app/src/main/res/drawable-nodpi/topf_secret_logo.png` hochgeladen; der Kotlin-Ressourcenname bleibt `R.drawable.topf_secret_logo`.
 - Die vorherige JPEG-Datei `topf_secret_logo.jpg` war unvollständig (APK enthielt 7.500 Bytes und der JPEG-Decoder meldete fehlende Bytes am Dateiende). Sie wurde aus `development` entfernt. Die frühere Annahme, die Dateiendung sei alleinige Ursache, war nicht korrekt.
@@ -51,10 +54,10 @@ Stand: 2026-11-26
 2. Manuellen Workflow starten und signiertes Release-APK bauen.
 3. Version 0.1.2 bauen, APK-Signatur prüfen und auf dem Samsung-Gerät testen; eine Deinstallation nur dann durchführen, wenn die Signatur nicht mit der installierten Version übereinstimmt.
 4. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
-5. App-Navigation und Designsystem aufbauen.
-6. Datenmodell und Room-Datenbank entwerfen.
-7. PIN-Sperre implementieren und testen.
-8. Rezeptverwaltung entwickeln.
+5. Navigation und Grunddesign sind angelegt; als Nächstes Datenmodell und Room-Datenbank entwerfen.
+6. PIN-Sperre implementieren und testen.
+7. Rezeptverwaltung mit Anlegen, Bearbeiten, Löschen und Favoriten entwickeln.
+8. Suche und Kategorien mit den gespeicherten Rezepten verbinden.
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
