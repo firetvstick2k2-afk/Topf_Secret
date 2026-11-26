@@ -152,6 +152,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                                         preparationMinutes = imported.preparationMinutes,
                                         cookingMinutes = imported.cookingMinutes,
                                         sourceUrl = imported.sourceUrl,
+                                        imageUri = imported.imageUrl?.let { downloadRecipeImage(context, it, imported.sourceUrl) },
                                         caloriesPerServing = imported.caloriesPerServing,
                                         carbohydratesPerServing = imported.carbohydratesPerServing,
                                         sugarsPerServing = imported.sugarsPerServing,
@@ -350,6 +351,7 @@ private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedReci
     var selectedCategory by rememberSaveable { mutableStateOf("") }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
+    val context = LocalContext.current
     val scope = rememberCoroutineScope()
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
@@ -391,6 +393,12 @@ private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedReci
                 Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("VORSCHAU", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
                     Text(recipe.title, color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                    if (!recipe.imageUrl.isNullOrBlank()) {
+                        RecipePhoto(recipe.imageUrl, Modifier.fillMaxWidth().height(190.dp))
+                        Text("Rezeptbild von der Originalseite", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                    } else {
+                        Text("Auf der Rezeptseite wurde kein übernehmbares Bild gefunden.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    }
                     if (recipe.description.isNotBlank()) Text(recipe.description, color = MutedInk)
                     OutlinedTextField(
                         value = selectedCategory,
@@ -422,7 +430,7 @@ private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedReci
                     Text("Zubereitung (${recipe.steps.size} Schritte)", color = Ink, fontWeight = FontWeight.Bold)
                     recipe.steps.forEachIndexed { index, step -> Text("${index + 1}. $step", color = Ink, style = MaterialTheme.typography.bodyMedium) }
                     Text("Quelle: ${recipe.sourceUrl}", color = MutedInk, style = MaterialTheme.typography.bodySmall)
-                    Text("Bitte prüfe die übernommenen Angaben. Das Originalbild wird nicht kopiert; der Quellenlink bleibt am Rezept erhalten.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    Text("Bitte prüfe die übernommenen Angaben. Das Rezeptbild wird lokal gespeichert; die Rezeptseite bleibt als Quelle hinterlegt.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
                     Button(onClick = { onSave(recipe.copy(category = selectedCategory.trim().ifBlank { "Importiert" })) }, modifier = Modifier.fillMaxWidth()) { Text("In meine Rezepte übernehmen") }
                 }
             }
@@ -1355,8 +1363,16 @@ private fun RecipePhoto(uri: String?, modifier: Modifier = Modifier) {
         value = withContext(Dispatchers.IO) {
             uri?.let { value ->
                 runCatching {
-                    context.contentResolver.openInputStream(Uri.parse(value))?.use { stream ->
-                        BitmapFactory.decodeStream(stream)
+                    if (value.startsWith("https://", true) || value.startsWith("http://", true)) {
+                        val connection = java.net.URL(value).openConnection().apply {
+                            connectTimeout = 10_000
+                            readTimeout = 12_000
+                        }
+                        connection.getInputStream().use { BitmapFactory.decodeStream(it) }
+                    } else {
+                        context.contentResolver.openInputStream(Uri.parse(value))?.use { stream ->
+                            BitmapFactory.decodeStream(stream)
+                        }
                     }
                 }.getOrNull()
             }
@@ -1382,6 +1398,45 @@ private suspend fun importRecipeImage(context: Context, source: Uri): String? =
                 destination.outputStream().use { output -> input.copyTo(output) }
             } ?: return@withContext null
             Uri.fromFile(destination).toString()
+        }.getOrNull()
+    }
+
+private suspend fun downloadRecipeImage(context: Context, imageUrl: String, sourceUrl: String): String? =
+    withContext(Dispatchers.IO) {
+        runCatching {
+            val parsed = java.net.URL(imageUrl)
+            require(parsed.protocol == "https" || parsed.protocol == "http") { "Ungültiges Bildformat" }
+            val connection = (parsed.openConnection() as java.net.HttpURLConnection).apply {
+                instanceFollowRedirects = true
+                connectTimeout = 10_000
+                readTimeout = 15_000
+                setRequestProperty("User-Agent", "TopfSecret/0.7.1 (recipe image import)")
+            }
+            try {
+                connection.connect()
+                require(connection.responseCode in 200..299) { "Rezeptbild konnte nicht geladen werden" }
+                require(connection.contentType?.startsWith("image/") == true) { "Die Bildquelle liefert keine Bilddatei" }
+                require(connection.contentLengthLong <= 8L * 1024L * 1024L || connection.contentLengthLong < 0) { "Rezeptbild ist zu groß" }
+                val directory = File(context.filesDir, "recipe_images").apply { mkdirs() }
+                val destination = File(directory, "online-${UUID.randomUUID()}.img")
+                connection.inputStream.use { input ->
+                    destination.outputStream().use { output ->
+                        val buffer = ByteArray(8192)
+                        var total = 0L
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            total += count
+                            require(total <= 8L * 1024L * 1024L) { "Rezeptbild ist zu groß" }
+                            output.write(buffer, 0, count)
+                        }
+                    }
+                }
+                File(directory, destination.name + ".source.txt").writeText("Bildquelle: $imageUrl\nRezeptquelle: $sourceUrl\n")
+                Uri.fromFile(destination).toString()
+            } finally {
+                connection.disconnect()
+            }
         }.getOrNull()
     }
 
