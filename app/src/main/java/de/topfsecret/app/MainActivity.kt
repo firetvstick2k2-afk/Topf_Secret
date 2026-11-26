@@ -454,6 +454,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
     var imageUri by rememberSaveable(original?.id) { mutableStateOf(original?.imageUri.orEmpty()) }
     var pendingCameraPath by rememberSaveable(original?.id) { mutableStateOf("") }
     var imageError by rememberSaveable(original?.id) { mutableStateOf(false) }
+    var showOnlineImageSearch by rememberSaveable(original?.id) { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -516,6 +517,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                     cameraCapture.launch(contentUri)
                 }.onFailure { imageError = true }
             }) { Text("Kamera") }
+            OutlinedButton(onClick = { showOnlineImageSearch = true }) { Text("Online suchen") }
             if (imageUri.isNotBlank()) {
                 TextButton(onClick = { imageUri = "" }) { Text("Entfernen", color = Color(0xFFB3261E)) }
             }
@@ -565,6 +567,18 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                 }
             }) { Text("Rezept speichern") }
         }
+    }
+    if (showOnlineImageSearch) {
+        OnlineDishImageSearch(
+            initialQuery = title.ifBlank { original?.title.orEmpty() },
+            onDismiss = { showOnlineImageSearch = false },
+            onImageSelected = { selectedUri ->
+                if (imageUri != original?.imageUri) deleteManagedRecipeImage(context, imageUri)
+                imageUri = selectedUri
+                imageError = false
+                showOnlineImageSearch = false
+            }
+        )
     }
 }
 
@@ -709,6 +723,9 @@ private fun deleteManagedRecipeImage(context: Context, storedUri: String?) {
         val file = File(Uri.parse(storedUri).path ?: return)
         val imageDirectory = File(context.filesDir, "recipe_images").canonicalFile
         val candidate = file.canonicalFile
-        if (candidate.parentFile == imageDirectory) candidate.delete()
+        if (candidate.parentFile == imageDirectory) {
+            candidate.delete()
+            File(imageDirectory, candidate.name + ".source.txt").delete()
+        }
     }
 }
