@@ -205,3 +205,10 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Tests ergänzt; CI-/Geräteprüfung steht noch aus. Vor Release manuell auf development bauen und Migration mit vorhandenen Rezepten prüfen.
 
 - Nachprüfung ergänzt: Stück-, Packungs- und Haushaltsmaße ohne Referenzgewicht werden mit konkretem Grund als nicht berechenbar ausgewiesen. Aktueller Code-Stand vor dieser Doku-Aktualisierung: `ad56eeba9ae9cacec734b354c8c09518bd000421`; Build #44 gehört zum vorherigen Stand. Neuer manueller CI-Lauf erforderlich.
+
+
+### G.5 Korrekturen nach Gerätetest: Cursor und gespeicherte Nährwerte (2026-11-26)
+- Zutatenfeld nutzt `TextFieldValue`; Produktübernahme aus Barcode-Scanner/Produktsuche setzt den Cursor direkt hinter den neu eingefügten Eintrag in die nächste leere Zeile. Der nächste Such-/Scanvorgang ist damit direkt möglich.
+- Rezeptdetail berechnet aus persistierten Zutaten und Nährwerten mit derselben Mengen- und Nährwertlogik wie der Editor erneut Gesamtgericht und Portionen. Nicht berechenbare Zutaten werden als Teilmenge transparent gemacht.
+- Falsche manuelle Rückfallwerte werden nicht mehr als automatische Rezeptberechnung ausgegeben, sobald eine automatische Teilberechnung vorliegt. Manuelle Altwerte bleiben nur dann sichtbar, wenn keine Zutat automatisch berechenbar ist.
+- Keine Datenbankschemaänderung, keine Datenlöschung. Build, Tests und Gerätetest stehen für diesen Commit noch aus.
