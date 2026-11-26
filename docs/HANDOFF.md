@@ -312,3 +312,13 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Beim Speichern wird nur das ausgewählte Bild geladen und lokal unter `filesDir/recipe_images` abgelegt, damit es offline verfügbar bleibt. Bild- und Rezeptquellen-URL werden in einer Begleitdatei festgehalten; das Rezept speichert den lokalen Bildpfad und den Rezeptquellen-Link.
 - Download mit HTTP(S)-Beschränkung, Timeouts, Bild-Content-Type-Prüfung und 8-MB-Limit. Die Bildanzeige in der Vorschau lädt die Kandidaten temporär von der Quellseite.
 - Version 0.7.2 / versionCode 14. **Build und Gerätetest stehen aus.** Prüfen: Chefkoch-Seite mit mehreren Bildern, Auswahl des richtigen Bildes, Speichern/offline-Neustart, Seite ohne Bilder, ungültige/zu große Bildquelle.
+
+
+## Integrierter Rezept-Browser (2026-11-26)
+
+- Neuer unterer Navigationseintrag „Browser“ mit Android WebView; Startseite Chefkoch.de.
+- Adress-/Suchfeld: direkte HTTP(S)-URLs oder Websuche, plus Zurück/Vorwärts/Aktualisieren und Chefkoch-Schnellzugriff.
+- WebView verwendet JavaScript und DOM Storage für moderne Rezeptseiten; Datei-/Content-Zugriff und Popup-Fenster sind deaktiviert. Navigation wird auf HTTP(S) beschränkt.
+- Fester Button „Dieses Rezept übernehmen“ reicht die aktuell geöffnete Seiten-URL an den vorhandenen Online-Rezeptimport weiter. Die bekannte Vorschau mit Kategorie, strukturierten Nährwerten und Bildauswahl wird wiederverwendet.
+- Kein Chefkoch-Sonder-Scraping und keine Umgehung von Login, Paywall, Captcha oder Zugriffsschutz. Import bleibt abhängig von den strukturierten Rezeptdaten der geöffneten Seite.
+- App-Version 0.8.0 / versionCode 15. **Build und Gerätetest stehen aus.** Prüfen: Chefkoch-Suche und Rezeptdetail, andere Rezeptseite, Importübergabe der finalen URL, Zurück/Vorwärts, Dark Mode und WebView-Rotation/Neuerstellung.
