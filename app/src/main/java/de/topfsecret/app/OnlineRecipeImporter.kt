@@ -18,6 +18,7 @@ data class ImportedRecipe(
     val steps: List<String>,
     val sourceUrl: String,
     val imageUrl: String? = null,
+    val imageUrls: List<String> = emptyList(),
     val caloriesPerServing: Double? = null,
     val carbohydratesPerServing: Double? = null,
     val sugarsPerServing: Double? = null,
@@ -73,13 +74,13 @@ object OnlineRecipeImporter {
             val raw = script.groupValues[1].trim()
             val root = runCatching { JSONObject(raw) }.getOrNull()
             if (root != null) {
-                findRecipe(root)?.let { return toImportedRecipe(it, sourceUrl) }
+                findRecipe(root)?.let { return toImportedRecipe(it, sourceUrl, html) }
             }
             val array = runCatching { JSONArray(raw) }.getOrNull()
             if (array != null) {
                 for (index in 0 until array.length()) {
                     val value = array.optJSONObject(index) ?: continue
-                    findRecipe(value)?.let { return toImportedRecipe(it, sourceUrl) }
+                    findRecipe(value)?.let { return toImportedRecipe(it, sourceUrl, html) }
                 }
             }
         }
@@ -103,7 +104,7 @@ object OnlineRecipeImporter {
         return null
     }
 
-    private fun toImportedRecipe(json: JSONObject, sourceUrl: String): ImportedRecipe {
+    private fun toImportedRecipe(json: JSONObject, sourceUrl: String, html: String): ImportedRecipe {
         val title = json.optString("name").trim()
         require(title.isNotBlank()) { "Die Rezeptseite enthält keinen Rezeptnamen." }
         val ingredientsJson = json.optJSONArray("recipeIngredient")
@@ -139,22 +140,32 @@ object OnlineRecipeImporter {
             return null
         }
         val calories = nutrient("calories")
-        val imageValue = json.opt("image")
-        val imageUrl = when (imageValue) {
-            is String -> imageValue
-            is JSONArray -> (0 until imageValue.length()).mapNotNull { index ->
-                when (val item = imageValue.opt(index)) {
-                    is String -> item
-                    is JSONObject -> item.optString("url").takeIf(String::isNotBlank)
-                    else -> null
-                }
-            }.firstOrNull()
-            is JSONObject -> imageValue.optString("url").takeIf(String::isNotBlank)
-            else -> null
-        }?.let { image ->
-            runCatching { URL(URL(sourceUrl), image).toString() }.getOrNull()
-                ?.takeIf { it.startsWith("https://", true) || it.startsWith("http://", true) }
+        val imageCandidates = linkedSetOf<String>()
+        fun addImage(raw: String?) {
+            val value = raw?.trim()?.trim('"', '\'')?.takeIf { it.isNotBlank() } ?: return
+            val absolute = runCatching { URL(URL(sourceUrl), value).toString() }.getOrNull() ?: return
+            if ((absolute.startsWith("https://", true) || absolute.startsWith("http://", true)) &&
+                !absolute.startsWith("data:", true)) imageCandidates.add(absolute)
         }
+        fun addStructuredImage(value: Any?) {
+            when (value) {
+                is String -> addImage(value)
+                is JSONArray -> for (index in 0 until value.length()) addStructuredImage(value.opt(index))
+                is JSONObject -> {
+                    addImage(value.optString("url").takeIf(String::isNotBlank))
+                    addImage(value.optString("contentUrl").takeIf(String::isNotBlank))
+                }
+            }
+        }
+        addStructuredImage(json.opt("image"))
+        Regex("""<meta[^>]+(?:property|name)\\s*=\\s*["'](?:og:image|twitter:image)["'][^>]+content\\s*=\\s*["']([^"']+)["'][^>]*>""", RegexOption.IGNORE_CASE)
+            .findAll(html).forEach { addImage(it.groupValues[1]) }
+        Regex("""<meta[^>]+content\\s*=\\s*["']([^"']+)["'][^>]+(?:property|name)\\s*=\\s*["'](?:og:image|twitter:image)["'][^>]*>""", RegexOption.IGNORE_CASE)
+            .findAll(html).forEach { addImage(it.groupValues[1]) }
+        Regex("""<img[^>]+(?:src|data-src)\\s*=\\s*["']([^"']+)["'][^>]*>""", RegexOption.IGNORE_CASE)
+            .findAll(html).forEach { addImage(it.groupValues[1]) }
+        val imageUrls = imageCandidates.take(24)
+        val imageUrl = imageUrls.firstOrNull()
         val sodium = nutrient("sodiumContent")
         val salt = nutrient("saltContent") ?: sodium?.let { it * 2.5 }
         return ImportedRecipe(
@@ -168,6 +179,7 @@ object OnlineRecipeImporter {
             steps = instructions,
             sourceUrl = sourceUrl,
             imageUrl = imageUrl,
+            imageUrls = imageUrls,
             caloriesPerServing = calories,
             carbohydratesPerServing = nutrient("carbohydrateContent"),
             sugarsPerServing = nutrient("sugarContent"),
