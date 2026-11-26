@@ -939,7 +939,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                             scope.launch {
                                 if (correctedCode != product.barcode) productCatalog.deleteByBarcode(product.barcode)
                                 val corrected = OpenFoodFactsProduct(correctedCode, correctedName, editedBrand.trim().ifBlank { null }, editedKcal.toDecimalOrNull(), editedCarbs.toDecimalOrNull(), editedProtein.toDecimalOrNull(), editedFat.toDecimalOrNull(), product.sourceUrl, product.sugarsGPer100, product.fiberGPer100, product.saltGPer100, product.saturatedFatGPer100)
-                                productCatalog.save(LocalFoodProductEntity(corrected.barcode, corrected.name, corrected.brand, corrected.caloriesKcalPer100, corrected.carbohydratesGPer100, corrected.proteinGPer100, corrected.fatGPer100, corrected.sourceUrl, "Manuell geprüft", "VERIFIED_LOCAL", sugarsGPer100 = corrected.sugarsGPer100, fiberGPer100 = corrected.fiberGPer100, saltGPer100 = corrected.saltGPer100, saturatedFatGPer100 = corrected.saturatedFatGPer100))
+                                productCatalog.save(LocalFoodProductEntity(corrected.barcode, corrected.name, corrected.brand, corrected.caloriesKcalPer100, corrected.carbohydratesGPer100, corrected.proteinGPer100, corrected.fatGPer100, corrected.sourceUrl, "Manuell geprüft", "VERIFIED_LOCAL", sugarsGPer100 = corrected.sugarsGPer100, fiberGPer100 = corrected.fiberGPer100, saltGPer100 = corrected.saltGPer100, saturatedFatGPer100 = corrected.saturatedFatGPer100, nutritionBasis = corrected.nutritionBasis))
                                 scannedProduct = corrected
                                 editingProduct = false
                             }
@@ -948,11 +948,11 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                 } else {
                     TextButton(onClick = {
                         scope.launch {
-                            if (!product.barcode.startsWith("BLS:")) {
+                            if (!product.barcode.startsWith("BLS:") && !product.barcode.startsWith("CUSTOM:")) {
                                 val existing = productCatalog.findByBarcode(product.barcode)
                                 val quality = if (existing?.quality == "VERIFIED_LOCAL") "VERIFIED_LOCAL" else "UNVERIFIED"
                                 val sourceName = existing?.sourceName ?: "Open Food Facts"
-                                productCatalog.save(LocalFoodProductEntity(product.barcode, product.name, product.brand, product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, product.sourceUrl, sourceName, quality, sugarsGPer100 = product.sugarsGPer100, fiberGPer100 = product.fiberGPer100, saltGPer100 = product.saltGPer100, saturatedFatGPer100 = product.saturatedFatGPer100))
+                                productCatalog.save(LocalFoodProductEntity(product.barcode, product.name, product.brand, product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, product.sourceUrl, sourceName, quality, sugarsGPer100 = product.sugarsGPer100, fiberGPer100 = product.fiberGPer100, saltGPer100 = product.saltGPer100, saturatedFatGPer100 = product.saturatedFatGPer100, nutritionBasis = product.nutritionBasis))
                             }
                             nutritionByIngredientName[product.name] = product
                             if (ingredients.lines().none { it.contains(product.name, ignoreCase = true) }) {
@@ -1010,7 +1010,7 @@ private fun RecipeDetailScreen(recipe: RecipeWithDetails, onBack: () -> Unit, on
                 val nutrition = NutritionPer100(
                     ingredient.caloriesPer100, ingredient.carbohydratesPer100,
                     ingredient.proteinPer100, ingredient.fatPer100,
-                    IngredientMeasureConverter.Basis.GRAMS, ingredient.sugarsPer100,
+                    if (ingredient.nutritionBasis == "100ml") IngredientMeasureConverter.Basis.MILLILITRES else IngredientMeasureConverter.Basis.GRAMS, ingredient.sugarsPer100,
                     ingredient.fiberPer100, ingredient.saltPer100, ingredient.saturatedFatPer100
                 )
                 val result = nutrition.forAmount(amount.first, amount.second, ingredient.name)
