@@ -1247,6 +1247,26 @@ private fun RecipeDetailScreen(recipe: RecipeWithDetails, onBack: () -> Unit, on
                     }
                 }
             }
+            val sourceNutritionLabels = listOfNotNull(
+                recipe.recipe.caloriesPerServing?.let { "Energie " + it.prettyNumber() + " kcal" },
+                recipe.recipe.carbohydratesPerServing?.let { "Kohlenhydrate " + it.prettyNumber() + " g" },
+                recipe.recipe.sugarsPerServing?.let { "davon Zucker " + it.prettyNumber() + " g" },
+                recipe.recipe.fiberPerServing?.let { "Ballaststoffe " + it.prettyNumber() + " g" },
+                recipe.recipe.proteinPerServing?.let { "Eiweiß " + it.prettyNumber() + " g" },
+                recipe.recipe.fatPerServing?.let { "Fett " + it.prettyNumber() + " g" },
+                recipe.recipe.saturatedFatPerServing?.let { "davon gesättigte Fettsäuren " + it.prettyNumber() + " g" },
+                recipe.recipe.saltPerServing?.let { "Salz " + it.prettyNumber() + " g" }
+            )
+            if (savedNutrition.calculatedIngredients > 0 && sourceNutritionLabels.isNotEmpty()) {
+                Spacer(Modifier.height(10.dp))
+                Card(colors = CardDefaults.cardColors(containerColor = PaleCopper), shape = RoundedCornerShape(16.dp)) {
+                    Column(Modifier.fillMaxWidth().padding(14.dp)) {
+                        Text("Zusätzliche Nährwerte aus der Rezeptquelle (pro Portion)", color = Ink, fontWeight = FontWeight.Bold)
+                        sourceNutritionLabels.forEach { Text(it, color = Ink, style = MaterialTheme.typography.bodyMedium) }
+                        Text("Originalangaben der Rezeptseite; getrennt von der Zutatenberechnung.", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                    }
+                }
+            }
     
         }
         Spacer(Modifier.height(24.dp))
