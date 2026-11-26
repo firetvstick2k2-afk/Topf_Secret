@@ -290,3 +290,9 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Vorhandene Vorschau, Kategorieauswahl, Zutatenverarbeitung und lokale Speicherfunktion werden wiederverwendet. Fehlende Nährwerte und Zeiten bleiben leer; Portionszahl vorerst Standardwert 2.
 - Chefkoch bleibt beim bestehenden Linkimport. Eine offizielle Chefkoch-Such-API ist weiterhin nicht bestätigt; keine automatisierte Chefkoch-Suche oder Seitenauslesung vortäuschen.
 - Version 0.9.1 / versionCode 17. Build und Gerätetest stehen aus.
+
+
+### G.16 TheMealDB-Bild in der Rezeptvorschau (2026-11-26)
+- Ursache: Die Detailabfrage lieferte `imageUrl`, die gemeinsame Vorschau rendert Bildkandidaten aber ausschließlich aus `imageUrls`. Deshalb erschien „Bildauswahl“ ohne Bild.
+- TheMealDB-Detailantwort übergibt das vorhandene Rezeptfoto jetzt zusätzlich als einzigen Bildkandidaten. Es wird in der Vorschau angezeigt und ist standardmäßig ausgewählt; beim Speichern wird es wie beim bisherigen Import lokal abgelegt.
+- Version 0.9.2 / versionCode 18. Build und Gerätetest stehen aus.
