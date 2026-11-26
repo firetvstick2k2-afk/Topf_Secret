@@ -22,7 +22,8 @@ data class LocalFoodProductEntity(
     val sugarsGPer100: Double? = null,
     val fiberGPer100: Double? = null,
     val saltGPer100: Double? = null,
-    val saturatedFatGPer100: Double? = null
+    val saturatedFatGPer100: Double? = null,
+    val nutritionBasis: String = "100g"
 )
 
 @Dao
