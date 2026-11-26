@@ -17,13 +17,12 @@ Stand: 2026-11-26
 - Android-Projektgrundgerüst mit Kotlin, Jetpack Compose und API-26-Mindestziel angelegt.
 - Erste Platzhalter-Startansicht vorhanden.
 - Produktanforderungen und Roadmap dokumentiert.
-- GitHub-Actions-Workflow `.github/workflows/android-ci.yml` ergänzt: baut bei Push/Pull Request auf `development` ein Debug-APK.
-- Die ersten CI-Läufe scheiterten vor dem Gradle-Build bei der Android-SDK-Einrichtung.
-- Ursache Lauf 1: Setup-Action versuchte das veraltete SDK-Paket `tools` zu installieren.
-- Ursache Lauf 2: Die Paketliste wurde mit Kommas übergeben; dadurch wurde beispielsweise `platform-tools,` als Paketname interpretiert.
-- Workflow erneut korrigiert: SDK-Pakete werden jetzt als leerzeichengetrennte Argumente übergeben: `platform-tools platforms;android-36 build-tools;36.0.0`.
-- Dieser neue Workflow-Stand muss noch durch einen CI-Lauf verifiziert werden.
-- Gradle Wrapper ist noch nicht eingecheckt; der CI-Workflow verwendet vorerst Gradle 8.13 aus der Action.
+- GitHub-Actions-Workflow `.github/workflows/android-ci.yml` baut bei Push/Pull Request auf `development` ein Debug-APK.
+- Android-SDK-Setup ist korrigiert: Pakete werden leerzeichengetrennt übergeben: `platform-tools platforms;android-36 build-tools;36.0.0`.
+- CI-Lauf `45738881747` war vollständig erfolgreich: SDK, JDK 17, Gradle und `assembleDebug` liefen grün.
+- Workflow erweitert: Das erzeugte Debug-APK wird mit `actions/upload-artifact@v4` als `topf-secret-debug-apk` hochgeladen; Aufbewahrung 14 Tage.
+- Der neue Upload-Schritt muss noch durch den nächsten CI-Lauf bestätigt werden.
+- Gradle Wrapper ist noch nicht eingecheckt. CI verwendet vorerst Gradle 8.13 über `gradle/actions/setup-gradle@v4`. Wrapper-Dateien erst aus einer vertrauenswürdigen Gradle-8.13-Installation generieren und den offiziellen Wrapper-JAR-Prüfwert verifizieren; kein handgefertigtes oder ungeprüftes JAR committen.
 
 ## Vereinbarte Produktanforderungen
 - Integrierter PIN-Schutz.
@@ -43,8 +42,8 @@ Stand: 2026-11-26
 - Nährwerte als Schätzwerte kennzeichnen; keine medizinischen Therapieempfehlungen.
 
 ## Nächste Schritte
-1. Neuen GitHub-Actions-Build prüfen und eventuelle Fehler beheben.
-2. Gradle Wrapper ergänzen und lokal/CI verifizieren.
+1. Neuen GitHub-Actions-Lauf prüfen und APK-Artefakt kontrollieren.
+2. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
 3. App-Navigation und Designsystem aufbauen.
 4. Datenmodell und Room-Datenbank entwerfen.
 5. PIN-Sperre implementieren und testen.
