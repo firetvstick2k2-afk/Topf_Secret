@@ -383,3 +383,9 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - „Für dich“ lädt nun bei jedem Öffnen der Entdecken-Ansicht eine zufällig gewählte TheMealDB-Kategorie statt immer dieselbe Chicken-Liste. Die Auswahl kann sich dadurch bei jedem Aufruf ändern.
 - TheMealDB-Rezeptdetails werden vor der Vorschau mit Google ML Kit lokal von Englisch nach Deutsch übersetzt: Titel, Kategorie, Herkunft, Zutaten und Zubereitungsschritte. Das Übersetzungsmodell wird beim ersten Bedarf heruntergeladen und danach auf dem Gerät wiederverwendet; ohne verfügbares Modell/Netzwerk wird ein verständlicher Fehler angezeigt statt stillschweigend Englisch als deutsche Übersetzung auszugeben.
 - Version 0.9.5 / versionCode 21. CI-Build und Gerätetest stehen noch aus.
+
+## Persönliche Begrüßung beim ersten Start (2026-11-26)
+- Bei der ersten Nutzung nach dem Splash und der Aktivierungsprüfung fragt Topf Secret nach dem Vornamen. Der Name wird lokal in den App-Einstellungen gespeichert und nicht an einen Server übertragen.
+- Auf der Startseite wird der Nutzer abhängig von der lokalen Gerätezeit begrüßt: morgens „Guten Morgen“, tagsüber „Guten Tag“, abends „Guten Abend“, nachts eine freundliche Nacht-Begrüßung – jeweils mit gespeichertem Namen.
+- Die Namensabfrage erscheint nur, solange noch kein Name gespeichert ist. Eine spätere Änderungsmöglichkeit kann in den Einstellungen ergänzt werden.
+- Version 0.9.6 / versionCode 22; CI-Build und Gerätetest offen.
