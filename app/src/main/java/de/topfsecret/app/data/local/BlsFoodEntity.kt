@@ -38,6 +38,9 @@ interface BlsFoodDao {
     @Query("SELECT COUNT(*) FROM bls_foods")
     suspend fun count(): Int
 
+    @Query("SELECT COUNT(*) FROM bls_foods WHERE nutrientsJson = '{}'")
+    suspend fun countWithoutFullNutrients(): Int
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertAll(items: List<BlsFoodEntity>)
 
