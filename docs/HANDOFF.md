@@ -12,17 +12,14 @@ Stand: 2026-11-26
 - Handoff und Projektdokumentation bei relevanten Änderungen aktuell halten.
 
 ## Aktueller Stand
-- Repository initialisiert.
-- `development` wurde von `main` abgezweigt.
-- Android-Projektgrundgerüst mit Kotlin, Jetpack Compose und API-26-Mindestziel angelegt.
-- Erste Platzhalter-Startansicht vorhanden.
-- Produktanforderungen und Roadmap dokumentiert.
-- GitHub-Actions-Workflow `.github/workflows/android-ci.yml` baut bei Push/Pull Request auf `development` ein Debug-APK.
-- Android-SDK-Setup ist korrigiert: Pakete werden leerzeichengetrennt übergeben: `platform-tools platforms;android-36 build-tools;36.0.0`.
-- CI-Lauf `45738881747` war vollständig erfolgreich: SDK, JDK 17, Gradle und `assembleDebug` liefen grün.
-- Workflow erweitert: Das erzeugte Debug-APK wird mit `actions/upload-artifact@v4` als `topf-secret-debug-apk` hochgeladen; Aufbewahrung 14 Tage.
-- Der neue Upload-Schritt muss noch durch den nächsten CI-Lauf bestätigt werden.
-- Gradle Wrapper ist noch nicht eingecheckt. CI verwendet vorerst Gradle 8.13 über `gradle/actions/setup-gradle@v4`. Wrapper-Dateien erst aus einer vertrauenswürdigen Gradle-8.13-Installation generieren und den offiziellen Wrapper-JAR-Prüfwert verifizieren; kein handgefertigtes oder ungeprüftes JAR committen.
+- Android-Projektgrundgerüst mit Kotlin, Jetpack Compose und API-26-Mindestziel.
+- GitHub-Actions baut auf `development` erfolgreich ein Debug-APK und lädt es als Artefakt `topf-secret-debug-apk` hoch (14 Tage Aufbewahrung); der Upload-Schritt wurde bereits erfolgreich ausgeführt.
+- Das vom Nutzer bestätigte Original-Logo liegt als `app/src/main/res/drawable-nodpi/topf_secret_logo.webp` vor.
+- Das passende quadratische App-Symbol liegt als `app/src/main/res/drawable-nodpi/ic_launcher.webp` vor.
+- Das Manifest verwendet das neue App-Symbol; die Compose-Startseite zeigt das vollständige Logo.
+- Grafiken wurden für Android-WebP-Darstellung optimiert; das Motiv und der Entwurf wurden nicht verändert.
+- Die neue Logo-/Icon-Version muss noch durch den nächsten CI-Build und eine Installation auf einem echten Gerät bestätigt werden.
+- Gradle Wrapper ist noch nicht eingecheckt. CI verwendet vorerst Gradle 8.13 über `gradle/actions/setup-gradle@v4`. Wrapper-Dateien erst aus einer vertrauenswürdigen Gradle-8.13-Installation generieren und den offiziellen Wrapper-JAR-Prüfwert verifizieren.
 
 ## Vereinbarte Produktanforderungen
 - Integrierter PIN-Schutz.
@@ -42,7 +39,7 @@ Stand: 2026-11-26
 - Nährwerte als Schätzwerte kennzeichnen; keine medizinischen Therapieempfehlungen.
 
 ## Nächste Schritte
-1. Neuen GitHub-Actions-Lauf prüfen und APK-Artefakt kontrollieren.
+1. CI-Build mit Logo und App-Symbol prüfen und neue APK als Artefakt bereitstellen.
 2. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
 3. App-Navigation und Designsystem aufbauen.
 4. Datenmodell und Room-Datenbank entwerfen.
