@@ -364,13 +364,16 @@ private fun HomeActionCard(modifier: Modifier, symbol: String, title: String, su
 @Composable
 private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var query by rememberSaveable { mutableStateOf("") }
-    var selectedCategory by rememberSaveable { mutableStateOf("Beliebt") }
+    var selectedSource by rememberSaveable { mutableStateOf("TheMealDB") }
+    var selectedCategory by rememberSaveable { mutableStateOf("Für dich") }
     var meals by remember { mutableStateOf<List<DiscoveryRecipe>>(emptyList()) }
     var loading by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
     val categories = listOf("Für dich", "Chicken", "Beef", "Seafood", "Vegetarian", "Pasta", "Dessert", "Starter")
     fun load(category: String, search: String = "") {
+        selectedSource = "TheMealDB"
         selectedCategory = category
         loading = true
         error = ""
@@ -386,6 +389,13 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
             loading = false
         }
     }
+    fun openChefkochSearch() {
+        val target = if (query.isBlank()) "https://www.chefkoch.de/" else
+            "https://www.chefkoch.de/rs/suche.php?q=${Uri.encode(query.trim())}"
+        runCatching {
+            context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, Uri.parse(target)))
+        }.onFailure { error = "Chefkoch konnte nicht geöffnet werden." }
+    }
     LaunchedEffect(Unit) { load("Für dich") }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(bottom = 20.dp)) {
         Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp)) {
@@ -393,57 +403,89 @@ private fun RecipeDiscoveryScreen(onImport: (String) -> Unit) {
             Text("Entdecke dein nächstes Lieblingsgericht", color = Ink, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text("Rezepte entdecken, auswählen und in dein Kochbuch übernehmen.", color = MutedInk, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(12.dp))
-            OutlinedTextField(value = query, onValueChange = { query = it }, modifier = Modifier.fillMaxWidth(), singleLine = true, label = { Text("Rezept suchen") }, trailingIcon = {
-                TextButton(onClick = { load(selectedCategory, query.trim()) }, enabled = query.isNotBlank()) { Text("Suchen") }
-            })
-        }
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            categories.forEach { category ->
-                FilterChip(selected = selectedCategory == category && query.isBlank(), onClick = { query = ""; load(category) }, label = { Text(category) })
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = selectedSource == "TheMealDB", onClick = { if (selectedSource != "TheMealDB") load("Für dich") }, label = { Text("TheMealDB") })
+                FilterChip(selected = selectedSource == "Chefkoch", onClick = { selectedSource = "Chefkoch"; error = "" }, label = { Text("Chefkoch") })
             }
+            Spacer(Modifier.height(8.dp))
+            OutlinedTextField(
+                value = query,
+                onValueChange = { query = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text(if (selectedSource == "Chefkoch") "Auf Chefkoch suchen" else "Rezept suchen") },
+                trailingIcon = {
+                    TextButton(
+                        onClick = { if (selectedSource == "Chefkoch") openChefkochSearch() else load(selectedCategory, query.trim()) },
+                        enabled = selectedSource == "Chefkoch" || query.isNotBlank()
+                    ) { Text("Suchen") }
+                }
+            )
         }
-        Spacer(Modifier.height(14.dp))
-        if (selectedCategory == "Für dich" && query.isBlank() && meals.isNotEmpty()) {
-            val hero = meals.first()
-            Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(220.dp)) {
-                RecipePhoto(hero.imageUrl, Modifier.fillMaxSize())
-                Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(14.dp)) {
-                    Text("JETZT ENTDECKEN", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    Text(hero.title, color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                    Button(onClick = { onImport("themealdb://${hero.id}") }) { Text("Rezept ansehen & übernehmen") }
+        if (selectedSource == "Chefkoch") {
+            Card(
+                Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Paper)
+            ) {
+                Column(Modifier.fillMaxWidth().padding(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("CHEFKOCH", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
+                    Text("Rezepte auf Chefkoch finden", color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text("Die Suche öffnet die offizielle Chefkoch-Seite. Wenn du ein Rezept gefunden hast, kopiere dessen Rezeptlink und importiere ihn in Topf Secret über „Online-Rezept über Link importieren“. Die Rezeptvorschau und Speicherung laufen dann wie gewohnt in Topf Secret.", color = MutedInk)
+                    Button(onClick = { openChefkochSearch() }, modifier = Modifier.fillMaxWidth()) {
+                        Text(if (query.isBlank()) "Chefkoch öffnen" else "Chefkoch-Suche öffnen")
+                    }
+                    Text("Chefkoch-Rezeptinhalte werden nicht automatisch ausgelesen. So bleiben wir bei der offiziellen Suche und dem vorhandenen Linkimport.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
                 }
             }
-            Spacer(Modifier.height(18.dp))
-        }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(if (query.isNotBlank()) "Suchergebnisse" else selectedCategory, color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.weight(1f))
-            if (loading) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
-        }
-        if (error.isNotBlank()) Text(error, color = Color(0xFFB3261E), modifier = Modifier.padding(16.dp))
-        if (!loading && meals.isEmpty() && error.isBlank()) Text("Keine Rezepte gefunden. Probiere einen anderen Suchbegriff.", color = MutedInk, modifier = Modifier.padding(16.dp))
-        if (meals.isNotEmpty()) {
-            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                meals.forEach { meal ->
-                    Card(Modifier.width(178.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
-                        Column {
-                            RecipePhoto(meal.imageUrl, Modifier.fillMaxWidth().height(132.dp))
-                            Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
-                                Text(meal.title, color = Ink, fontWeight = FontWeight.Bold, maxLines = 2, minLines = 2)
-                                Text(listOf(meal.category, meal.area).filter(String::isNotBlank).joinToString(" · ").ifBlank { "Rezeptidee" }, color = MutedInk, style = MaterialTheme.typography.labelSmall, maxLines = 1)
-                                TextButton(onClick = { onImport("themealdb://${meal.id}") }, modifier = Modifier.fillMaxWidth()) { Text("Ansehen & übernehmen") }
+        } else {
+            Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                categories.forEach { category ->
+                    FilterChip(selected = selectedCategory == category && query.isBlank(), onClick = { query = ""; load(category) }, label = { Text(category) })
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            if (selectedCategory == "Für dich" && query.isBlank() && meals.isNotEmpty()) {
+                val hero = meals.first()
+                Box(Modifier.fillMaxWidth().padding(horizontal = 14.dp).height(220.dp)) {
+                    RecipePhoto(hero.imageUrl, Modifier.fillMaxSize())
+                    Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(14.dp)) {
+                        Text("JETZT ENTDECKEN", color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text(hero.title, color = Color.White, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                        Button(onClick = { onImport("themealdb://${hero.id}") }) { Text("Rezept ansehen & übernehmen") }
+                    }
+                }
+                Spacer(Modifier.height(18.dp))
+            }
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(if (query.isNotBlank()) "Suchergebnisse" else selectedCategory, color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Spacer(Modifier.weight(1f))
+                if (loading) CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp)
+            }
+            if (error.isNotBlank()) Text(error, color = Color(0xFFB3261E), modifier = Modifier.padding(16.dp))
+            if (!loading && meals.isEmpty() && error.isBlank()) Text("Keine Rezepte gefunden. Probiere einen anderen Suchbegriff.", color = MutedInk, modifier = Modifier.padding(16.dp))
+            if (meals.isNotEmpty()) {
+                Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    meals.forEach { meal ->
+                        Card(Modifier.width(178.dp), shape = RoundedCornerShape(16.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
+                            Column {
+                                RecipePhoto(meal.imageUrl, Modifier.fillMaxWidth().height(132.dp))
+                                Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(5.dp)) {
+                                    Text(meal.title, color = Ink, fontWeight = FontWeight.Bold, maxLines = 2, minLines = 2)
+                                    Text(listOf(meal.category, meal.area).filter(String::isNotBlank).joinToString(" · ").ifBlank { "Rezeptidee" }, color = MutedInk, style = MaterialTheme.typography.labelSmall, maxLines = 1)
+                                    TextButton(onClick = { onImport("themealdb://${meal.id}") }, modifier = Modifier.fillMaxWidth()) { Text("Ansehen & übernehmen") }
+                                }
                             }
                         }
                     }
                 }
             }
+            Spacer(Modifier.height(18.dp))
+            Text("Weitere Ideen", color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp))
+            Text("Die Rezeptauswahl wird aus TheMealDB geladen. Chefkoch kann über die offizielle Suche und den Linkimport genutzt werden.", color = MutedInk, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
         }
-        Spacer(Modifier.height(18.dp))
-        Text("Weitere Ideen", color = Ink, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 16.dp))
-        Text("Die Rezeptauswahl wird aus einer öffentlichen Rezeptdatenbank geladen. Weitere Anbieter können später ergänzt werden.", color = MutedInk, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
     }
 }
-
 @Composable
 private fun RecipeBrowserScreen(onImport: (String) -> Unit) {
     var address by rememberSaveable { mutableStateOf("https://www.chefkoch.de/") }
