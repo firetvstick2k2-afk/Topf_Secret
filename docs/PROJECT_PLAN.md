@@ -7,6 +7,7 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte solle
 ## Funktionale Anforderungen
 
 ### A. Schutz und Privatsphäre
+- Technische Grundlage begonnen: Recovery-Code-Generator mit 120 Bit Zufall und strenger Crockford-Base32-Validierung ist vorhanden; Onboarding, Schlüsselhüllen und Wiederherstellung folgen.
 - Zwei lokale persönliche Profile (Nutzer und Ehefrau) mit jeweils eigener PIN und privatem Rezeptbereich.
 - Gemeinsame Rezepte sind für beide Profile sichtbar; bestehende Rezepte werden bei Einführung als gemeinsam übernommen.
 - PIN-Ersteinrichtung mit freier PIN-Wahl; PIN niemals im Klartext speichern und Fehlversuche begrenzen.
