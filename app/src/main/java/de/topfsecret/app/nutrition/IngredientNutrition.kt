@@ -32,7 +32,7 @@ object IngredientMeasureConverter {
     }
 
     fun parseAmount(raw: String): Pair<Double, String>? {
-        val match = Regex("^\\\\s*(\\\\d+(?:[.,]\\\\d+)?)\\\\s*([\\\\p{L}.]+)\\\\s*$").matchEntire(raw) ?: return null
+        val match = Regex("""^\s*(\d+(?:[.,]\d+)?)\s*([\p{L}.]+)\s*$""").matchEntire(raw) ?: return null
         val value = match.groupValues[1].replace(',', '.').toDoubleOrNull() ?: return null
         return value to match.groupValues[2]
     }
