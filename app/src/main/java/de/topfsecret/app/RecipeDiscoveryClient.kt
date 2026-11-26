@@ -52,4 +52,48 @@ object RecipeDiscoveryClient {
             connection.disconnect()
         }
     }
+
+    suspend fun details(id: String): ImportedRecipe = withContext(Dispatchers.IO) {
+        require(id.matches(Regex("""\d+"""))) { "Ungültige TheMealDB-Rezeptnummer." }
+        val connection = (URL(BASE + "lookup.php?i=$id").openConnection() as HttpURLConnection).apply {
+            connectTimeout = 10_000
+            readTimeout = 12_000
+            requestMethod = "GET"
+            setRequestProperty("Accept", "application/json")
+        }
+        try {
+            require(connection.responseCode in 200..299) { "Das vollständige Rezept ist gerade nicht erreichbar." }
+            val root = JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
+            val meal = root.optJSONArray("meals")?.optJSONObject(0)
+                ?: throw IllegalArgumentException("Dieses Rezept wurde nicht gefunden.")
+            val ingredients = (1..20).mapNotNull { index ->
+                val name = meal.optString("strIngredient$index").trim()
+                if (name.isBlank() || name.equals("null", true)) null else {
+                    val measure = meal.optString("strMeasure$index").trim().takeUnless { it.isBlank() || it.equals("null", true) }
+                    listOfNotNull(measure, name).joinToString(" ")
+                }
+            }
+            require(ingredients.isNotEmpty()) { "Für dieses Rezept wurden keine Zutaten geliefert." }
+            val instructions = meal.optString("strInstructions").replace("\r", "")
+                .split(Regex("""\n+""")).map { it.trim() }.filter(String::isNotBlank)
+            val category = meal.optString("strCategory").ifBlank { "TheMealDB" }
+            val area = meal.optString("strArea").trim()
+            val source = meal.optString("strSource").takeIf { it.startsWith("http://") || it.startsWith("https://") }
+                ?: "https://www.themealdb.com/meal/$id"
+            ImportedRecipe(
+                title = meal.optString("strMeal").trim(),
+                description = listOf(category, area).filter(String::isNotBlank).joinToString(" · "),
+                category = category,
+                servings = 2,
+                preparationMinutes = null,
+                cookingMinutes = null,
+                ingredients = ingredients,
+                steps = instructions,
+                sourceUrl = source,
+                imageUrl = meal.optString("strMealThumb").takeIf { it.startsWith("http://") || it.startsWith("https://") }
+            )
+        } finally {
+            connection.disconnect()
+        }
+    }
 }
