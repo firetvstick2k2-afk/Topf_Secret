@@ -2,6 +2,11 @@ package de.topfsecret.app
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.google.android.gms.tasks.Tasks
+import com.google.mlkit.nl.translate.DownloadConditions
+import com.google.mlkit.nl.translate.TranslateLanguage
+import com.google.mlkit.nl.translate.Translation
+import com.google.mlkit.nl.translate.TranslatorOptions
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -20,7 +25,10 @@ object RecipeDiscoveryClient {
 
     suspend fun search(query: String): List<DiscoveryRecipe> = request("search.php?s=${java.net.URLEncoder.encode(query, "UTF-8")}")
     suspend fun byCategory(category: String): List<DiscoveryRecipe> = request("filter.php?c=${java.net.URLEncoder.encode(category, "UTF-8")}")
-    suspend fun popular(): List<DiscoveryRecipe> = request("filter.php?c=Chicken")
+    suspend fun popular(): List<DiscoveryRecipe> {
+        val freshCategories = listOf("Chicken", "Beef", "Seafood", "Vegetarian", "Pasta", "Dessert", "Starter")
+        return request("filter.php?c=${java.net.URLEncoder.encode(freshCategories.random(), "UTF-8")}")
+    }
 
     private suspend fun request(path: String): List<DiscoveryRecipe> = withContext(Dispatchers.IO) {
         val connection = (URL(BASE + path).openConnection() as HttpURLConnection).apply {
@@ -66,22 +74,38 @@ object RecipeDiscoveryClient {
             val root = JSONObject(connection.inputStream.bufferedReader().use { it.readText() })
             val meal = root.optJSONArray("meals")?.optJSONObject(0)
                 ?: throw IllegalArgumentException("Dieses Rezept wurde nicht gefunden.")
-            val ingredients = (1..20).mapNotNull { index ->
+            val rawIngredients = (1..20).mapNotNull { index ->
                 val name = meal.optString("strIngredient$index").trim()
                 if (name.isBlank() || name.equals("null", true)) null else {
                     val measure = meal.optString("strMeasure$index").trim().takeUnless { it.isBlank() || it.equals("null", true) }
                     listOfNotNull(measure, name).joinToString(" ")
                 }
             }
-            require(ingredients.isNotEmpty()) { "Für dieses Rezept wurden keine Zutaten geliefert." }
-            val instructions = meal.optString("strInstructions").replace("\r", "")
+            require(rawIngredients.isNotEmpty()) { "Für dieses Rezept wurden keine Zutaten geliefert." }
+            val rawInstructions = meal.optString("strInstructions").replace("\r", "")
                 .split(Regex("""\n+""")).map { it.trim() }.filter(String::isNotBlank)
-            val category = meal.optString("strCategory").ifBlank { "TheMealDB" }
-            val area = meal.optString("strArea").trim()
+            val options = TranslatorOptions.Builder()
+                .setSourceLanguage(TranslateLanguage.ENGLISH)
+                .setTargetLanguage(TranslateLanguage.GERMAN)
+                .build()
+            val translator = Translation.getClient(options)
+            val translated = try {
+                Tasks.await(translator.downloadModelIfNeeded(DownloadConditions.Builder().build()))
+                translateRecipeText(translator, rawIngredients, rawInstructions, meal.optString("strMeal").trim(),
+                    meal.optString("strCategory").ifBlank { "TheMealDB" }, meal.optString("strArea").trim())
+            } catch (error: Exception) {
+                throw IllegalStateException("Die deutsche Übersetzung konnte nicht geladen werden. Bitte Internetverbindung prüfen und erneut versuchen.", error)
+            } finally {
+                translator.close()
+            }
+            val ingredients = translated.ingredients
+            val instructions = translated.instructions
+            val category = translated.category
+            val area = translated.area
             val source = meal.optString("strSource").takeIf { it.startsWith("http://") || it.startsWith("https://") }
                 ?: "https://www.themealdb.com/meal/$id"
             ImportedRecipe(
-                title = meal.optString("strMeal").trim(),
+                title = translated.title,
                 description = listOf(category, area).filter(String::isNotBlank).joinToString(" · "),
                 category = category,
                 servings = 2,
@@ -97,4 +121,30 @@ object RecipeDiscoveryClient {
             connection.disconnect()
         }
     }
+}
+
+private data class TranslatedRecipeText(
+    val title: String,
+    val category: String,
+    val area: String,
+    val ingredients: List<String>,
+    val instructions: List<String>
+)
+
+private fun translateRecipeText(
+    translator: com.google.mlkit.nl.translate.Translator,
+    ingredients: List<String>,
+    instructions: List<String>,
+    title: String,
+    category: String,
+    area: String
+): TranslatedRecipeText {
+    fun translate(text: String): String = if (text.isBlank()) text else Tasks.await(translator.translate(text))
+    return TranslatedRecipeText(
+        title = translate(title),
+        category = translate(category),
+        area = translate(area),
+        ingredients = ingredients.map(::translate),
+        instructions = instructions.map(::translate)
+    )
 }
