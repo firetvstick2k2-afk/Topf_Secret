@@ -16,7 +16,15 @@ data class ImportedRecipe(
     val cookingMinutes: Int?,
     val ingredients: List<String>,
     val steps: List<String>,
-    val sourceUrl: String
+    val sourceUrl: String,
+    val caloriesPerServing: Double? = null,
+    val carbohydratesPerServing: Double? = null,
+    val sugarsPerServing: Double? = null,
+    val fiberPerServing: Double? = null,
+    val proteinPerServing: Double? = null,
+    val fatPerServing: Double? = null,
+    val saturatedFatPerServing: Double? = null,
+    val saltPerServing: Double? = null
 )
 
 object OnlineRecipeImporter {
@@ -119,6 +127,19 @@ object OnlineRecipeImporter {
             else -> yield?.toString().orEmpty()
         }
         val servings = Regex("""\d+""").find(yieldText)?.value?.toIntOrNull()?.coerceIn(1, 100) ?: 2
+        val nutrition = json.optJSONObject("nutrition")
+        fun nutrient(vararg keys: String): Double? {
+            if (nutrition == null) return null
+            for (key in keys) {
+                val value = nutrition.opt(key)
+                val parsed = parseNutritionValue(value) ?: continue
+                return parsed
+            }
+            return null
+        }
+        val calories = nutrient("calories")
+        val sodium = nutrient("sodiumContent")
+        val salt = nutrient("saltContent") ?: sodium?.let { it * 2.5 }
         return ImportedRecipe(
             title = title,
             description = json.optString("description").trim(),
@@ -128,8 +149,35 @@ object OnlineRecipeImporter {
             cookingMinutes = parseDuration(json.optString("cookTime")),
             ingredients = ingredients,
             steps = instructions,
-            sourceUrl = sourceUrl
+            sourceUrl = sourceUrl,
+            caloriesPerServing = calories,
+            carbohydratesPerServing = nutrient("carbohydrateContent"),
+            sugarsPerServing = nutrient("sugarContent"),
+            fiberPerServing = nutrient("fiberContent"),
+            proteinPerServing = nutrient("proteinContent"),
+            fatPerServing = nutrient("fatContent"),
+            saturatedFatPerServing = nutrient("saturatedFatContent"),
+            saltPerServing = salt
         )
+    }
+
+    private fun parseNutritionValue(value: Any?): Double? {
+        val raw = when (value) {
+            is Number -> value.toString()
+            is String -> value
+            is JSONObject -> value.optString("value")
+            else -> return null
+        }
+        val number = Regex("""-?\d+(?:[.,]\d+)?""").find(raw)?.value
+            ?.replace(',', '.')?.toDoubleOrNull() ?: return null
+        val unit = raw.lowercase()
+        val grams = when {
+            Regex("""\bmg\b""").containsMatchIn(unit) -> number / 1000.0
+            Regex("""\bkg\b""").containsMatchIn(unit) -> number * 1000.0
+            Regex("""\b(g|gram|grams)\b""").containsMatchIn(unit) -> number
+            else -> number
+        }
+        return grams.takeIf { it.isFinite() && it >= 0.0 }
     }
 
     private fun parseDuration(value: String): Int? {
