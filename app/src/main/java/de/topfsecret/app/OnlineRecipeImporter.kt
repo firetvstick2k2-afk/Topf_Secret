@@ -158,11 +158,11 @@ object OnlineRecipeImporter {
             }
         }
         addStructuredImage(json.opt("image"))
-        Regex("""<meta[^>]+(?:property|name)\\s*=\\s*["'](?:og:image|twitter:image)["'][^>]+content\\s*=\\s*["']([^"']+)["'][^>]*>""", RegexOption.IGNORE_CASE)
+        Regex("""<meta[^>]+(?:property|name)\s*=\s*["'](?:og:image|twitter:image)["'][^>]+content\s*=\s*["']([^"']+)["'][^>]*>""", RegexOption.IGNORE_CASE)
             .findAll(html).forEach { addImage(it.groupValues[1]) }
-        Regex("""<meta[^>]+content\\s*=\\s*["']([^"']+)["'][^>]+(?:property|name)\\s*=\\s*["'](?:og:image|twitter:image)["'][^>]*>""", RegexOption.IGNORE_CASE)
+        Regex("""<meta[^>]+content\s*=\s*["']([^"']+)["'][^>]+(?:property|name)\s*=\s*["'](?:og:image|twitter:image)["'][^>]*>""", RegexOption.IGNORE_CASE)
             .findAll(html).forEach { addImage(it.groupValues[1]) }
-        Regex("""<img[^>]+(?:src|data-src)\\s*=\\s*["']([^"']+)["'][^>]*>""", RegexOption.IGNORE_CASE)
+        Regex("""<img[^>]+(?:src|data-src)\s*=\s*["']([^"']+)["'][^>]*>""", RegexOption.IGNORE_CASE)
             .findAll(html).forEach { addImage(it.groupValues[1]) }
         val imageUrls = imageCandidates.take(24)
         val imageUrl = imageUrls.firstOrNull()
