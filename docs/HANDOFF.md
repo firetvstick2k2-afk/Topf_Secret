@@ -101,7 +101,9 @@ Stand: 2026-11-26
 7. SQLCipher-/Keystore-/Biometric-Prototyp für Room 2.8.3, compileSdk 36 und API 26+ bauen und im CI validieren.
 8. Danach sichere Schlüsselverwaltung, Datenbankmigration v1 mit Erhalt aller bisherigen Rezepte als gemeinsam, zwei private Datenbanken, PIN-/Wiederherstellungsablauf, Biometrie und verschlüsselte Bilddateien schrittweise implementieren und testen.
 
-- Build #22 (Commit `d1ce3f3`) wurde am 26.11.2026 während des SQLCipher-Instrumentierungsschritts vom Nutzer abgebrochen. Im Log war `adb: device 'emulator-5554' not found` sichtbar; dadurch wurde weder der SQLCipher-Test bestätigt noch ein APK-Build gestartet. Der Workflow ist anschließend auf `ubuntu-22.04` festgesetzt worden; erneuter CI-Lauf steht aus.
+- Build #22 (Commit `d1ce3f3`) wurde am 26.11.2026 während des SQLCipher-Instrumentierungsschritts vom Nutzer abgebrochen. Im Log war `adb: device 'emulator-5554' not found` sichtbar; dadurch wurde weder der SQLCipher-Test bestätigt noch ein APK-Build gestartet. Der Workflow ist anschließend auf `ubuntu-22.04` festgesetzt worden. Auch Build #23 wurde während desselben Emulator-Schritts abgebrochen; die Runner-Änderung allein genügte nicht. Als nächste gezielte Maßnahme wurden die AVD-Datengröße auf `6G` begrenzt, Emulator-Grafikoptionen explizit gesetzt, das Boot-Timeout auf 900 Sekunden erhöht und eine Datenträgerdiagnose ergänzt. Ein erfolgreicher CI-Lauf steht weiterhin aus.
+
+- Der Emulator-Runner-Bericht zu `adb: device 'emulator-5554' not found` dokumentiert unter anderem einen nicht gestarteten Emulator durch eine zu große AVD-Userdata-Partition bei knappem Runner-Speicher. Daher wird die AVD-Datengröße jetzt explizit auf 6G begrenzt; die konkrete Ursache unseres Laufs ist ohne den vollständigen Emulator-Startlog noch nicht abschließend bewiesen.
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
