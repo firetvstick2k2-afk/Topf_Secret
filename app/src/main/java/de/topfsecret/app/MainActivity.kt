@@ -513,20 +513,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
     var productSearchLoading by remember { mutableStateOf(false) }
     var productSearchMessage by remember { mutableStateOf("") }
     var blsResults by remember { mutableStateOf<List<de.topfsecret.app.data.local.BlsFoodEntity>>(emptyList()) }
-    var blsImportMessage by remember { mutableStateOf("") }
-    var blsImporting by remember { mutableStateOf(false) }
-    val blsPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let { selected ->
-            blsImporting = true
-            blsImportMessage = "BLS-Datei wird eingelesen …"
-            scope.launch {
-                de.topfsecret.app.nutrition.BlsXlsxImporter.importWorkbook(context, selected, blsFoodDao).fold(
-                    onSuccess = { count -> blsImportMessage = "$count Lebensmittel aus dem BLS 4.0 importiert."; blsImporting = false },
-                    onFailure = { error -> blsImportMessage = error.message ?: "Der BLS-Import ist fehlgeschlagen."; blsImporting = false }
-                )
-            }
-        }
-    }
+    var blsMessage by remember { mutableStateOf("BLS 4.0 wird offline vorbereitet …") }
     var editingProduct by remember { mutableStateOf(false) }
     var editedBarcode by remember { mutableStateOf("") }
     var editedName by remember { mutableStateOf("") }
@@ -742,15 +729,22 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(value = productSearchQuery, onValueChange = { productSearchQuery = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Suchbegriff") }, singleLine = true)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(enabled = !blsImporting, onClick = { blsPicker.launch(arrayOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) }) { Text(if (blsImporting) "Import läuft …" else "BLS-Datei importieren") }
-                        OutlinedButton(enabled = productSearchQuery.trim().length >= 2 && !blsImporting, onClick = {
+                        OutlinedButton(enabled = productSearchQuery.trim().length >= 2, onClick = {
                             scope.launch {
-                                blsResults = blsFoodDao.search(productSearchQuery.trim())
-                                blsImportMessage = if (blsResults.isEmpty()) "Keine BLS-Treffer. Importiere zuerst die offizielle BLS-4.0-Exceldatei." else "${blsResults.size} BLS-Grundnahrungsmittel gefunden."
+                                blsMessage = "BLS-Datenbank wird geprüft …"
+                                runCatching {
+                                    de.topfsecret.app.nutrition.BlsDatasetSeeder.ensureSeeded(context, blsFoodDao)
+                                    blsFoodDao.search(productSearchQuery.trim())
+                                }.onSuccess { results ->
+                                    blsResults = results
+                                    blsMessage = if (results.isEmpty()) "Keine passenden BLS-Lebensmittel gefunden." else "${results.size} BLS-Grundnahrungsmittel gefunden."
+                                }.onFailure { error ->
+                                    blsMessage = error.message ?: "Die lokale BLS-Datenbank konnte nicht geladen werden."
+                                }
                             }
                         }) { Text("BLS suchen") }
                     }
-                    if (blsImportMessage.isNotBlank()) Text(blsImportMessage, color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    if (blsMessage.isNotBlank()) Text(blsMessage, color = MutedInk, style = MaterialTheme.typography.bodySmall)
                     blsResults.forEach { item ->
                         TextButton(modifier = Modifier.fillMaxWidth(), onClick = {
                             scannedProduct = OpenFoodFactsProduct("BLS:${item.code}", item.germanName, "BLS 4.0", item.kcalPer100, item.carbohydratesGPer100, item.proteinGPer100, item.fatGPer100, "https://blsdb.de/")
