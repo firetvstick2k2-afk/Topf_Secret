@@ -132,7 +132,7 @@ private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, appVe
                                 scope.launch {
                                     val newId = repository.saveRecipe(entity, ingredients, steps)
                                     if (editing != null && editing.recipe.imageUri != entity.imageUri) {
-                                        deleteManagedRecipeImage(applicationContext, editing.recipe.imageUri)
+                                        deleteManagedRecipeImage(this@MainActivity, editing.recipe.imageUri)
                                     }
                                     editingRecipeId = 0L
                                     selectedRecipeId = newId
