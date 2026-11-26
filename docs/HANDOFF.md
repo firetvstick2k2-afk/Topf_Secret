@@ -205,3 +205,12 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Build #42 war erfolgreich; das beweist allein nicht, dass das Asset in der APK enthalten ist.
 - CI-Workflow wurde auf `development` um einen harten APK-Integritätstest ergänzt: `unzip -Z1` muss `assets/bls_foods_v4.jsonl.gz` finden und der aus der APK extrahierte SHA-256 muss `96e3f2aaf98fa538f84dd6d826a36b1a7565e87f2520bb80b2d9b4aa51ec0bbf` entsprechen. Der nächste manuelle Build soll die Frage eindeutig entscheiden.
 - Bis zum erfolgreichen APK-Asset-Test und Gerätetest bleibt BLS-Lauffähigkeit unbestätigt. Keine Deinstallation oder Datenlöschung.
+
+
+### BLS-Assetfehler durch Android-GZIP-Asset-Paketierung behoben (2026-11-26)
+- Nutzer hat bestätigt, Release Build #42 / Version 0.6.1 installiert zu haben; der Fehler beim Laden der Datei blieb bestehen.
+- Diagnose anhand des CI-Laufs #43 (45871865372): Build und APK-Erstellung waren erfolgreich, aber die neue Integritätsprüfung brach ab. Die APK enthält `assets/bls_foods_v4.jsonl` (nicht `.jsonl.gz`). Android/AAPT hat das als `.gz` eingecheckte Asset beim APK-Packaging expandiert und die `.gz`-Endung entfernt.
+- Seeder korrigiert: öffnet nun `bls_foods_v4.jsonl` und liest direkt UTF-8-JSONL; `GZIPInputStream` entfernt. Erwartete Datensatzanzahl und die vollständigen 138 Nährstoff-Tripel bleiben unverändert.
+- CI-APK-Prüfung korrigiert: fordert `assets/bls_foods_v4.jsonl` und prüft den SHA-256 des entpackten Inhalts `b58c764620ab5b3b28f81aa3d7caca23b4b2665b151642fde809fca25f4890a6`.
+- Updateversion auf 0.6.2 / versionCode 10 erhöht, damit das nächste Release über 0.6.1 aktualisierbar ist, ohne Deinstallation oder Verlust der lokalen Rezepte.
+- Noch ausstehend: neuer manueller CI-Lauf muss Build und APK-Asset-Prüfung bestehen; danach Geräteprüfung der BLS-Erstinitialisierung und Suche nach Semmelknödel.
