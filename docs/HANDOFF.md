@@ -377,3 +377,9 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Beim App-Start erscheint vor der Aktivierungsprüfung eine kurze Compose-Animation (ca. 3,6 Sekunden): Kochtopf fährt ein, Deckel hebt sich/wackelt, Dampf steigt auf, anschließend erscheint der Markenname mit augenzwinkerndem Begrüßungstext.
 - Animation ist vollständig lokal mit Jetpack Compose umgesetzt; keine zusätzliche Bibliothek, kein Netzwerk und keine Bilddatei erforderlich.
 - App-Version auf 0.9.4 / versionCode 20 erhöht. CI-Build und Gerätetest stehen noch aus.
+
+## Entdecken: Suchfelder entfernt, TheMealDB-Übersetzung und wechselnde Auswahl (2026-11-26)
+- Die beiden nicht zuverlässig funktionierenden Suchfelder in der Entdecken-Ansicht wurden entfernt. TheMealDB wird über die Kategorie-Chips durchstöbert; Chefkoch wird über den einzelnen Button „Chefkoch öffnen“ aufgerufen. Es wird kein Suchbegriff mehr vorgetäuscht oder in ein leeres Chefkoch-Suchfeld übernommen.
+- „Für dich“ lädt nun bei jedem Öffnen der Entdecken-Ansicht eine zufällig gewählte TheMealDB-Kategorie statt immer dieselbe Chicken-Liste. Die Auswahl kann sich dadurch bei jedem Aufruf ändern.
+- TheMealDB-Rezeptdetails werden vor der Vorschau mit Google ML Kit lokal von Englisch nach Deutsch übersetzt: Titel, Kategorie, Herkunft, Zutaten und Zubereitungsschritte. Das Übersetzungsmodell wird beim ersten Bedarf heruntergeladen und danach auf dem Gerät wiederverwendet; ohne verfügbares Modell/Netzwerk wird ein verständlicher Fehler angezeigt statt stillschweigend Englisch als deutsche Übersetzung auszugeben.
+- Version 0.9.5 / versionCode 21. CI-Build und Gerätetest stehen noch aus.
