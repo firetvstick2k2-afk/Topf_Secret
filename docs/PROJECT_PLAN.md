@@ -145,3 +145,10 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Offizielle BLS-Dokumentation: 7.140 Lebensmittel, 138 Nährstoffe, je Nährstoff Wert plus Datenherkunft plus Referenz; CC BY 4.0 und MRI-Zitierangabe. Die Lizenzseite nennt Max Rubner-Institut als Herausgeber. Vor Release Import anhand der offiziellen XLSX-Datei prüfen und Quellen-/Änderungshinweis beibehalten.
 - Android CI startet jetzt automatisch bei Push auf `development`; GitHub Release bleibt manuell.
 - Build und Gerätetest der neuen Datenbankmigration, XLSX-Import- und Suchfunktion stehen noch aus.
+
+
+### BLS-Migrationsfehler nach Installation (2026-11-26)
+- Gerätetest auf Samsung SM-S908B / Android 16 zeigte beim Start: `Migration didn't properly handle: bls_foods`.
+- Ursache: Migration 3→4 erstellte `index_bls_foods_germanName`, während `BlsFoodEntity` den Index nicht in `@Entity(indices = ...)` deklarierte. Room erkannte dadurch eine Abweichung zwischen erwartetem und tatsächlichem Schema.
+- Korrektur: Entity deklariert jetzt `Index(value = ["germanName"])`, passend zum bestehenden Migrations-SQL. Keine Änderung der Datenbankversion und keine Löschung vorhandener Daten.
+- Build und erneuter Gerätetest stehen aus.
