@@ -685,7 +685,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(steps, { steps = it }, Modifier.fillMaxWidth(), label = { Text("Zubereitung – ein Schritt pro Zeile") }, placeholder = { Text("Kartoffeln schälen und würfeln.\nZwiebel glasig anbraten.") }, minLines = 4)
         Spacer(Modifier.height(16.dp))
-        if (calculatedNutrition.calculatedIngredients > 0) {
+        if (ingredients.lines().any { it.isNotBlank() }) {
             Card(colors = CardDefaults.cardColors(containerColor = PaleCopper), shape = RoundedCornerShape(14.dp)) {
                 Column(Modifier.fillMaxWidth().padding(12.dp)) {
                     Text("Automatisch berechnete Nährwerte", color = Ink, fontWeight = FontWeight.Bold)
@@ -884,7 +884,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                             }
                             nutritionByIngredientName[product.name] = product
                             if (ingredients.lines().none { it.contains(product.name, ignoreCase = true) }) {
-                                ingredients = listOf(ingredients.trimEnd(), "100 g " + product.name).filter(String::isNotBlank).joinToString("\\n")
+                                ingredients = listOf(ingredients.trimEnd(), "100 g " + product.name).filter(String::isNotBlank).joinToString("\n")
                             }
                             scannedProduct = null
                         }
@@ -1044,7 +1044,7 @@ private fun NutritionValueLines(values: NutritionPer100.Totals) {
 }
 
 private fun Double.prettyNumber(): String =
-    if (this % 1.0 == 0.0) toInt().toString() else toString().replace('.', ',')
+    java.text.DecimalFormat("0.##", java.text.DecimalFormatSymbols.getInstance(java.util.Locale.GERMAN)).format(this)
 
 
 @Composable
