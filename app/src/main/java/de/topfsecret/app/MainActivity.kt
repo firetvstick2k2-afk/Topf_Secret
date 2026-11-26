@@ -529,7 +529,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
         val lines = ingredients.lines().map(String::trim).filter(String::isNotEmpty)
         val calculated = mutableListOf<NutritionPer100.Totals>()
         val issues = mutableListOf<Pair<String, String>>()
-        val knownUnits = setOf("mg", "g", "gramm", "kg", "ml", "cl", "dl", "l", "liter", "litre", "tl", "teelöffel", "el", "esslöffel", "tasse", "tassen")
+        val knownUnits = setOf("mg", "g", "gramm", "kg", "ml", "cl", "dl", "l", "liter", "litre", "tl", "teelöffel", "el", "esslöffel", "tasse", "tassen", "stück", "stk", "stk.", "prise", "pck", "pck.", "packung", "bund", "dose", "becher")
         lines.forEach { line ->
             val match = Regex("""^(\d+(?:[.,]\d+)?)(?:\s*([\p{L}.]+))?(?:\s+(.+))?$""", RegexOption.IGNORE_CASE).matchEntire(line)
             if (match == null) { issues += line to "Die Mengenangabe konnte nicht erkannt werden."; return@forEach }
@@ -546,7 +546,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
             if (product == null) { issues += line to "Für diese Zutat liegen keine Nährwertdaten vor."; return@forEach }
             val nutrition = NutritionPer100(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, IngredientMeasureConverter.Basis.GRAMS, product.sugarsGPer100, product.fiberGPer100, product.saltGPer100, product.saturatedFatGPer100)
             val result = nutrition.forAmount(quantity, unit, name)
-            if (result == null) issues += line to if (unit == "Stück") "Aufgrund der Mengenangabe nicht berechenbar: Stückgewicht fehlt." else "Die Einheit lässt sich ohne passende Umrechnung nicht berechnen."
+            if (result == null) issues += line to if (unit.lowercase(java.util.Locale.GERMAN) in setOf("stück", "stk", "stk.")) "Aufgrund der Mengenangabe nicht berechenbar: Stückgewicht fehlt." else "Die Einheit '$unit' hat kein hinterlegtes Referenzgewicht und kann deshalb nicht berechnet werden."
             else if (listOf(product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100).all { it == null }) issues += line to "Für diese Zutat fehlen verwertbare Grundnährwerte."
             else calculated += result
         }
