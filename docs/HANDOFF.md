@@ -214,3 +214,6 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - CI-APK-Prüfung korrigiert: fordert `assets/bls_foods_v4.jsonl` und prüft den SHA-256 des entpackten Inhalts `b58c764620ab5b3b28f81aa3d7caca23b4b2665b151642fde809fca25f4890a6`.
 - Updateversion auf 0.6.2 / versionCode 10 erhöht, damit das nächste Release über 0.6.1 aktualisierbar ist, ohne Deinstallation oder Verlust der lokalen Rezepte.
 - Noch ausstehend: neuer manueller CI-Lauf muss Build und APK-Asset-Prüfung bestehen; danach Geräteprüfung der BLS-Erstinitialisierung und Suche nach Semmelknödel.
+
+- Zusatzhärtung nach Diagnose: Der Seeder erkennt jetzt anhand der GZIP-Magic-Bytes, ob das unter `assets/bls_foods_v4.jsonl` ausgelieferte Asset noch gzip-komprimiert oder bereits entpackt ist. Beide Varianten werden korrekt verarbeitet.
+- CI extrahiert das Asset und hasht immer den entpackten JSONL-Inhalt; damit ist der Test unabhängig davon, ob AAPT den Quellinhalt beim Packaging entpackt oder nur den Namen ändert.
