@@ -744,6 +744,10 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                         carbohydratesPerServing = if (calculatedNutrition.calculatedIngredients > 0) calculatedNutrition.carbohydratesG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else carbs.toDecimalOrNull(),
                         proteinPerServing = if (calculatedNutrition.calculatedIngredients > 0) calculatedNutrition.proteinG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else protein.toDecimalOrNull(),
                         fatPerServing = if (calculatedNutrition.calculatedIngredients > 0) calculatedNutrition.fatG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else fat.toDecimalOrNull(),
+                        sugarsPerServing = if (calculatedNutrition.calculatedIngredients > 0 && calculatedNutrition.sugarsComplete && uncalculatedReasons.isEmpty()) calculatedNutrition.sugarsG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else null,
+                        fiberPerServing = if (calculatedNutrition.calculatedIngredients > 0 && calculatedNutrition.fiberComplete && uncalculatedReasons.isEmpty()) calculatedNutrition.fiberG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else null,
+                        saltPerServing = if (calculatedNutrition.calculatedIngredients > 0 && calculatedNutrition.saltComplete && uncalculatedReasons.isEmpty()) calculatedNutrition.saltG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else null,
+                        saturatedFatPerServing = if (calculatedNutrition.calculatedIngredients > 0 && calculatedNutrition.saturatedFatComplete && uncalculatedReasons.isEmpty()) calculatedNutrition.saturatedFatG / (servings.toIntOrNull()?.coerceAtLeast(1) ?: 2) else null,
                         updatedAt = System.currentTimeMillis()
                     )
                     onSave(entity, ingredients.lines(), steps.lines(), nutritionByIngredientName.toMap())
@@ -955,7 +959,11 @@ private fun RecipeDetailScreen(recipe: RecipeWithDetails, onBack: () -> Unit, on
             recipe.recipe.caloriesPerServing?.let { "⚡ " + it.prettyNumber() + " kcal" },
             recipe.recipe.carbohydratesPerServing?.let { "Kohlenhydrate " + it.prettyNumber() + " g" },
             recipe.recipe.proteinPerServing?.let { "Eiweiß " + it.prettyNumber() + " g" },
-            recipe.recipe.fatPerServing?.let { "Fett " + it.prettyNumber() + " g" }
+            recipe.recipe.fatPerServing?.let { "Fett " + it.prettyNumber() + " g" },
+            recipe.recipe.sugarsPerServing?.let { "davon Zucker " + it.prettyNumber() + " g" },
+            recipe.recipe.fiberPerServing?.let { "Ballaststoffe " + it.prettyNumber() + " g" },
+            recipe.recipe.saturatedFatPerServing?.let { "davon gesättigte Fettsäuren " + it.prettyNumber() + " g" },
+            recipe.recipe.saltPerServing?.let { "Salz " + it.prettyNumber() + " g" }
         )
         if (nutritionLabels.isNotEmpty()) {
             Spacer(Modifier.height(12.dp))
