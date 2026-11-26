@@ -119,3 +119,12 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Unit-Tests für mg/g/kg, ml/l/dl, EL/TL, Dichteumrechnung und deutsche Dezimalmengen hinzugefügt.
 - Achtung: noch kein bestätigter Android-Build oder Gerätetest dieses neuen Schritts. Vor dem nächsten Release Build/CI ausführen und auf dem Telefon testen (Scanner-Modul/Google Play-Dienste, Barcode unbekannt, Produkt ohne Nährwerte, Mengenänderung, bestehende Datenbankmigration v1→v2).
 - Open Food Facts-Daten sind community-gepflegt und können unvollständig oder fehlerhaft sein. ODbL-/Datenlizenzbedingungen und Quellenhinweis sind zu beachten; API-Limits beachten (Produktabfragen 15/min/IP). API-Doku: https://openfoodfacts.github.io/documentation/docs/Product-Opener/api/.
+
+
+### Ergänzung Produktsuche nach Barcode (2026-11-26)
+- Nutzerwunsch: Wenn ein Barcode nicht erkannt/abgerufen werden kann, der Produktname fehlt oder die Produktdaten nicht brauchbar sind, soll automatisch ein Such-Popup erscheinen. Die Produktsuche soll außerdem jederzeit manuell aus der Zutatenverwaltung geöffnet werden können.
+- Umsetzung auf `development`: Open Food Facts Produktsuche über die Such-API ergänzt. Suche nach Lebensmittelbegriff oder Marke, Treffer zeigen Produktname/Marke und ob Nährwerte vorliegen. Auswahl öffnet die vorhandene Produktvorschau; Übernahme speichert die gefundenen Nährwerte wie beim Barcode-Scan.
+- Wenn kein Treffer verfügbar ist, kann der Suchbegriff als normale Zutat ohne Produktdaten übernommen werden. Der Barcode ist damit optional und darf die Rezeptbearbeitung nicht blockieren.
+- Fehler beim Barcode-Lookup, fehlender erkannter Barcode und Scannerfehler öffnen automatisch das Such-Popup. Zusätzlich gibt es neben „Barcode scannen“ die manuelle Aktion „Produkt suchen“.
+- Datenquelle bleibt Open Food Facts; Produktdaten sind community-gepflegt und können unvollständig oder ungenau sein. Nährwerte bleiben Richtwerte.
+- Noch offen: Android-Build/Unit-Tests und Gerätetest der Suche (z. B. „Semmelknödel“, Markenfilter, kein Treffer, API nicht erreichbar, Barcode 22018632).
