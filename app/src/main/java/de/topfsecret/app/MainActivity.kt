@@ -153,7 +153,28 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                                         cookingMinutes = imported.cookingMinutes,
                                         sourceUrl = imported.sourceUrl
                                     )
-                                    val newId = repository.saveRecipe(entity, imported.ingredients, imported.steps)
+                                    de.topfsecret.app.nutrition.BlsDatasetSeeder.ensureSeeded(context, blsFoodDao)
+                                    val importedNutrition = mutableMapOf<String, OpenFoodFactsProduct>()
+                                    imported.ingredients.forEach { line ->
+                                        val ingredientName = Regex("""^\\d+(?:[.,]\\d+)?\\s*(?:kg|g|mg|l|ml|cl|dl|EL|TL|Stk\\.?|Stück)?\\s+(.+)$""", RegexOption.IGNORE_CASE)
+                                            .matchEntire(line.trim())?.groupValues?.get(1)?.trim() ?: line.trim()
+                                        val local = productCatalog.search(ingredientName).firstOrNull { it.name.equals(ingredientName, true) }
+                                        if (local != null) {
+                                            importedNutrition[ingredientName] = OpenFoodFactsProduct(local.barcode, local.name, local.brand,
+                                                local.caloriesKcalPer100, local.carbohydratesGPer100, local.proteinGPer100, local.fatGPer100,
+                                                local.sourceUrl, local.sugarsGPer100, local.fiberGPer100, local.saltGPer100,
+                                                local.saturatedFatGPer100, local.nutritionBasis)
+                                        } else {
+                                            val bls = blsFoodDao.search(ingredientName).firstOrNull { it.germanName.equals(ingredientName, true) }
+                                            if (bls != null) importedNutrition[ingredientName] = OpenFoodFactsProduct(
+                                                "BLS:${bls.code}", bls.germanName, "BLS 4.0", bls.kcalPer100,
+                                                bls.carbohydratesGPer100, bls.proteinGPer100, bls.fatGPer100,
+                                                "https://blsdb.de/", bls.blsNumber("SUGAR"), bls.blsNumber("FIBT"),
+                                                bls.blsNumber("NACL"), bls.blsNumber("FASAT")
+                                            )
+                                        }
+                                    }
+                                    val newId = repository.saveRecipe(entity, imported.ingredients, imported.steps, importedNutrition)
                                     editingRecipeId = 0L
                                     selectedRecipeId = newId
                                 }
