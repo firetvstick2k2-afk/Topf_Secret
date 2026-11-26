@@ -16,6 +16,10 @@ jobs:
     name: Build signed release APK
     # Emulator-Instrumentierungstests werden vorerst auf Ubuntu 22.04 ausgeführt.
     runs-on: ubuntu-22.04
+    # GitHub-hosted Linux runners may lack usable KVM. The Android Emulator
+    # requires this explicit opt-in when the action falls back to -accel off.
+    env:
+      ANDROID_I_WANT_MY_TCG: "yes"
     steps:
       - name: Check out source
         uses: actions/checkout@v4
