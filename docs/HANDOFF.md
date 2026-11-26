@@ -91,6 +91,7 @@ Stand: 2026-11-26
 - Speicherung verwendet das bereits vorhandene Feld `RecipeEntity.imageUri`; Room-Schema bleibt Version 1. `AndroidManifest.xml` registriert den FileProvider und `res/xml/file_paths.xml` begrenzt den freigegebenen Pfad auf `recipe_images/`.
 - Online-Gerichtebildersuche ergänzt: Suche nach Gerichtsnamen über die Wikimedia-Commons-Action-API, Treffer mit Vorschaubildern und Lizenz-/Urheberangaben; Auswahl lädt ein Vorschaubild in `filesDir/recipe_images` herunter. Ein begleitender `.source.txt`-Beleg speichert Commons-Dateiseite, Thumbnail-URL, Lizenz, Urheber und Attribution. Die Bildquelle wird beim Löschen/Ersetzen der verwalteten Bilddatei mit entfernt. Dafür ist die Android-Internetberechtigung erforderlich. Es werden keine Google-Bilderseiten gescrapt und kein API-Schlüssel benötigt.
 - Online-Suche ist auf Gerichtefotos begrenzt; keine Rezept- oder Zutaten-Websuche. Ergebnisse ohne auslesbare Lizenzangabe werden ausgelassen. Vor der Übernahme werden Lizenz und Urheber im Treffer angezeigt.
+- Build 27 (`45770453918`) scheiterte erneut ausschließlich an der Activity-Label-Referenz für die Bereinigung eines ersetzten Rezeptbilds: `this@MainActivity` war innerhalb der Composable-Lambda kein gültiges Label (`Unresolved label`). Korrektur auf `this@MainActivity@onCreate`; neuer Build ausstehend.
 - Noch offen: Build-/Gerätetest der Online-Suche, Netzwerkfehler/Commons-Rate-Limits, Galerieformate und Kamera-Apps sowie Bildgrößen-/Speicheroptimierung.
 
 ## Letzter Hinweis
