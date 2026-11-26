@@ -1,0 +1,33 @@
+# Gradle
+.gradle/
+**/build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Android
+local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+captures/
+.externalNativeBuild/
+.cxx/
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+secrets.properties
+google-services.json
+supabase.properties
+
+# Private recipe data and backups
+*.tsb
+*.backup
+recipe-data/
+private-uploads/
