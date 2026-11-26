@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [RecipeEntity::class, IngredientEntity::class, PreparationStepEntity::class, LocalFoodProductEntity::class, BlsFoodEntity::class], version = 4, exportSchema = true)
+@Database(entities = [RecipeEntity::class, IngredientEntity::class, PreparationStepEntity::class, LocalFoodProductEntity::class, BlsFoodEntity::class], version = 5, exportSchema = true)
 abstract class TopfSecretDatabase : RoomDatabase() {
     abstract fun recipeDao(): RecipeDao
     abstract fun localFoodProductDao(): LocalFoodProductDao
@@ -69,10 +69,17 @@ abstract class TopfSecretDatabase : RoomDatabase() {
                 db.execSQL("CREATE INDEX IF NOT EXISTS index_bls_foods_germanName ON bls_foods(germanName)")
             }
         }
+
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE bls_foods ADD COLUMN nutrientsJson TEXT NOT NULL DEFAULT '{}' ")
+                db.execSQL("ALTER TABLE bls_foods ADD COLUMN note TEXT")
+            }
+        }
         @Volatile private var INSTANCE: TopfSecretDatabase? = null
         fun getInstance(context: Context): TopfSecretDatabase = INSTANCE ?: synchronized(this) {
             INSTANCE ?: Room.databaseBuilder(context.applicationContext, TopfSecretDatabase::class.java, "topf_secret.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { INSTANCE = it }
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5).build().also { INSTANCE = it }
         }
     }
 }
