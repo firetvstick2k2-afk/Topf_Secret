@@ -1,6 +1,13 @@
 package de.topfsecret.app
 
 import android.app.Application
+import android.util.Log
+import de.topfsecret.app.data.local.TopfSecretDatabase
+import de.topfsecret.app.nutrition.BlsDatasetSeeder
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import android.content.ContentValues
 import android.os.Build
 import android.os.Environment
@@ -13,9 +20,19 @@ import java.util.Date
 import java.util.Locale
 
 class TopfSecretApplication : Application() {
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
         super.onCreate()
+
+        applicationScope.launch {
+            runCatching {
+                val database = TopfSecretDatabase.getInstance(this@TopfSecretApplication)
+                BlsDatasetSeeder.ensureSeeded(this@TopfSecretApplication, database.blsFoodDao())
+            }.onFailure { error ->
+                Log.e("TopfSecret", "BLS 4.0 konnte nicht vollständig initialisiert werden.", error)
+            }
+        }
 
         val previousHandler = Thread.getDefaultUncaughtExceptionHandler()
         Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
