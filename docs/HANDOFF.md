@@ -165,3 +165,21 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Absturzprotokoll: `Migration didn't properly handle: bls_foods`. Die Migration 3→4 legt den Index `index_bls_foods_germanName` an, aber `BlsFoodEntity` hatte diesen Index nicht in der `@Entity`-Definition deklariert. Room erwartete deshalb ein Schema ohne Index und fand einen zusätzlichen Index.
 - Korrektur auf `development`: `BlsFoodEntity` deklariert jetzt `Index(value = ["germanName"])`; dies stimmt mit dem bereits vorhandenen SQL in Migration 3→4 überein. Datenbankversion und Tabellen-/Spaltenstruktur bleiben unverändert; kein Datenbank-Reset und keine destructive migration.
 - Noch offen: CI-Build des Korrektur-Commits und erneuter Installationstest auf dem betroffenen Gerät. Bis zur Bestätigung ist der Startfehler als behoben im Code, aber noch nicht auf dem Gerät verifiziert zu behandeln.
+
+
+## BLS 4.0 – Offline-Vollintegration (2026-11-26)
+
+- Der Nutzer hat den komprimierten Datensatz `app/src/main/assets/bls_foods_v4.jsonl.gz` auf `development` hochgeladen. GitHub-Blob-SHA: `827fc98c0a296d0eb64062f80cd31738f8a20f22`; lokale SHA-256 vor Upload: `96e3f2aaf98fa538f84dd6d826a36b1a7565e87f2520bb80b2d9b4aa51ec0bbf`.
+- Umfang: 7.140 Lebensmittel mit jeweils 138 Nährstoffkomponenten. Alle Nährstoff-Tripel (Wert, Datenherkunft, Referenz) werden in `nutrientsJson` gespeichert; zusätzliche Datensatzhinweise in `note`. Textmarker wie `&lt;LOQ`, `&lt;LOD` und `-` bleiben im JSON erhalten und werden nicht als numerische Null interpretiert.
+- Room-Schema v5 ergänzt `nutrientsJson` (Standardwert `{}`) und `note` über die nicht-destruktive Migration 4→5. Bestehende Rezepte, Zutaten und lokale Produktdaten bleiben erhalten.
+- `BlsDatasetSeeder` liest das gzip-JSONL offline aus den App-Assets. Die Vollständigkeit wird anhand der erwarteten 7.140 Datensätze geprüft; ein unvollständiger Seed wird erneut aufgebaut. Die Suche sichert die Initialisierung zusätzlich ab.
+- Der manuelle XLSX-Importer und dessen Dateiauswahl wurden entfernt. Die Rezeptbild-Dateiauswahl bleibt bestehen.
+- ENERCC, PROT625, CHO und FAT werden für die bestehende Rezeptberechnung in die Makrospalten gespiegelt; alle 138 Nährstoff-Tripel bleiben parallel erhalten.
+- **Status:** Code committed auf `development`. Android-CI-Build, Room-Migrationstest und Gerätetest sind noch offen. Die Integration ist noch nicht als auf dem Gerät verifiziert zu betrachten.
+- Lizenz: Max Rubner-Institut (2025): Bundeslebensmittelschlüssel (BLS), Version 4.0, Karlsruhe; CC BY 4.0. Änderungen/Aufbereitung kenntlich machen; keine Unterstützung oder Prüfung durch das MRI suggerieren.
+
+## CI-Trigger-Policy (maßgeblich, 2026-11-26)
+
+- Android-CI läuft bei Pull Requests gegen `development` und bei manuellem Start (`workflow_dispatch`).
+- Kein automatischer `push`-Trigger. Ältere Dokumentationsstellen, die einen Push-Build erwähnen, sind überholt.
+- Ausschließlich `development` bearbeiten; `main` bleibt unangetastet.
