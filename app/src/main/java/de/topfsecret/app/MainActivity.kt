@@ -315,6 +315,69 @@ private fun HomeActionCard(modifier: Modifier, symbol: String, title: String, su
 }
 
 @Composable
+private fun OnlineRecipeImportScreen(onCancel: () -> Unit, onSave: (ImportedRecipe) -> Unit) {
+    var url by rememberSaveable { mutableStateOf("") }
+    var imported by remember { mutableStateOf<ImportedRecipe?>(null) }
+    var loading by remember { mutableStateOf(false) }
+    var error by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        TextButton(onClick = onCancel) { Text("‹ Zurück zu den Rezepten", color = Copper) }
+        Text("ONLINE-REZEPT", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        Text("Rezept per Link übernehmen", color = Ink, fontSize = 27.sp, fontWeight = FontWeight.Bold)
+        Text("Füge den Link einer Rezeptseite ein. Topf Secret sucht nach strukturierten Rezeptangaben (Schema.org) und zeigt dir die gefundenen Daten vor dem Speichern.", color = MutedInk)
+        OutlinedTextField(
+            value = url,
+            onValueChange = { url = it; imported = null; error = "" },
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text("Rezept-Link") },
+            placeholder = { Text("https://…") },
+            singleLine = true
+        )
+        Button(
+            onClick = {
+                loading = true
+                error = ""
+                imported = null
+                scope.launch {
+                    runCatching { OnlineRecipeImporter.importFromUrl(url) }
+                        .onSuccess { imported = it }
+                        .onFailure { error = it.message ?: "Der Rezeptlink konnte nicht gelesen werden." }
+                    loading = false
+                }
+            },
+            enabled = url.isNotBlank() && !loading,
+            modifier = Modifier.fillMaxWidth()
+        ) { Text(if (loading) "Rezept wird gesucht…" else "Rezeptdaten laden") }
+        if (error.isNotBlank()) {
+            Text(error, color = Color(0xFFB3261E))
+            Text("Tipp: Manche Webseiten stellen keine maschinenlesbaren Rezeptdaten bereit. Dann kannst du das Rezept weiterhin manuell anlegen.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+        }
+        imported?.let { recipe ->
+            Card(colors = CardDefaults.cardColors(containerColor = Paper), shape = RoundedCornerShape(18.dp)) {
+                Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("VORSCHAU", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+                    Text(recipe.title, color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+                    if (recipe.description.isNotBlank()) Text(recipe.description, color = MutedInk)
+                    Text("${recipe.servings} Portionen · Vorbereitung: ${recipe.preparationMinutes?.let { "$it Min." } ?: "–"} · Kochzeit: ${recipe.cookingMinutes?.let { "$it Min." } ?: "–"}", color = Ink)
+                    Text("Zutaten (${recipe.ingredients.size})", color = Ink, fontWeight = FontWeight.Bold)
+                    recipe.ingredients.forEach { Text("• $it", color = Ink, style = MaterialTheme.typography.bodyMedium) }
+                    Text("Zubereitung (${recipe.steps.size} Schritte)", color = Ink, fontWeight = FontWeight.Bold)
+                    recipe.steps.forEachIndexed { index, step -> Text("${index + 1}. $step", color = Ink, style = MaterialTheme.typography.bodyMedium) }
+                    Text("Quelle: ${recipe.sourceUrl}", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    Text("Bitte prüfe die übernommenen Angaben. Das Originalbild wird nicht kopiert; der Quellenlink bleibt am Rezept erhalten.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    Button(onClick = { onSave(recipe) }, modifier = Modifier.fillMaxWidth()) { Text("In meine Rezepte übernehmen") }
+                }
+            }
+        }
+        Text("Hinweis: Der Import funktioniert bei Webseiten, die Rezeptdaten strukturiert veröffentlichen. Nicht jede Rezeptseite unterstützt das. Es werden nur Rezept-Metadaten übernommen, keine komplette Webseite.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+@Composable
 private fun RecipeListScreen(
     recipes: List<RecipeWithDetails>,
     selectedCategory: String,
