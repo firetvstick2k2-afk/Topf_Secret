@@ -26,6 +26,8 @@ Stand: 2026-11-26
 - Der Quellstand wurde auf Version 0.6.0 (`versionCode = 8`) angehoben. Build und Gerätetest für diese Erweiterung stehen noch aus.
 - Room `2.8.3` ist eingebunden (Kotlin KAPT als Compiler-Anbindung). Die lokale Datenbank `topf_secret.db` wird bei Bedarf über `TopfSecretDatabase.getInstance(context)` erstellt.
 - Datenmodell v1: `RecipeEntity` mit Titel, Beschreibung, Kategorie, Portionen, Zeiten, Bild-/Quellen-URI, Notizen, optionalen Nährwert-Schätzwerten pro Portion, Favoritenstatus und Zeitstempeln. Zutaten (`IngredientEntity`) und Zubereitungsschritte (`PreparationStepEntity`) sind normalisiert und per Fremdschlüssel mit Cascade Delete verknüpft.
+- Sicherheitsarchitektur für lokale Profile ist in `docs/SECURITY_ARCHITECTURE.md` dokumentiert (Commit `0cad4fa`). Sie sieht eine verschlüsselte gemeinsame SQLCipher-Datenbank und je eine separat verschlüsselte private Datenbank pro Profil vor. Die gemeinsame Datenbank wird für beide Profile unabhängig freigegeben; private Datenbankschlüssel bleiben profilgebunden. Private Bilddateien müssen ebenfalls separat verschlüsselt werden.
+- SQLCipher for Android (neue Bibliothekslinie) ist als Kandidat vorgesehen; konkrete Version und Room-2.8.3-/compileSdk-36-Kompatibilität sind vor Einbau in einem Prototyp-Build zu validieren. AndroidX BiometricPrompt und Android Keystore sind für optionale biometrische Schlüsselhüllen vorgesehen.
 - `RecipeDao` bietet Flow-Beobachtung aller Rezepte, einzelner Rezepte und Kategorien sowie transaktionales Speichern mit Ersetzen der Zutaten und Schritte. Der Rezepte-Bereich ist mit Room verbunden; Rezeptliste, Detailansicht und Eingabemaske unterstützen den ersten lokalen CRUD-Ablauf. Die Rezeptliste bietet eine Live-Suche über Rezeptname, Kategorie, Beschreibung und Zutatenname sowie einen Kategorienfilter. Kategorien werden aus den gespeicherten Rezepten abgeleitet; dafür war keine Room-Schemaänderung nötig. Migrationen über Datenbankversion 1 hinaus sind noch nicht umgesetzt.
 - Pushes auf `development` lösen keinen Build mehr aus. Builds werden manuell über GitHub Actions → Android CI → Run workflow gestartet. Pull Requests gegen `development` lösen weiterhin automatisch einen Build aus.
 - CI erstellt ein signiertes Release-APK und benennt es vor der Veröffentlichung nach der GitHub-Buildnummer, z. B. `topf_secret_#18.apk`.
@@ -93,8 +95,8 @@ Stand: 2026-11-26
 4. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
 5. Version 0.6.0 in GitHub Actions bauen und auf dem Gerät testen: Hell-/Dunkelmodus über das Symbol oben rechts inklusive Neustart, Kontrast der „Guten Appetit“-Karte, Rezeptzeiten, Nährwerte, Zutatenmengen sowie Anlegen/Bearbeiten/Löschen und Datenpersistenz.
 6. Rezept-Suche, Kategorienübersicht, Kategorienfilter, Favoritenübersicht und Info-Dialog (Logo, Autorzeile, dynamische App-Version) sind im Quellstand umgesetzt; GitHub-Actions-Build und Gerätetest stehen noch aus.
-7. Sicherheitsarchitektur für persönliche Profile, getrennte private Rezeptdaten, PIN, Biometrie und profilgebundene Wiederherstellung abschließend entwerfen und gegen aktuelle Android-/Room-/Verschlüsselungsbibliotheken prüfen.
-8. Erst danach Datenbankmigration und Profil-/PIN-/Backup-Code-Funktionen implementieren; vorhandene Rezepte als gemeinsam erhalten und Migration testen.
+7. SQLCipher-/Keystore-/Biometric-Prototyp für Room 2.8.3, compileSdk 36 und API 26+ bauen und im CI validieren.
+8. Danach sichere Schlüsselverwaltung, Datenbankmigration v1 mit Erhalt aller bisherigen Rezepte als gemeinsam, zwei private Datenbanken, PIN-/Wiederherstellungsablauf, Biometrie und verschlüsselte Bilddateien schrittweise implementieren und testen.
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
