@@ -303,3 +303,31 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Chefkoch-Suche öffnet die offizielle Chefkoch-Suche mit dem eingegebenen Suchbegriff im Browser. Der Nutzer kopiert anschließend den konkreten Rezeptlink und nutzt den bestehenden Online-Linkimport in Topf Secret.
 - Keine automatisierte Chefkoch-Suche, kein Scraping und keine Umgehung von Zugriffsbeschränkungen; die Chefkoch-Bedingungen untersagen automatisches Auslesen und den Aufbau eigener Suchsysteme.
 - Version 0.9.3 / versionCode 19. Build und Gerätetest stehen aus. Deutsche Übersetzung für TheMealDB ist als nächster Umsetzungsschritt offen.
+
+## Produkt- und Lizenzarchitektur für eine spätere Veröffentlichung (Entscheidung 2026-11-26)
+
+### Drei getrennte Android-Apps
+- **Topf_Secret_Admin**: private Familien-/Entwicklungsvariante für Nutzer und Ehefrau. Die umfangreichere Entdecken-Funktion wird hier weiterentwickelt und getestet (TheMealDB, geplante deutsche Übersetzung und zusätzliche Testquellen); vorhandener Familien-Key bleibt für diese Variante vorgesehen.
+- **Topf Secret Release 1.0**: stabile Kundenvariante. Entdecken enthält nur rechtlich geprüfte externe Rezeptseiten als Linkbuttons. Die Buttons öffnen die Originalseiten im Browser. Nutzer kopieren/teilen die konkrete Rezeptadresse und importieren sie anschließend über den vorhandenen URL-Import. Keine nicht autorisierte automatisierte Suche, Extraktion oder Bildkopie.
+- **Topf Secret Lizenzmanager**: separate Android-App für den Betreiber zur Erstellung und Verwaltung von Kundenlizenzen.
+- Getrennte Application IDs/Installationen und Build-Konfigurationen vorsehen. Gemeinsame Rezeptbasis/Funktionen möglichst wiederverwenden; Admin-Testfunktionen und nicht freigegebene Quellen dürfen nicht in Release gelangen.
+
+### Einmalige Keys ohne laufenden Lizenzserver (erste Ausbaustufe)
+- Geschäftsmodell: einmaliger Kauf, kein Abo und keine automatische Verlängerung.
+- Lizenzmanager erfasst Kundenname und E-Mail-Adresse; Betreiber wählt eine Laufzeit und tippt auf „Generate Key“.
+- Laufzeiten: mindestens Beta, 1 Monat, 3 Monate, 6 Monate, 1 Jahr, 2 Jahre und Lifetime; Auswahl soll erweiterbar bleiben. Zeitlizenzen haben ein Ablaufdatum, Lifetime nicht.
+- Lokale Lizenzübersicht mit Suche nach Name/E-Mail, Lizenztyp, Key/Key-Referenz, Ausstellungsdatum, Ablaufdatum und Status. Verlorene Keys sollen anhand des Kundeneintrags wiedergefunden bzw. erneut ausgegeben werden können.
+- Lizenzformat offline prüfbar und digital signiert: privater Signaturschlüssel ausschließlich im Lizenzmanager und sicher gesichert; öffentlicher Prüfschlüssel in Admin- und Release-App. Niemals private Schlüssel in APKs oder öffentliches GitHub einchecken.
+- Lizenzdaten sollen eine eindeutige Lizenz-ID, Lizenztyp, Ausstellungszeitpunkt, Ablaufdatum (außer Lifetime), Kundenreferenz/E-Mail und ggf. Gerätebindung enthalten.
+- Lizenzmanager-Datenbank benötigt verschlüsselten Export/Backup und einen getesteten Wiederherstellungsweg, da keine zentrale Serverkopie vorgesehen ist.
+- E-Mail-Zuordnung ist zunächst manuell durch den Betreiber zu verifizieren. Automatischer E-Mail-Einmalcode würde einen Maildienst/externen Dienst erfordern und ist nicht Teil der kostenlosen Offline-Erstausbaustufe.
+- Beta ist ein eigener Lizenztyp für ausgewählte Tester, mit eigener Laufzeit und Kennzeichnung.
+
+### Grenzen und Sicherheitsentscheidungen
+- Offline-Signaturprüfung schützt gegen selbst erzeugte/manipulierte Keys, bietet aber ohne Server keinen sofortigen zentralen Widerruf. Ein altes Gerät kann nach einem Gerätewechsel nicht zuverlässig remote deaktiviert werden. Gerätewechsel erfolgt zunächst durch Ausstellung/Übertragung einer neuen signierten Lizenz; die Grenze muss in der späteren UX berücksichtigt werden.
+- Ablaufprüfung bei zeitlich begrenzten Keys benötigt eine robuste Zeitstrategie; Manipulation der Geräteuhr ist bei rein offline arbeitender App nicht vollständig auszuschließen. Vor Implementierung geeignete lokale Speicherung/Prüfung und verständliche Kulanz-/Offline-Regeln festlegen.
+- Keine laufenden Serverkosten für die erste Ausbaustufe geplant. Externe Maildienste, Cloud-Synchronisierung oder zentrale Widerrufslisten wären spätere optionale Erweiterungen mit möglichen Kosten.
+- Vor Release kommerzielle Nutzungsrechte, Attribution, Caching- und Bildrechte jeder Rezeptquelle prüfen. TheMealDB bleibt zunächst Entwicklungsquelle; kommerzielle Freigabe/Bedingungen sind vor Veröffentlichung zu klären. Chefkoch bleibt bei externem Browser-Link und manuellem URL-Import ohne Scraping.
+
+**Status:** Vereinbart und dokumentiert, nicht implementiert. Zuerst die bestehende Admin-App/Entdecken-Funktion weiterentwickeln; Lizenzmanager und Release-Aufteilung sind spätere eigene Arbeitspakete.
+
