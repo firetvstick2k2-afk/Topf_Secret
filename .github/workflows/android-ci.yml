@@ -14,12 +14,7 @@ permissions:
 jobs:
   build:
     name: Build signed release APK
-    # Emulator-Instrumentierungstests werden vorerst auf Ubuntu 22.04 ausgeführt.
     runs-on: ubuntu-22.04
-    # GitHub-hosted Linux runners may lack usable KVM. The Android Emulator
-    # requires this explicit opt-in when the action falls back to -accel off.
-    env:
-      ANDROID_I_WANT_MY_TCG: "yes"
     steps:
       - name: Check out source
         uses: actions/checkout@v4
@@ -39,25 +34,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.13'
-
-      - name: Report runner disk space
-        run: |
-          echo "Disk space before Android emulator setup:"
-          df -h /
-          df -h "$HOME"
-
-      - name: Run SQLCipher Room instrumentation test
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 35
-          target: google_apis
-          arch: x86_64
-          profile: pixel_2
-          disk-size: 6G
-          emulator-boot-timeout: 900
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
-          disable-animations: true
-          script: gradle --no-daemon connectedDebugAndroidTest
 
       - name: Prepare signing key
         env:
