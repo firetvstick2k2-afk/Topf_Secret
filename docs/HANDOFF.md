@@ -18,7 +18,8 @@ Stand: 2026-11-26
 - Navigation nutzt Compose-Zustand und benötigt noch keine zusätzliche Navigation-Bibliothek.
 - Rezepteditor erweitert: Vorbereitungszeit und Kochzeit sowie kcal, Kohlenhydrate, Eiweiß und Fett je Portion können optional erfasst und in der Detailansicht angezeigt werden. Nährwerte werden ausdrücklich als Richtwerte gekennzeichnet.
 - Zutatenzeilen erkennen einfache Mengen-/Einheitenangaben am Zeilenanfang (z. B. `500 g Kartoffeln`, `2 EL Öl`) und speichern Menge und Zutatenname getrennt. Beim Bearbeiten werden beide Bestandteile wieder zusammengesetzt.
-- Hell-/Dunkelmodus ist über einen Schalter auf der Startseite umstellbar. Die Auswahl wird lokal in den App-Einstellungen gespeichert und bleibt nach einem Neustart erhalten.
+- Hell-/Dunkelmodus ist über ein Symbol oben rechts in der Kopfzeile umstellbar (Mond/Sonne). Die Auswahl wird lokal in den App-Einstellungen gespeichert und bleibt nach einem Neustart erhalten.
+- Die Startseiten-Karte „Guten Appetit“ verwendet im Hell- und Dunkelmodus jeweils einen kontrastreichen dunklen Braunton mit heller Schrift; sie übernimmt nicht mehr versehentlich die dynamische Textfarbe als Hintergrund.
 - Für diese Erweiterung war keine Room-Schemaänderung nötig; Datenbankversion 1 bleibt bestehen.
 - Der Quellstand wurde auf Version 0.6.0 (`versionCode = 8`) angehoben. Build und Gerätetest für diese Erweiterung stehen noch aus.
 - Room `2.8.3` ist eingebunden (Kotlin KAPT als Compiler-Anbindung). Die lokale Datenbank `topf_secret.db` wird bei Bedarf über `TopfSecretDatabase.getInstance(context)` erstellt.
@@ -76,7 +77,7 @@ Stand: 2026-11-26
 2. Manuellen Workflow starten und signiertes Release-APK bauen.
 3. Nach dem Import-Fix einen neuen signierten Release-Build starten, APK-Signatur prüfen und Aktivierungsseite auf dem Gerät testen; eine Deinstallation nur dann durchführen, wenn die Signatur nicht mit der installierten Version übereinstimmt.
 4. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
-5. Version 0.6.0 in GitHub Actions bauen und auf dem Gerät testen: Hell-/Dunkelmodus inklusive Neustart, Rezeptzeiten, Nährwerte, Zutatenmengen sowie Anlegen/Bearbeiten/Löschen und Datenpersistenz.
+5. Version 0.6.0 in GitHub Actions bauen und auf dem Gerät testen: Hell-/Dunkelmodus über das Symbol oben rechts inklusive Neustart, Kontrast der „Guten Appetit“-Karte, Rezeptzeiten, Nährwerte, Zutatenmengen sowie Anlegen/Bearbeiten/Löschen und Datenpersistenz.
 6. Suche, Filter und Kategorien mit den gespeicherten Rezepten verbinden.
 7. PIN-Sperre implementieren und testen.
 
