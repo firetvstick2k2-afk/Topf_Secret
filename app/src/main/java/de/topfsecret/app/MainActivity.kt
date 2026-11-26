@@ -102,19 +102,74 @@ class MainActivity : ComponentActivity() {
         val appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "Unbekannt"
         setContent {
             var darkMode by rememberSaveable { mutableStateOf(preferences.getBoolean("dark_mode", false)) }
+            var userName by rememberSaveable { mutableStateOf(preferences.getString("user_name", "").orEmpty()) }
             var showSplash by rememberSaveable { mutableStateOf(true) }
             TopfSecretTheme(darkMode) {
                 if (showSplash) {
                     TopfSecretSplash(onFinished = { showSplash = false })
                 } else {
                     ActivationGate {
-                        TopfSecretApp(appContext, repository, productCatalog, blsFoodDao, darkMode, appVersion) { enabled ->
-                            darkMode = enabled
-                            preferences.edit().putBoolean("dark_mode", enabled).apply()
+                        if (userName.isBlank()) {
+                            FirstRunNameScreen(onSave = { enteredName ->
+                                val cleanedName = enteredName.trim()
+                                preferences.edit().putString("user_name", cleanedName).apply()
+                                userName = cleanedName
+                            })
+                        } else {
+                            TopfSecretApp(appContext, repository, productCatalog, blsFoodDao, darkMode, appVersion, userName) { enabled ->
+                                darkMode = enabled
+                                preferences.edit().putBoolean("dark_mode", enabled).apply()
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+}
+
+private fun timeGreeting(name: String): String {
+    val hour = java.time.LocalTime.now().hour
+    val greeting = when (hour) {
+        in 5..10 -> "Guten Morgen"
+        in 11..17 -> "Guten Tag"
+        in 18..22 -> "Guten Abend"
+        else -> "Schön, dass du noch da bist"
+    }
+    val emoji = when (hour) {
+        in 5..10 -> "☀️"
+        in 11..17 -> "😊"
+        in 18..22 -> "🌙"
+        else -> "✨"
+    }
+    return "$greeting, $name! $emoji"
+}
+
+@Composable
+private fun FirstRunNameScreen(onSave: (String) -> Unit) {
+    var name by rememberSaveable { mutableStateOf("") }
+    Column(
+        modifier = Modifier.fillMaxSize().background(Cream).padding(28.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Image(painterResource(R.drawable.topf_secret_logo), "Topf Secret", Modifier.size(112.dp))
+        Spacer(Modifier.height(18.dp))
+        Text("Willkommen bei Topf Secret! 🍲", color = Ink, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(8.dp))
+        Text("Wie dürfen wir dich nennen? Dann können wir dich künftig passend zur Tageszeit begrüßen.", color = MutedInk, textAlign = TextAlign.Center)
+        Spacer(Modifier.height(20.dp))
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            label = { Text("Dein Vorname") },
+            placeholder = { Text("z. B. Alex") }
+        )
+        Spacer(Modifier.height(14.dp))
+        Button(onClick = { onSave(name.trim()) }, enabled = name.trim().isNotEmpty(), modifier = Modifier.fillMaxWidth()) {
+            Text("Los geht's!")
         }
     }
 }
@@ -229,7 +284,7 @@ private fun TopfSecretTheme(darkMode: Boolean, content: @Composable () -> Unit) 
 }
 
 @Composable
-private fun TopfSecretApp(context: Context, repository: RecipeRepository, productCatalog: LocalFoodProductDao, blsFoodDao: de.topfsecret.app.data.local.BlsFoodDao, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit) {
+private fun TopfSecretApp(context: Context, repository: RecipeRepository, productCatalog: LocalFoodProductDao, blsFoodDao: de.topfsecret.app.data.local.BlsFoodDao, darkMode: Boolean, appVersion: String, userName: String, onDarkModeChange: (Boolean) -> Unit) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var selectedRecipeId by rememberSaveable { mutableLongStateOf(0L) }
     var editingRecipeId by rememberSaveable { mutableLongStateOf(0L) }
@@ -261,7 +316,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
     ) { innerPadding ->
         Surface(Modifier.fillMaxSize().padding(innerPadding), color = Cream) {
             when (selectedTab) {
-                0 -> HomeScreen(recipes.size, darkMode, appVersion, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 }, { selectedTab = 5 })
+                0 -> HomeScreen(recipes.size, darkMode, appVersion, userName, onDarkModeChange, { selectedTab = 1 }, { selectedTab = 2 }, { selectedTab = 5 })
                 1 -> {
                     if (editingRecipeId == -2L) {
                         OnlineRecipeImportScreen(
@@ -384,7 +439,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
 }
 
 @Composable
-private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit, onSourcesClick: () -> Unit) {
+private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, userName: String, onDarkModeChange: (Boolean) -> Unit, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit, onSourcesClick: () -> Unit) {
     var showInfoDialog by rememberSaveable { mutableStateOf(false) }
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 18.dp),
@@ -435,7 +490,7 @@ private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, 
                 containerColor = Paper
             )
         }
-        Text("Schön, dass ihr da seid! 👋", color = MutedInk, style = MaterialTheme.typography.titleMedium)
+        Text(timeGreeting(userName), color = MutedInk, style = MaterialTheme.typography.titleMedium)
         Spacer(Modifier.height(7.dp))
         Text("Was kochen wir heute?", color = Ink, fontSize = 29.sp, lineHeight = 35.sp, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(10.dp))
