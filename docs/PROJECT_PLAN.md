@@ -203,3 +203,5 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Rezeptdetail zeigt zusätzliche Nährwerte pro Portion. Teilberechnungen werden als Teilmenge markiert und nicht als vollständige Rezeptwerte gespeichert.
 - App-Version 0.6.3 / versionCode 11.
 - Tests ergänzt; CI-/Geräteprüfung steht noch aus. Vor Release manuell auf development bauen und Migration mit vorhandenen Rezepten prüfen.
+
+- Nachprüfung ergänzt: Stück-, Packungs- und Haushaltsmaße ohne Referenzgewicht werden mit konkretem Grund als nicht berechenbar ausgewiesen. Aktueller Code-Stand vor dieser Doku-Aktualisierung: `ad56eeba9ae9cacec734b354c8c09518bd000421`; Build #44 gehört zum vorherigen Stand. Neuer manueller CI-Lauf erforderlich.
