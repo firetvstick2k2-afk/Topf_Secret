@@ -79,7 +79,9 @@ private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, onDar
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var selectedRecipeId by rememberSaveable { mutableLongStateOf(0L) }
     var editingRecipeId by rememberSaveable { mutableLongStateOf(0L) }
+    var selectedCategory by rememberSaveable { mutableStateOf("") }
     val recipes by repository.observeRecipes().collectAsState(initial = emptyList())
+    val categories = recipes.map { it.recipe.category.trim() }.filter(String::isNotBlank).distinct().sortedBy { it.lowercase() }
     val scope = rememberCoroutineScope()
 
     Scaffold(
@@ -93,6 +95,7 @@ private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, onDar
                             selectedTab = index
                             selectedRecipeId = 0L
                             editingRecipeId = 0L
+                            if (index != 1) selectedCategory = ""
                         },
                         icon = { Text(destination.symbol, fontSize = 23.sp) },
                         label = { Text(destination.label) }
@@ -121,7 +124,7 @@ private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, onDar
                     } else if (selectedRecipeId != 0L) {
                         val selected = recipes.firstOrNull { it.recipe.id == selectedRecipeId }
                         if (selected == null) {
-                            RecipeListScreen(recipes, { editingRecipeId = -1L }, { selectedRecipeId = it })
+                            RecipeListScreen(recipes, selectedCategory, { selectedCategory = "" }, { editingRecipeId = -1L }, { selectedRecipeId = it })
                         } else {
                             RecipeDetailScreen(
                                 recipe = selected,
@@ -139,10 +142,15 @@ private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, onDar
                             )
                         }
                     } else {
-                        RecipeListScreen(recipes, { editingRecipeId = -1L }, { selectedRecipeId = it })
+                        RecipeListScreen(recipes, selectedCategory, { selectedCategory = "" }, { editingRecipeId = -1L }, { selectedRecipeId = it })
                     }
                 }
-                2 -> PlaceholderScreen("GUT SORTIERT", "Kategorien", "Ob Frühstück, Hauptgericht oder etwas Süßes – bald findet ihr alles mit wenigen Fingertipps.", "🥕", "Die Kategorien werden als Nächstes mit euren gespeicherten Rezepten verbunden.")
+                2 -> CategoryScreen(categories, recipes, onCategoryClick = { category ->
+                    selectedCategory = category
+                    selectedTab = 1
+                    selectedRecipeId = 0L
+                    editingRecipeId = 0L
+                })
                 else -> PlaceholderScreen("FÜR SPÄTER", "Eure Favoriten", "Die Rezepte, die ihr immer wieder kochen möchtet, sammeln wir hier.", "♡", "Favoriten könnt ihr bereits in der Rezeptansicht markieren.")
             }
         }
@@ -211,7 +219,24 @@ private fun HomeActionCard(modifier: Modifier, symbol: String, title: String, su
 }
 
 @Composable
-private fun RecipeListScreen(recipes: List<RecipeWithDetails>, onAdd: () -> Unit, onOpen: (Long) -> Unit) {
+private fun RecipeListScreen(
+    recipes: List<RecipeWithDetails>,
+    selectedCategory: String,
+    onClearCategory: () -> Unit,
+    onAdd: () -> Unit,
+    onOpen: (Long) -> Unit
+) {
+    var searchText by rememberSaveable { mutableStateOf("") }
+    val visibleRecipes = recipes.filter { item ->
+        val categoryMatches = selectedCategory.isBlank() || item.recipe.category.equals(selectedCategory, ignoreCase = true)
+        val query = searchText.trim()
+        val searchMatches = query.isBlank() ||
+            item.recipe.title.contains(query, ignoreCase = true) ||
+            item.recipe.category.contains(query, ignoreCase = true) ||
+            item.recipe.description.contains(query, ignoreCase = true) ||
+            item.ingredients.any { it.name.contains(query, ignoreCase = true) }
+        categoryMatches && searchMatches
+    }
     Scaffold(
         containerColor = Cream,
         floatingActionButton = {
@@ -221,19 +246,46 @@ private fun RecipeListScreen(recipes: List<RecipeWithDetails>, onAdd: () -> Unit
         Column(Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(20.dp)) {
             Text("DEINE SAMMLUNG", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
             Spacer(Modifier.height(6.dp))
-            Text("Alle Rezepte", color = Ink, fontSize = 28.sp, fontWeight = FontWeight.Bold)
-            Spacer(Modifier.height(16.dp))
-            if (recipes.isEmpty()) {
+            Text(if (selectedCategory.isBlank()) "Alle Rezepte" else selectedCategory, color = Ink, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+            Spacer(Modifier.height(12.dp))
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                label = { Text("Rezepte suchen") },
+                placeholder = { Text("Name, Kategorie oder Zutat") },
+                trailingIcon = {
+                    if (searchText.isNotEmpty()) IconButton(onClick = { searchText = "" }) { Text("✕") }
+                }
+            )
+            if (selectedCategory.isNotBlank()) {
+                Spacer(Modifier.height(8.dp))
+                TextButton(onClick = onClearCategory) { Text("Alle Kategorien anzeigen", color = Copper) }
+            }
+            Spacer(Modifier.height(12.dp))
+            if (visibleRecipes.isEmpty()) {
                 Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
                     Column(Modifier.fillMaxWidth().padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("🍲", fontSize = 48.sp)
+                        Text(if (recipes.isEmpty()) "🍲" else "🔎", fontSize = 48.sp)
                         Spacer(Modifier.height(10.dp))
-                        Text("Der Topf ist noch leer", color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            when {
+                                recipes.isEmpty() -> "Der Topf ist noch leer"
+                                selectedCategory.isNotBlank() -> "Keine Rezepte in dieser Kategorie"
+                                else -> "Nichts gefunden"
+                            },
+                            color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium
+                        )
                         Spacer(Modifier.height(6.dp))
-                        Text("Legt euer erstes Lieblingsrezept an. Über das Plus geht's los!", color = MutedInk, textAlign = TextAlign.Center)
+                        Text(
+                            if (recipes.isEmpty()) "Legt euer erstes Lieblingsrezept an. Über das Plus geht's los!"
+                            else "Ändert euren Suchbegriff oder wählt eine andere Kategorie.",
+                            color = MutedInk, textAlign = TextAlign.Center
+                        )
                     }
                 }
-            } else recipes.forEach { item ->
+            } else visibleRecipes.forEach { item ->
                 Card(onClick = { onOpen(item.recipe.id) }, modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
                     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
                         Text(if (item.recipe.isFavorite) "❤️" else "🍽️", fontSize = 27.sp)
@@ -244,6 +296,46 @@ private fun RecipeListScreen(recipes: List<RecipeWithDetails>, onAdd: () -> Unit
                         }
                         Text("›", color = Copper, fontSize = 28.sp)
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CategoryScreen(
+    categories: List<String>,
+    recipes: List<RecipeWithDetails>,
+    onCategoryClick: (String) -> Unit
+) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
+        Text("GUT SORTIERT", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        Spacer(Modifier.height(6.dp))
+        Text("Kategorien", color = Ink, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Text("Wählt eine Kategorie und findet die passenden Rezepte.", color = MutedInk, style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(18.dp))
+        if (categories.isEmpty()) {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
+                Column(Modifier.fillMaxWidth().padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("🥕", fontSize = 48.sp)
+                    Spacer(Modifier.height(10.dp))
+                    Text("Noch keine Kategorien", color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Gebt euren Rezepten beim Anlegen eine Kategorie, zum Beispiel Hauptgericht, Dessert oder Frühstück.", color = MutedInk, textAlign = TextAlign.Center)
+                }
+            }
+        } else categories.forEach { category ->
+            val count = recipes.count { it.recipe.category.equals(category, ignoreCase = true) }
+            Card(onClick = { onCategoryClick(category) }, modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp), shape = RoundedCornerShape(18.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
+                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("🥕", fontSize = 25.sp)
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(category, color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text("$count " + if (count == 1) "Rezept" else "Rezepte", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text("›", color = Copper, fontSize = 28.sp)
                 }
             }
         }
