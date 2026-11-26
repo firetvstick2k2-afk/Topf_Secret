@@ -1229,14 +1229,18 @@ private fun RecipeDetailScreen(recipe: RecipeWithDetails, onBack: () -> Unit, on
                 val manualLabels = listOfNotNull(
                     recipe.recipe.caloriesPerServing?.let { "⚡ " + it.prettyNumber() + " kcal" },
                     recipe.recipe.carbohydratesPerServing?.let { "Kohlenhydrate " + it.prettyNumber() + " g" },
+                    recipe.recipe.sugarsPerServing?.let { "davon Zucker " + it.prettyNumber() + " g" },
+                    recipe.recipe.fiberPerServing?.let { "Ballaststoffe " + it.prettyNumber() + " g" },
                     recipe.recipe.proteinPerServing?.let { "Eiweiß " + it.prettyNumber() + " g" },
-                    recipe.recipe.fatPerServing?.let { "Fett " + it.prettyNumber() + " g" }
+                    recipe.recipe.fatPerServing?.let { "Fett " + it.prettyNumber() + " g" },
+                    recipe.recipe.saturatedFatPerServing?.let { "davon gesättigte Fettsäuren " + it.prettyNumber() + " g" },
+                    recipe.recipe.saltPerServing?.let { "Salz " + it.prettyNumber() + " g" }
                 )
                 if (manualLabels.isNotEmpty()) {
                     Spacer(Modifier.height(12.dp))
                     Card(colors = CardDefaults.cardColors(containerColor = PaleCopper), shape = RoundedCornerShape(16.dp)) {
                         Column(Modifier.fillMaxWidth().padding(14.dp)) {
-                            Text("Manuelle Nährwertangaben", color = Ink, fontWeight = FontWeight.Bold)
+                            Text(if (recipe.recipe.sourceUrl.isNullOrBlank()) "Manuelle Nährwertangaben" else "Nährwertangaben aus Rezeptquelle", color = Ink, fontWeight = FontWeight.Bold)
                             manualLabels.forEach { Text(it, color = Ink, style = MaterialTheme.typography.bodyMedium) }
                             Text("Angaben sind Richtwerte.", color = MutedInk, style = MaterialTheme.typography.labelSmall)
                         }
