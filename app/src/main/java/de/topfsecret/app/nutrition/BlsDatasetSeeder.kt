@@ -7,8 +7,10 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.BufferedInputStream
 import java.io.BufferedReader
 import java.io.InputStreamReader
+import java.util.zip.GZIPInputStream
 
 /**
  * Seeds the bundled, official BLS 4.0 JSONL dataset into Room.
@@ -31,10 +33,20 @@ object BlsDatasetSeeder {
         var imported = 0
         var batch = ArrayList<BlsFoodEntity>(BATCH_SIZE)
         try {
-            // Android's APK packaging expands the source .gz asset and removes
-            // the suffix, so the runtime asset is plain JSONL, not gzip data.
-            context.assets.open("bls_foods_v4.jsonl").use { asset ->
-                BufferedReader(InputStreamReader(asset, Charsets.UTF_8)).useLines { lines ->
+            // Android's APK packaging removes the .gz suffix. Depending on the
+            // packaging path, the bytes may be expanded or remain gzip-compressed.
+            context.assets.open("bls_foods_v4.jsonl").use { input ->
+                val buffered = BufferedInputStream(input)
+                buffered.mark(2)
+                val first = buffered.read()
+                val second = buffered.read()
+                buffered.reset()
+                val content = if (first == 0x1f && second == 0x8b) {
+                    GZIPInputStream(buffered)
+                } else {
+                    buffered
+                }
+                BufferedReader(InputStreamReader(content, Charsets.UTF_8)).useLines { lines ->
                     lines.forEach { line ->
                         if (line.isBlank()) return@forEach
                         val record = JSONObject(line)
