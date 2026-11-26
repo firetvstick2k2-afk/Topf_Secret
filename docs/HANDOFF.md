@@ -197,3 +197,11 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - GitHub Actions Build #41 (`0a06d5168d2facf87d4bd0bfd8258d3afcce9197`) lief erfolgreich; die signierte APK wurde als Release `build-41` veröffentlicht. Die APK-Größe stieg gegenüber Build #39 von ca. 11,5 MB auf ca. 15,7 MB, konsistent mit dem gebündelten BLS-Asset (3,72 MB komprimiert). Der Android-Standardpfad `app/src/main/assets` wird ohne zusätzliche Gradle-Konfiguration in die APK übernommen.
 - Für ein Update über eine vorhandene Installation muss `versionCode` steigen. Deshalb wurde auf `development` auf `versionCode = 9`, `versionName = 0.6.1` angehoben und die Release-Metadaten der CI angepasst. Die Room-Datenbank wird nicht zurückgesetzt; bestehende Rezepte bleiben erhalten.
 - Nächster Schritt: manuellen Android-CI-Workflow auf `development` starten, APK-Asset/Build prüfen und auf dem Gerät installieren. Gerätetest der BLS-Suche (z. B. „Semmelknödel“) steht weiterhin aus.
+
+
+### APK-Prüfung BLS-Asset (2026-11-26)
+- Nutzer bestätigt: Version 0.6.1 aus Release `build-42` installiert; Fehler beim Öffnen von `bls_foods_v4.jsonl.gz` bleibt bestehen.
+- Git-Tree des Build-42-Commits `28409a0935b575a535efaf33fa47efcfae93927b` enthält `app/src/main/assets/bls_foods_v4.jsonl.gz` mit 3.720.228 Bytes und Blob-SHA `827fc98c0a296d0eb64062f80cd31738f8a20f22`.
+- Build #42 war erfolgreich; das beweist allein nicht, dass das Asset in der APK enthalten ist.
+- CI-Workflow wurde auf `development` um einen harten APK-Integritätstest ergänzt: `unzip -Z1` muss `assets/bls_foods_v4.jsonl.gz` finden und der aus der APK extrahierte SHA-256 muss `96e3f2aaf98fa538f84dd6d826a36b1a7565e87f2520bb80b2d9b4aa51ec0bbf` entsprechen. Der nächste manuelle Build soll die Frage eindeutig entscheiden.
+- Bis zum erfolgreichen APK-Asset-Test und Gerätetest bleibt BLS-Lauffähigkeit unbestätigt. Keine Deinstallation oder Datenlöschung.
