@@ -191,3 +191,9 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Korrektur auf `development`: BLS wird nun bei der normalen Produktsuche zuerst initialisiert/validiert und parallel in die Trefferliste aufgenommen; anschließend folgen lokale Produktkatalog- und Online-Treffer. Die separate BLS-Schaltfläche und der irreführende Dauerhinweis wurden entfernt.
 - Der Datensatz enthält nach Prüfung u. a. „Semmelknödel“, „Semmelknödel roh“, „Semmelknödel gekocht“ und „Semmelknödel getrocknet“.
 - **Status:** UI-Code committed (Commit `5b451330263a65c1a3b2fb4ccbb8155c799354dc`). Build und erneuter Gerätetest stehen noch aus.
+
+
+### BLS-Suche – APK-Bereitstellung und Update (2026-11-26)
+- GitHub Actions Build #41 (`0a06d5168d2facf87d4bd0bfd8258d3afcce9197`) lief erfolgreich; die signierte APK wurde als Release `build-41` veröffentlicht. Die APK-Größe stieg gegenüber Build #39 von ca. 11,5 MB auf ca. 15,7 MB, konsistent mit dem gebündelten BLS-Asset (3,72 MB komprimiert). Der Android-Standardpfad `app/src/main/assets` wird ohne zusätzliche Gradle-Konfiguration in die APK übernommen.
+- Für ein Update über eine vorhandene Installation muss `versionCode` steigen. Deshalb wurde auf `development` auf `versionCode = 9`, `versionName = 0.6.1` angehoben und die Release-Metadaten der CI angepasst. Die Room-Datenbank wird nicht zurückgesetzt; bestehende Rezepte bleiben erhalten.
+- Nächster Schritt: manuellen Android-CI-Workflow auf `development` starten, APK-Asset/Build prüfen und auf dem Gerät installieren. Gerätetest der BLS-Suche (z. B. „Semmelknödel“) steht weiterhin aus.
