@@ -4,6 +4,10 @@ import android.os.Bundle
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.content.Context
+import androidx.core.content.FileProvider
+import java.io.File
+import java.util.UUID
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.ui.graphics.asImageBitmap
@@ -445,14 +449,31 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
     var steps by rememberSaveable(original?.id) { mutableStateOf(recipe?.steps?.sortedBy { it.position }?.joinToString("\n") { it.instruction }.orEmpty()) }
     var error by rememberSaveable(original?.id) { mutableStateOf(false) }
     var imageUri by rememberSaveable(original?.id) { mutableStateOf(original?.imageUri.orEmpty()) }
+    var pendingCameraPath by rememberSaveable(original?.id) { mutableStateOf("") }
+    var imageError by rememberSaveable(original?.id) { mutableStateOf(false) }
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val imagePicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        uri?.let {
-            runCatching {
-                context.contentResolver.takePersistableUriPermission(it, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        uri?.let { selected ->
+            scope.launch {
+                val imported = importRecipeImage(context, selected)
+                if (imported != null) {
+                    if (imageUri != original?.imageUri) deleteManagedRecipeImage(context, imageUri)
+                    imageUri = imported
+                    imageError = false
+                } else imageError = true
             }
-            imageUri = it.toString()
         }
+    }
+    val cameraCapture = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+        if (success && pendingCameraPath.isNotBlank()) {
+            if (imageUri != original?.imageUri) deleteManagedRecipeImage(context, imageUri)
+            imageUri = Uri.fromFile(File(pendingCameraPath)).toString()
+            imageError = false
+        } else {
+            pendingCameraPath.takeIf(String::isNotBlank)?.let { File(it).delete() }
+        }
+        pendingCameraPath = ""
     }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
@@ -481,11 +502,24 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = { imagePicker.launch(arrayOf("image/*")) }) {
-                Text(if (imageUri.isBlank()) "Bild aus Galerie wählen" else "Bild ändern")
+                Text("Galerie")
             }
+            OutlinedButton(onClick = {
+                runCatching {
+                    val directory = File(context.filesDir, "recipe_images").apply { mkdirs() }
+                    val photo = File(directory, "camera-${UUID.randomUUID()}.jpg")
+                    val contentUri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", photo)
+                    pendingCameraPath = photo.absolutePath
+                    cameraCapture.launch(contentUri)
+                }.onFailure { imageError = true }
+            }) { Text("Kamera") }
             if (imageUri.isNotBlank()) {
                 TextButton(onClick = { imageUri = "" }) { Text("Entfernen", color = Color(0xFFB3261E)) }
             }
+        }
+        if (imageError) {
+            Spacer(Modifier.height(4.dp))
+            Text("Das Bild konnte nicht übernommen werden. Bitte erneut versuchen.", color = Color(0xFFB3261E), style = MaterialTheme.typography.bodySmall)
         }
         Spacer(Modifier.height(10.dp))
         OutlinedTextField(ingredients, { ingredients = it }, Modifier.fillMaxWidth(), label = { Text("Zutaten – eine pro Zeile") }, placeholder = { Text("z. B. 500 g Kartoffeln\n1 Zwiebel") }, minLines = 4)
@@ -508,7 +542,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
         }
         Spacer(Modifier.height(18.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            TextButton(onClick = onCancel) { Text("Abbrechen", color = MutedInk) }
+            TextButton(onClick = { if (imageUri != original?.imageUri) deleteManagedRecipeImage(context, imageUri); onCancel() }) { Text("Abbrechen", color = MutedInk) }
             Button(onClick = {
                 if (title.isBlank()) error = true
                 else {
@@ -650,5 +684,28 @@ private fun RecipePhoto(uri: String?, modifier: Modifier = Modifier) {
             modifier = modifier,
             contentScale = ContentScale.Crop
         )
+    }
+}
+
+
+private suspend fun importRecipeImage(context: Context, source: Uri): String? =
+    withContext(Dispatchers.IO) {
+        runCatching {
+            val directory = File(context.filesDir, "recipe_images").apply { mkdirs() }
+            val destination = File(directory, "gallery-${UUID.randomUUID()}.img")
+            context.contentResolver.openInputStream(source)?.use { input ->
+                destination.outputStream().use { output -> input.copyTo(output) }
+            } ?: return@withContext null
+            Uri.fromFile(destination).toString()
+        }.getOrNull()
+    }
+
+private fun deleteManagedRecipeImage(context: Context, storedUri: String?) {
+    if (storedUri.isNullOrBlank()) return
+    runCatching {
+        val file = File(Uri.parse(storedUri).path ?: return)
+        val imageDirectory = File(context.filesDir, "recipe_images").canonicalFile
+        val candidate = file.canonicalFile
+        if (candidate.parentFile == imageDirectory) candidate.delete()
     }
 }
