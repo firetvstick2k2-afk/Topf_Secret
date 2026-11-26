@@ -31,55 +31,56 @@ object BlsDatasetSeeder {
         var imported = 0
         var batch = ArrayList<BlsFoodEntity>(BATCH_SIZE)
         try {
-            // Android APK packaging expands the source .gz asset and removes the suffix.
+            // Android's APK packaging expands the source .gz asset and removes
+            // the suffix, so the runtime asset is plain JSONL, not gzip data.
             context.assets.open("bls_foods_v4.jsonl").use { asset ->
                 BufferedReader(InputStreamReader(asset, Charsets.UTF_8)).useLines { lines ->
-                        lines.forEach { line ->
-                            if (line.isBlank()) return@forEach
-                            val record = JSONObject(line)
-                            val nutrients = record.optJSONObject("n")
-                                ?: error("BLS-Datensatz ohne Nährstoffdaten.")
-                            fun triple(code: String): JSONArray? = nutrients.optJSONArray(code)
-                            fun rawValue(code: String): String? {
-                                val value = triple(code)?.opt(0) ?: return null
-                                return if (value == JSONObject.NULL) null else value.toString()
-                            }
-                            fun numeric(code: String): Double? =
-                                rawValue(code)?.replace(',', '.')?.toDoubleOrNull()?.takeIf(Double::isFinite)
-                            fun origin(code: String): String? =
-                                triple(code)?.opt(1)?.toString()?.takeIf { it.isNotBlank() && it != "null" }
-                            fun reference(code: String): String? =
-                                triple(code)?.opt(2)?.toString()?.takeIf { it.isNotBlank() && it != "null" }
+                    lines.forEach { line ->
+                        if (line.isBlank()) return@forEach
+                        val record = JSONObject(line)
+                        val nutrients = record.optJSONObject("n")
+                            ?: error("BLS-Datensatz ohne Nährstoffdaten.")
+                        fun triple(code: String): JSONArray? = nutrients.optJSONArray(code)
+                        fun rawValue(code: String): String? {
+                            val value = triple(code)?.opt(0) ?: return null
+                            return if (value == JSONObject.NULL) null else value.toString()
+                        }
+                        fun numeric(code: String): Double? =
+                            rawValue(code)?.replace(',', '.')?.toDoubleOrNull()?.takeIf(Double::isFinite)
+                        fun origin(code: String): String? =
+                            triple(code)?.opt(1)?.toString()?.takeIf { it.isNotBlank() && it != "null" }
+                        fun reference(code: String): String? =
+                            triple(code)?.opt(2)?.toString()?.takeIf { it.isNotBlank() && it != "null" }
 
-                            val code = record.optString("c")
-                            val germanName = record.optString("de")
-                            if (code.isBlank() || germanName.isBlank()) error("Ungültiger BLS-Datensatz.")
-                            batch += BlsFoodEntity(
-                                code = code,
-                                germanName = germanName,
-                                englishName = record.optString("en").takeIf { it.isNotBlank() && it != "null" },
-                                kcalPer100 = numeric("ENERCC"),
-                                proteinGPer100 = numeric("PROT625"),
-                                carbohydratesGPer100 = numeric("CHO"),
-                                fatGPer100 = numeric("FAT"),
-                                kcalOrigin = origin("ENERCC"),
-                                proteinOrigin = origin("PROT625"),
-                                carbohydratesOrigin = origin("CHO"),
-                                fatOrigin = origin("FAT"),
-                                kcalReference = reference("ENERCC"),
-                                proteinReference = reference("PROT625"),
-                                carbohydratesReference = reference("CHO"),
-                                fatReference = reference("FAT"),
-                                nutrientsJson = nutrients.toString(),
-                                note = record.optString("note").takeIf { it.isNotBlank() && it != "null" }
-                            )
-                            if (batch.size >= BATCH_SIZE) {
-                                dao.insertAll(batch)
-                                imported += batch.size
-                                batch = ArrayList(BATCH_SIZE)
-                            }
+                        val code = record.optString("c")
+                        val germanName = record.optString("de")
+                        if (code.isBlank() || germanName.isBlank()) error("Ungültiger BLS-Datensatz.")
+                        batch += BlsFoodEntity(
+                            code = code,
+                            germanName = germanName,
+                            englishName = record.optString("en").takeIf { it.isNotBlank() && it != "null" },
+                            kcalPer100 = numeric("ENERCC"),
+                            proteinGPer100 = numeric("PROT625"),
+                            carbohydratesGPer100 = numeric("CHO"),
+                            fatGPer100 = numeric("FAT"),
+                            kcalOrigin = origin("ENERCC"),
+                            proteinOrigin = origin("PROT625"),
+                            carbohydratesOrigin = origin("CHO"),
+                            fatOrigin = origin("FAT"),
+                            kcalReference = reference("ENERCC"),
+                            proteinReference = reference("PROT625"),
+                            carbohydratesReference = reference("CHO"),
+                            fatReference = reference("FAT"),
+                            nutrientsJson = nutrients.toString(),
+                            note = record.optString("note").takeIf { it.isNotBlank() && it != "null" }
+                        )
+                        if (batch.size >= BATCH_SIZE) {
+                            dao.insertAll(batch)
+                            imported += batch.size
+                            batch = ArrayList(BATCH_SIZE)
                         }
                     }
+                }
             }
             if (batch.isNotEmpty()) {
                 dao.insertAll(batch)
