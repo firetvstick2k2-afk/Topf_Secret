@@ -79,13 +79,14 @@ class MainActivity : ComponentActivity() {
         val database = TopfSecretDatabase.getInstance(appContext)
         val repository = RecipeRepository(database.recipeDao())
         val productCatalog = database.localFoodProductDao()
+        val blsFoodDao = database.blsFoodDao()
         val preferences = getSharedPreferences("topf_secret_settings", MODE_PRIVATE)
         val appVersion = packageManager.getPackageInfo(packageName, 0).versionName ?: "Unbekannt"
         setContent {
             var darkMode by rememberSaveable { mutableStateOf(preferences.getBoolean("dark_mode", false)) }
             TopfSecretTheme(darkMode) {
                 ActivationGate {
-                    TopfSecretApp(appContext, repository, productCatalog, darkMode, appVersion) { enabled ->
+                    TopfSecretApp(appContext, repository, productCatalog, blsFoodDao, darkMode, appVersion) { enabled ->
                         darkMode = enabled
                         preferences.edit().putBoolean("dark_mode", enabled).apply()
                     }
@@ -104,7 +105,7 @@ private fun TopfSecretTheme(darkMode: Boolean, content: @Composable () -> Unit) 
 }
 
 @Composable
-private fun TopfSecretApp(context: Context, repository: RecipeRepository, productCatalog: LocalFoodProductDao, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit) {
+private fun TopfSecretApp(context: Context, repository: RecipeRepository, productCatalog: LocalFoodProductDao, blsFoodDao: de.topfsecret.app.data.local.BlsFoodDao, darkMode: Boolean, appVersion: String, onDarkModeChange: (Boolean) -> Unit) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     var selectedRecipeId by rememberSaveable { mutableLongStateOf(0L) }
     var editingRecipeId by rememberSaveable { mutableLongStateOf(0L) }
@@ -142,6 +143,7 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
                         RecipeEditorScreen(
                             recipe = editing,
                             productCatalog = productCatalog,
+                            blsFoodDao = blsFoodDao,
                             onCancel = { editingRecipeId = 0L },
                             onSave = { entity, ingredients, steps, nutritionByIngredientName ->
                                 scope.launch {
@@ -463,7 +465,7 @@ private fun FavoriteScreen(
 }
 
 @Composable
-private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: LocalFoodProductDao, onCancel: () -> Unit, onSave: (RecipeEntity, List<String>, List<String>, Map<String, OpenFoodFactsProduct>) -> Unit) {
+private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: LocalFoodProductDao, blsFoodDao: de.topfsecret.app.data.local.BlsFoodDao, onCancel: () -> Unit, onSave: (RecipeEntity, List<String>, List<String>, Map<String, OpenFoodFactsProduct>) -> Unit) {
     val original = recipe?.recipe
     var title by rememberSaveable(original?.id) { mutableStateOf(original?.title.orEmpty()) }
     var description by rememberSaveable(original?.id) { mutableStateOf(original?.description.orEmpty()) }
@@ -508,6 +510,21 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
     var productSearchResults by remember { mutableStateOf<List<OpenFoodFactsProduct>>(emptyList()) }
     var productSearchLoading by remember { mutableStateOf(false) }
     var productSearchMessage by remember { mutableStateOf("") }
+    var blsResults by remember { mutableStateOf<List<de.topfsecret.app.data.local.BlsFoodEntity>>(emptyList()) }
+    var blsImportMessage by remember { mutableStateOf("") }
+    var blsImporting by remember { mutableStateOf(false) }
+    val blsPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let { selected ->
+            blsImporting = true
+            blsImportMessage = "BLS-Datei wird eingelesen …"
+            scope.launch {
+                de.topfsecret.app.nutrition.BlsXlsxImporter.import(context, selected, blsFoodDao).fold(
+                    onSuccess = { count -> blsImportMessage = "$count Lebensmittel aus dem BLS 4.0 importiert."; blsImporting = false },
+                    onFailure = { error -> blsImportMessage = error.message ?: "Der BLS-Import ist fehlgeschlagen."; blsImporting = false }
+                )
+            }
+        }
+    }
     var editingProduct by remember { mutableStateOf(false) }
     var editedBarcode by remember { mutableStateOf("") }
     var editedName by remember { mutableStateOf("") }
@@ -724,6 +741,27 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                     Text("Suche nach Lebensmittel oder Marke, z. B. Semmelknödel oder Gut & Günstig.", color = MutedInk)
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(value = productSearchQuery, onValueChange = { productSearchQuery = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Suchbegriff") }, singleLine = true)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedButton(enabled = !blsImporting, onClick = { blsPicker.launch(arrayOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")) }) { Text(if (blsImporting) "Import läuft …" else "BLS-Datei importieren") }
+                        OutlinedButton(enabled = productSearchQuery.trim().length >= 2 && !blsImporting, onClick = {
+                            scope.launch {
+                                blsResults = blsFoodDao.search(productSearchQuery.trim())
+                                blsImportMessage = if (blsResults.isEmpty()) "Keine BLS-Treffer. Importiere zuerst die offizielle BLS-4.0-Exceldatei." else "${blsResults.size} BLS-Grundnahrungsmittel gefunden."
+                            }
+                        }) { Text("BLS suchen") }
+                    }
+                    if (blsImportMessage.isNotBlank()) Text(blsImportMessage, color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    blsResults.forEach { item ->
+                        TextButton(modifier = Modifier.fillMaxWidth(), onClick = {
+                            scannedProduct = OpenFoodFactsProduct("BLS:${item.code}", item.germanName, "BLS 4.0", item.kcalPer100, item.carbohydratesGPer100, item.proteinGPer100, item.fatGPer100, "https://blsdb.de/")
+                            showProductSearch = false
+                        }) {
+                            Column(Modifier.fillMaxWidth()) {
+                                Text(item.germanName, color = Ink, fontWeight = FontWeight.SemiBold)
+                                Text("BLS-Code ${item.code} · " + (item.kcalPer100?.let { it.prettyNumber() + " kcal" } ?: "Energie nicht angegeben") + " je 100 g", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                            }
+                        }
+                    }
                     Spacer(Modifier.height(6.dp))
                     Button(enabled = productSearchQuery.trim().length >= 2 && !productSearchLoading, onClick = {
                         productSearchLoading = true
@@ -799,7 +837,7 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                         Text("Eiweiß: " + (product.proteinGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
                         Text("Fett: " + (product.fatGPer100?.let { it.prettyNumber() + " g" } ?: "nicht vorhanden"))
                         Spacer(Modifier.height(6.dp))
-                        Text("Quelle: Open Food Facts · vor Übernahme bitte Verpackung prüfen.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                        Text(if (product.barcode.startsWith("BLS:")) "Quelle: Bundeslebensmittelschlüssel (BLS) 4.0 · Durchschnittswerte je 100 g." else "Quelle: Open Food Facts · vor Übernahme bitte Verpackung prüfen.", color = MutedInk, style = MaterialTheme.typography.bodySmall)
                     }
                 }
             },
@@ -821,10 +859,12 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                 } else {
                     TextButton(onClick = {
                         scope.launch {
-                            val existing = productCatalog.findByBarcode(product.barcode)
-                            val quality = if (existing?.quality == "VERIFIED_LOCAL") "VERIFIED_LOCAL" else "UNVERIFIED"
-                            val sourceName = existing?.sourceName ?: "Open Food Facts"
-                            productCatalog.save(LocalFoodProductEntity(product.barcode, product.name, product.brand, product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, product.sourceUrl, sourceName, quality))
+                            if (!product.barcode.startsWith("BLS:")) {
+                                val existing = productCatalog.findByBarcode(product.barcode)
+                                val quality = if (existing?.quality == "VERIFIED_LOCAL") "VERIFIED_LOCAL" else "UNVERIFIED"
+                                val sourceName = existing?.sourceName ?: "Open Food Facts"
+                                productCatalog.save(LocalFoodProductEntity(product.barcode, product.name, product.brand, product.caloriesKcalPer100, product.carbohydratesGPer100, product.proteinGPer100, product.fatGPer100, product.sourceUrl, sourceName, quality))
+                            }
                             nutritionByIngredientName[product.name] = product
                             if (ingredients.lines().none { it.contains(product.name, ignoreCase = true) }) {
                                 ingredients = listOf(ingredients.trimEnd(), "100 g " + product.name).filter(String::isNotBlank).joinToString("\\n")
@@ -918,7 +958,7 @@ private fun RecipeDetailScreen(recipe: RecipeWithDetails, onBack: () -> Unit, on
             Column(Modifier.padding(vertical = 3.dp)) {
                 Text("• " + line, color = Ink)
                 if (!it.barcode.isNullOrBlank()) {
-                    Text("Barcode: " + it.barcode + " · Nährwertquelle: Open Food Facts", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                    Text((if (it.barcode.startsWith("BLS:")) "BLS-Code: " + it.barcode.removePrefix("BLS:") + " · Quelle: BLS 4.0" else "Barcode: " + it.barcode + " · Nährwertquelle: Open Food Facts"), color = MutedInk, style = MaterialTheme.typography.labelSmall)
                 }
             }
         }
