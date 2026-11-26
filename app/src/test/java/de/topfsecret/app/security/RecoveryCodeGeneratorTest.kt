@@ -23,7 +23,7 @@ class RecoveryCodeGeneratorTest {
             val normalized = RecoveryCodeGenerator.normalize(RecoveryCodeGenerator.generate())
             assertNotNull(normalized)
             assertEquals(24, normalized!!.length)
-            assertNull(RecoveryCodeGenerator.normalize(normalized.replace('0', 'O')))
+            assertNull(RecoveryCodeGenerator.normalize(normalized.dropLast(1) + "O"))
         }
     }
 
