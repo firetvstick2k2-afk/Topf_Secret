@@ -512,8 +512,6 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
     var productSearchResults by remember { mutableStateOf<List<OpenFoodFactsProduct>>(emptyList()) }
     var productSearchLoading by remember { mutableStateOf(false) }
     var productSearchMessage by remember { mutableStateOf("") }
-    var blsResults by remember { mutableStateOf<List<de.topfsecret.app.data.local.BlsFoodEntity>>(emptyList()) }
-    var blsMessage by remember { mutableStateOf("BLS 4.0 wird offline vorbereitet …") }
     var editingProduct by remember { mutableStateOf(false) }
     var editedBarcode by remember { mutableStateOf("") }
     var editedName by remember { mutableStateOf("") }
@@ -728,54 +726,41 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
                     Text("Suche nach Lebensmittel oder Marke, z. B. Semmelknödel oder Gut & Günstig.", color = MutedInk)
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(value = productSearchQuery, onValueChange = { productSearchQuery = it }, modifier = Modifier.fillMaxWidth(), label = { Text("Suchbegriff") }, singleLine = true)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(enabled = productSearchQuery.trim().length >= 2, onClick = {
-                            scope.launch {
-                                blsMessage = "BLS-Datenbank wird geprüft …"
-                                runCatching {
-                                    de.topfsecret.app.nutrition.BlsDatasetSeeder.ensureSeeded(context, blsFoodDao)
-                                    blsFoodDao.search(productSearchQuery.trim())
-                                }.onSuccess { results ->
-                                    blsResults = results
-                                    blsMessage = if (results.isEmpty()) "Keine passenden BLS-Lebensmittel gefunden." else "${results.size} BLS-Grundnahrungsmittel gefunden."
-                                }.onFailure { error ->
-                                    blsMessage = error.message ?: "Die lokale BLS-Datenbank konnte nicht geladen werden."
-                                }
-                            }
-                        }) { Text("BLS suchen") }
-                    }
-                    if (blsMessage.isNotBlank()) Text(blsMessage, color = MutedInk, style = MaterialTheme.typography.bodySmall)
-                    blsResults.forEach { item ->
-                        TextButton(modifier = Modifier.fillMaxWidth(), onClick = {
-                            scannedProduct = OpenFoodFactsProduct("BLS:${item.code}", item.germanName, "BLS 4.0", item.kcalPer100, item.carbohydratesGPer100, item.proteinGPer100, item.fatGPer100, "https://blsdb.de/")
-                            showProductSearch = false
-                        }) {
-                            Column(Modifier.fillMaxWidth()) {
-                                Text(item.germanName, color = Ink, fontWeight = FontWeight.SemiBold)
-                                Text("BLS-Code ${item.code} · " + (item.kcalPer100?.let { it.prettyNumber() + " kcal" } ?: "Energie nicht angegeben") + " je 100 g", color = MutedInk, style = MaterialTheme.typography.labelSmall)
-                            }
-                        }
-                    }
                     Spacer(Modifier.height(6.dp))
                     Button(enabled = productSearchQuery.trim().length >= 2 && !productSearchLoading, onClick = {
                         productSearchLoading = true
                         productSearchMessage = ""
                         scope.launch {
-                            val localResults = productCatalog.search(productSearchQuery).map {
-                                OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl)
-                            }
-                            OpenFoodFactsClient.searchProducts(productSearchQuery).fold(
-                                onSuccess = { remote ->
-                                    productSearchResults = (localResults + remote.filterNot { item -> localResults.any { it.barcode == item.barcode } }).take(30)
-                                    productSearchMessage = if (productSearchResults.isEmpty()) "Keine passenden Produkte gefunden. Du kannst die Zutat trotzdem ohne Produktdaten übernehmen." else "Lokale geprüfte Produkte stehen zuerst."
-                                    productSearchLoading = false
-                                },
-                                onFailure = {
-                                    productSearchResults = localResults
-                                    productSearchMessage = if (localResults.isNotEmpty()) "Online-Suche nicht erreichbar. Lokale Produkte werden angezeigt." else (it.message ?: "Die Suche ist fehlgeschlagen.")
-                                    productSearchLoading = false
+                            runCatching {
+                                de.topfsecret.app.nutrition.BlsDatasetSeeder.ensureSeeded(context, blsFoodDao)
+                                blsFoodDao.search(productSearchQuery.trim()).map { item ->
+                                    OpenFoodFactsProduct("BLS:${item.code}", item.germanName, "BLS 4.0", item.kcalPer100, item.carbohydratesGPer100, item.proteinGPer100, item.fatGPer100, "https://blsdb.de/")
                                 }
-                            )
+                            }.onSuccess { blsProducts ->
+                                val localResults = productCatalog.search(productSearchQuery).map {
+                                    OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl)
+                                }
+                                OpenFoodFactsClient.searchProducts(productSearchQuery).fold(
+                                    onSuccess = { remote ->
+                                        val combined = blsProducts + localResults + remote
+                                        productSearchResults = combined.distinctBy { it.barcode }.take(40)
+                                        productSearchMessage = if (productSearchResults.isEmpty()) "Keine passenden Produkte oder BLS-Lebensmittel gefunden." else "BLS 4.0 und lokale Produkte stehen vor den Online-Treffern."
+                                        productSearchLoading = false
+                                    },
+                                    onFailure = { error ->
+                                        productSearchResults = (blsProducts + localResults).distinctBy { it.barcode }.take(40)
+                                        productSearchMessage = if (productSearchResults.isNotEmpty()) "Offline-Treffer aus BLS 4.0 und lokalem Katalog. Online-Suche nicht erreichbar." else (error.message ?: "Die Suche ist fehlgeschlagen.")
+                                        productSearchLoading = false
+                                    }
+                                )
+                            }.onFailure { error ->
+                                val localResults = productCatalog.search(productSearchQuery).map {
+                                    OpenFoodFactsProduct(it.barcode, it.name, it.brand, it.caloriesKcalPer100, it.carbohydratesGPer100, it.proteinGPer100, it.fatGPer100, it.sourceUrl)
+                                }
+                                productSearchResults = localResults
+                                productSearchMessage = "BLS konnte nicht geladen werden: ${error.message ?: "unbekannter Fehler"}"
+                                productSearchLoading = false
+                            }
                         }
                     }) { Text(if (productSearchLoading) "Suche…" else "Suchen") }
                     if (productSearchMessage.isNotBlank()) {
