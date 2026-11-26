@@ -103,10 +103,6 @@ class MainActivity : ComponentActivity() {
         setContent {
             var darkMode by rememberSaveable { mutableStateOf(preferences.getBoolean("dark_mode", false)) }
             var showSplash by rememberSaveable { mutableStateOf(true) }
-            LaunchedEffect(Unit) {
-                delay(3_100)
-                showSplash = false
-            }
             TopfSecretTheme(darkMode) {
                 if (showSplash) {
                     TopfSecretSplash(onFinished = { showSplash = false })
