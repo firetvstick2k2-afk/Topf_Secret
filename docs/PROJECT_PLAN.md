@@ -258,3 +258,11 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Strukturierte Nährwerte aus Schema.org NutritionInformation werden übernommen, wenn die Quelle sie bereitstellt: kcal, Kohlenhydrate, Zucker, Ballaststoffe, Eiweiß, Fett, gesättigte Fettsäuren und Salz. Sodium wird bei fehlendem SaltContent mit Faktor 2,5 in Salzäquivalent umgerechnet.
 - Werte der Quelle werden pro Portion separat von der Zutatenberechnung gespeichert und angezeigt. Keine Werte werden geschätzt oder erfunden, wenn die Quelle sie nicht bereitstellt.
 - Version 0.7.1 / versionCode 13. Build und Gerätetest ausstehend.
+
+
+### G.12 Online-Rezeptimport – mehrere Bilder auswählen (2026-11-26)
+- Bildkandidaten aus Schema.org `image`, `og:image`, `twitter:image` und HTML-`img`-Attributen (`src`/`data-src`) sammeln, relative Bild-URLs auflösen, maximal 24 Kandidaten anzeigen.
+- In der Vorschau werden Bilder einzeln dargestellt; Nutzer wählt das gewünschte Rezeptfoto vor dem Import. Bild bleibt optional.
+- Nur ausgewähltes Bild wird lokal gespeichert (offline verfügbar); Bildquelle wird zusammen mit der Rezeptquelle dokumentiert.
+- Download-Schutz: HTTP(S), Timeouts, Content-Type `image/*`, maximal 8 MB.
+- Version 0.7.2 / versionCode 14. Build und Gerätetest ausstehend.
