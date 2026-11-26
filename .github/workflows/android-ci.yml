@@ -53,6 +53,26 @@ jobs:
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: gradle --no-daemon testReleaseUnitTest assembleRelease
 
+      - name: Verify bundled BLS asset inside APK
+        run: |
+          APK_SOURCE="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n 1)"
+          if [ -z "$APK_SOURCE" ]; then
+            echo "::error::No release APK was produced"
+            exit 1
+          fi
+          if ! unzip -Z1 "$APK_SOURCE" | grep -Fxq "assets/bls_foods_v4.jsonl.gz"; then
+            echo "::error::BLS asset is missing from the generated APK"
+            unzip -Z1 "$APK_SOURCE" | grep 'assets/' || true
+            exit 1
+          fi
+          APK_ASSET_SHA="$(unzip -p "$APK_SOURCE" assets/bls_foods_v4.jsonl.gz | sha256sum | awk '{print $1}')"
+          EXPECTED_SHA="96e3f2aaf98fa538f84dd6d826a36b1a7565e87f2520bb80b2d9b4aa51ec0bbf"
+          if [ "$APK_ASSET_SHA" != "$EXPECTED_SHA" ]; then
+            echo "::error::BLS asset checksum mismatch inside APK: $APK_ASSET_SHA"
+            exit 1
+          fi
+          echo "Verified BLS asset in APK (SHA-256: $APK_ASSET_SHA)"
+          
       - name: Rename APK with build number
         run: |
           APK_SOURCE="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n 1)"
