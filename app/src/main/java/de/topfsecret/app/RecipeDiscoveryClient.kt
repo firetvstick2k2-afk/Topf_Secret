@@ -86,7 +86,7 @@ object RecipeDiscoveryClient {
             val source = meal.optString("strSource").takeIf { it.startsWith("http://") || it.startsWith("https://") }
                 ?: "https://www.themealdb.com/meal/$id"
             ImportedRecipe(
-                title = translated.title,
+                title = meal.optString("strMeal"),
                 description = listOf(category, area).filter(String::isNotBlank).joinToString(" · "),
                 category = category,
                 servings = 2,
