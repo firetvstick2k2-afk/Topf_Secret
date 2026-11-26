@@ -337,3 +337,10 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Kurze, witzige Startanimation mit eigenem Compose-gezeichnetem Kochtopf: Einflug/Pop-in, verschmitztes Gesicht, angehobener Deckel, Dampf und anschließender Topf-Secret-Schriftzug.
 - Läuft vor der Aktivierungsprüfung, ist offlinefähig und benötigt keine zusätzliche Animationsbibliothek.
 - Version 0.9.4 / versionCode 20. Implementiert auf `development`; CI-Build und Gerätetest stehen noch aus.
+
+
+### H.1 Entdecken UX und deutsche Rezeptübersetzung (2026-11-26)
+- Nicht funktionierende globale Suchfelder in Entdecken entfernt. TheMealDB-Navigation erfolgt über Kategorien; Chefkoch wird über einen einzelnen Button extern geöffnet, ohne einen Suchbegriff in einer nicht funktionierenden Eingabe vorzutäuschen.
+- „Für dich“ wählt bei jedem Öffnen der Entdecken-Ansicht zufällig eine TheMealDB-Kategorie, damit nicht immer dieselbe Chicken-Auswahl erscheint.
+- TheMealDB-Detailrezepte werden mit Google ML Kit Translation Englisch→Deutsch übersetzt (Titel, Kategorie, Region, Zutaten und Anweisungen). Das Sprachmodell wird dynamisch beim ersten Gebrauch geladen und anschließend lokal wiederverwendet. Der erste Download benötigt Internet; danach ist die Übersetzung mit vorhandenem Modell offline möglich.
+- Version 0.9.5 / versionCode 21; implementiert auf `development`, CI-Build und Gerätetest offen.
