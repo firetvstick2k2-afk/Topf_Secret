@@ -26,11 +26,6 @@ Stand: 2026-11-26
 - Der Quellstand wurde auf Version 0.6.0 (`versionCode = 8`) angehoben. Build und Gerätetest für diese Erweiterung stehen noch aus.
 - Room `2.8.3` ist eingebunden (Kotlin KAPT als Compiler-Anbindung). Die lokale Datenbank `topf_secret.db` wird bei Bedarf über `TopfSecretDatabase.getInstance(context)` erstellt.
 - Datenmodell v1: `RecipeEntity` mit Titel, Beschreibung, Kategorie, Portionen, Zeiten, Bild-/Quellen-URI, Notizen, optionalen Nährwert-Schätzwerten pro Portion, Favoritenstatus und Zeitstempeln. Zutaten (`IngredientEntity`) und Zubereitungsschritte (`PreparationStepEntity`) sind normalisiert und per Fremdschlüssel mit Cascade Delete verknüpft.
-- Sicherheitsarchitektur für lokale Profile ist in `docs/SECURITY_ARCHITECTURE.md` dokumentiert (Commit `0cad4fa`). Sie sieht eine verschlüsselte gemeinsame SQLCipher-Datenbank und je eine separat verschlüsselte private Datenbank pro Profil vor. Die gemeinsame Datenbank wird für beide Profile unabhängig freigegeben; private Datenbankschlüssel bleiben profilgebunden. Private Bilddateien müssen ebenfalls separat verschlüsselt werden.
-- SQLCipher for Android `net.zetetic:sqlcipher-android:4.20.0` und `androidx.sqlite:sqlite:2.7.0` sind eingebunden. Room 2.8.3 wird über `net.zetetic.database.sqlcipher.SupportOpenHelperFactory` angebunden; die vorhandene Produktivdatenbank wird weiterhin unverändert mit dem bisherigen Room-Builder geöffnet.
-- Instrumentierungstest `SqlCipherRoomSmokeTest` nutzt eine separate Datenbank und einen zufälligen Testschlüssel: Room-Datensatz schreiben/lesen, verschlüsselten Dateiheader prüfen und Wiederöffnung mit demselben Schlüssel testen. GitHub Actions führt `connectedDebugAndroidTest` auf einem API-35-Emulator aus. Wegen eines beobachteten Emulator-/ADB-Ausfalls wurde der Runner vorläufig auf `ubuntu-22.04` festgesetzt; der nächste Lauf muss die Stabilität erst bestätigen. CI-Ergebnis steht noch aus. Noch kein Keystore- oder Produktionsschlüsselcode eingebaut.
-- `RecoveryCodeGenerator` erzeugt 24 kryptografisch zufällige Crockford-Base32-Zeichen (120 Bit) und formatiert sie in sechs Vierergruppen. Die Eingabe-Normalisierung akzeptiert Bindestriche/Leerzeichen und Groß-/Kleinschreibung, lehnt aber Zeichen außerhalb des Alphabets ab. Der Generator ist noch nicht in die Einrichtung eingebunden.
-- Unit-Tests für Format, Alphabet, Normalisierung und ungültige Codes sind angelegt. GitHub Actions führt vor dem Release-Build jetzt `testReleaseUnitTest` aus. Ein Lauf wurde für diese Commits noch nicht ausgeführt/bestätigt.
 - `RecipeDao` bietet Flow-Beobachtung aller Rezepte, einzelner Rezepte und Kategorien sowie transaktionales Speichern mit Ersetzen der Zutaten und Schritte. Der Rezepte-Bereich ist mit Room verbunden; Rezeptliste, Detailansicht und Eingabemaske unterstützen den ersten lokalen CRUD-Ablauf. Die Rezeptliste bietet eine Live-Suche über Rezeptname, Kategorie, Beschreibung und Zutatenname sowie einen Kategorienfilter. Kategorien werden aus den gespeicherten Rezepten abgeleitet; dafür war keine Room-Schemaänderung nötig. Migrationen über Datenbankversion 1 hinaus sind noch nicht umgesetzt.
 - Pushes auf `development` lösen keinen Build mehr aus. Builds werden manuell über GitHub Actions → Android CI → Run workflow gestartet. Pull Requests gegen `development` lösen weiterhin automatisch einen Build aus.
 - CI erstellt ein signiertes Release-APK und benennt es vor der Veröffentlichung nach der GitHub-Buildnummer, z. B. `topf_secret_#18.apk`.
@@ -62,50 +57,37 @@ Stand: 2026-11-26
 - Der Admin-Key enthält die vom Nutzer gewünschten Zahlenfolgen 1312 und 2709. Er ist bewusst als gemeinsamer Familien-Key ausgelegt, nicht als sichere individuelle Lizenz.
 
 ## Vereinbarte Produktanforderungen
-- Integrierter PIN-Schutz.
-- Zwei lokale persönliche Profile (Nutzer und Ehefrau) mit getrennten PINs und privaten Rezeptbereichen.
-- Gemeinsame Rezepte bleiben für beide Profile sichtbar; bestehende Rezepte werden bei der Einführung als gemeinsam übernommen.
-- PIN-Ersteinrichtung mit freier PIN-Wahl; PIN nicht im Klartext speichern und Fehlversuche begrenzen.
-- Optionale biometrische Entsperrung (z. B. Fingerabdruck) über Android BiometricPrompt; PIN bleibt immer als Alternative verfügbar.
-- Jeder Nutzer erhält einen eigenen, automatisch auf dem Gerät generierten Wiederherstellungscode. Vereinbartes Format: 24 Zeichen aus einem Verwechslungen vermeidenden Base32-Zeichensatz, lesbar in sechs Vierergruppen mit Bindestrichen (120 Bit Zufall bei 32 Symbolen).
-- Der Wiederherstellungscode wird bei der Ersteinrichtung vollständig angezeigt, mit einer Schaltfläche kopierbar gemacht und kann vom Nutzer als Screenshot oder Notiz gesichert werden. Der Nutzer muss die Sicherung bestätigen, bevor die Einrichtung abgeschlossen wird.
-- Der vollständige Wiederherstellungscode wird nur einmal angezeigt und nicht im Klartext gespeichert oder protokolliert. Für die Prüfung/Wiederherstellung werden nur sichere kryptografische Ableitungen bzw. Verifier gespeichert.
-- Der Code eines Profils stellt ausschließlich dieses Profil wieder her: Nach erfolgreicher Prüfung darf eine neue PIN festgelegt und die zugehörige Schlüsselhülle erneuert werden.
-- Der Admin-Freischaltstatus bleibt unabhängig von den persönlichen PINs.
-- Rezeptverwaltung: Rezepte manuell erstellen, bearbeiten und speichern.
+- Gemeinsames, PIN-freies Kochbuch für Nutzer und Ehefrau; keine privaten Rezeptbereiche.
+- Die normale Android-Bildschirmsperre schützt den Gerätezugriff.
+- Admin-Freischaltung bleibt davon unabhängig bestehen.
+- Rezepte manuell erstellen, bearbeiten und speichern.
+- Rezeptbilder aus Galerie auswählen und anzeigen; Kameraaufnahme folgt.
 - Webseiten-Rezeptimport mit Vorschau und ausdrücklicher Übernahme.
-- Gerichtsbilder speichern.
 - Nährwertberechnung, insbesondere kcal und Kohlenhydrate pro Portion und Portionsmenge.
 - Vollständiger Rezept-Export/Import inklusive Bilder als Backup.
 - Möglichst breite Android-Kompatibilität, vorläufig Android 8.0 / API 26.
 - Öffentliches GitHub-Repository; private Daten und Zugangsdaten bleiben außerhalb des Repositories.
 
-## Sicherheitsregeln
+## Datenschutz- und Sicherheitsregeln
+- Keine persönlichen PINs, Wiederherstellungscodes, privaten Profile oder biometrischen Zugangsdaten in Topf Secret.
 - Keine echten Rezepte, privaten Fotos, Backups, Zugangsdaten, Keystores oder Cloud-Schlüssel committen.
-- PIN nie im Klartext speichern.
-- Wiederherstellungscodes nie im Klartext speichern, loggen oder an einen Server übertragen.
-- PIN und Wiederherstellungscode müssen mit kryptografisch geeigneten Verfahren geprüft werden; Fehlversuche begrenzen und Vergleiche sicher implementieren.
-- Die Schlüsselarchitektur muss vor Implementierung festgelegt und geprüft werden. UI-Filter allein sind keine kryptografische Trennung privater Rezeptdaten.
-- Biometrische Daten werden nicht von der App gespeichert; Android stellt nur das Authentifizierungsergebnis bereit.
-- Synchronisation nur authentifiziert und auf berechtigte Personen begrenzt.
+- Die bestehende Admin-Aktivierung bleibt getrennt von der Rezeptverwaltung.
 - Nährwerte als Schätzwerte kennzeichnen; keine medizinischen Therapieempfehlungen.
 - Absturzprotokolle können technische Geräteinformationen enthalten; vor dem Teilen keine persönlichen Inhalte ergänzen.
 
 ## Nächste Schritte
-1. Die vier GitHub Actions Secrets sicher hinterlegen.
-2. Manuellen Workflow starten; die signierte APK wird danach im GitHub-Bereich Releases als direkte `.apk`-Datei veröffentlicht.
-3. Nach dem Import-Fix einen neuen signierten Release-Build starten, APK-Signatur prüfen und Aktivierungsseite auf dem Gerät testen; eine Deinstallation nur dann durchführen, wenn die Signatur nicht mit der installierten Version übereinstimmt.
-4. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
-5. Version 0.6.0 in GitHub Actions bauen und auf dem Gerät testen: Hell-/Dunkelmodus über das Symbol oben rechts inklusive Neustart, Kontrast der „Guten Appetit“-Karte, Rezeptzeiten, Nährwerte, Zutatenmengen sowie Anlegen/Bearbeiten/Löschen und Datenpersistenz.
-6. Rezept-Suche, Kategorienübersicht, Kategorienfilter, Favoritenübersicht und Info-Dialog (Logo, Autorzeile, dynamische App-Version) sind im Quellstand umgesetzt; GitHub-Actions-Build und Gerätetest stehen noch aus.
-7. SQLCipher-/Keystore-/Biometric-Prototyp für Room 2.8.3, compileSdk 36 und API 26+ bauen und im CI validieren.
-8. Danach sichere Schlüsselverwaltung, Datenbankmigration v1 mit Erhalt aller bisherigen Rezepte als gemeinsam, zwei private Datenbanken, PIN-/Wiederherstellungsablauf, Biometrie und verschlüsselte Bilddateien schrittweise implementieren und testen.
+1. Rezeptbilder aus Galerieauswahl auf dem Gerät testen: auswählen, speichern, App neu starten, Rezept bearbeiten und Bild entfernen.
+2. Bildauswahl um Kameraaufnahme erweitern und Bilder robust im App-internen Speicher ablegen.
+3. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
+4. Version 0.6.0 in GitHub Actions bauen und auf dem Gerät testen: Hell-/Dunkelmodus, Rezeptzeiten, Nährwerte, Zutatenmengen sowie Anlegen/Bearbeiten/Löschen und Datenpersistenz.
+5. Backup/Restore einschließlich aller Rezeptbilder umsetzen.
+6. Danach Web-Rezeptimport und Zwei-Wege-Synchronisation planen.
 
-- Build #22 (Commit `d1ce3f3`) wurde am 26.11.2026 während des SQLCipher-Instrumentierungsschritts vom Nutzer abgebrochen. Im Log war `adb: device 'emulator-5554' not found` sichtbar; dadurch wurde weder der SQLCipher-Test bestätigt noch ein APK-Build gestartet. Der Workflow ist anschließend auf `ubuntu-22.04` festgesetzt worden. Auch Build #23 wurde während desselben Emulator-Schritts abgebrochen; die Runner-Änderung allein genügte nicht. Als nächste gezielte Maßnahme wurden die AVD-Datengröße auf `6G` begrenzt, Emulator-Grafikoptionen explizit gesetzt, das Boot-Timeout auf 900 Sekunden erhöht und eine Datenträgerdiagnose ergänzt. Ein erfolgreicher CI-Lauf steht weiterhin aus.
-
-- Der Emulator-Runner-Bericht zu `adb: device 'emulator-5554' not found` dokumentiert unter anderem einen nicht gestarteten Emulator durch eine zu große AVD-Userdata-Partition bei knappem Runner-Speicher. Daher wird die AVD-Datengröße jetzt explizit auf 6G begrenzt; die konkrete Ursache unseres Laufs ist ohne den vollständigen Emulator-Startlog noch nicht abschließend bewiesen.
-
-- Die Datenträgerdiagnose in Build #24 zeigte 85 GB frei (146 GB gesamt, 42 % belegt); Speichermangel war in diesem Lauf damit nicht die Ursache. Der Emulator meldete außerdem ausdrücklich, dass die Disk-Anforderungen erfüllt waren.
+## Aktueller Funktionsschritt
+- PIN-/Biometrie-/Recovery-Code-/SQLCipher-Prototyp vollständig verworfen und aus dem App-Projekt entfernt. Die produktive Room-Datenbank blieb unverändert.
+- CI führt keine Android-Emulator-Instrumentierung mehr aus; Release-Build und Unit-Tests laufen weiterhin.
+- Rezeptbilder: Galerieauswahl über Android Document Picker, dauerhafte URI-Berechtigung, Bildvorschau in Rezeptliste und Detail sowie Bild ändern/entfernen im Editor. Die vorhandene Spalte `imageUri` wird verwendet; keine Room-Schemaänderung.
+- Noch nicht umgesetzt: Kameraaufnahme, Kopieren der Bilddatei in den App-internen Speicher, Build-/Gerätetest.
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
