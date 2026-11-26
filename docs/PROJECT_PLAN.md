@@ -168,3 +168,10 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 
 - Android-CI nur bei Pull Requests gegen `development` und manuellem Start über `workflow_dispatch`.
 - Kein automatischer Push-Build; ältere anderslautende Angaben in diesem Plan sind überholt.
+
+
+### BLS-Suche – Build und Updatepfad (2026-11-26)
+- Die vereinheitlichte Produktsuche auf `development` führt BLS 4.0 vor lokalen und Online-Treffern aus. Der alte Vorbereitungs-Dauerhinweis wurde entfernt.
+- Android CI Build #41 lief erfolgreich und veröffentlichte eine signierte APK. Die BLS-Assetdatei liegt im Android-Standardpfad `app/src/main/assets`; die APK-Größe ist gegenüber dem Build ohne den Datensatz deutlich gestiegen.
+- Für ein Update ohne Deinstallation wurde `versionCode` auf 9 und `versionName` auf 0.6.1 erhöht; CI-Release-Metadaten wurden angepasst.
+- Noch offen: neuen manuellen CI-Build für Version 0.6.1 starten, APK installieren und BLS-Suche auf dem Gerät mit „Semmelknödel“/„Knödel“ prüfen. Keine Datenbank- oder Rezeptdatenlöschung.
