@@ -344,3 +344,9 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - „Für dich“ wählt bei jedem Öffnen der Entdecken-Ansicht zufällig eine TheMealDB-Kategorie, damit nicht immer dieselbe Chicken-Auswahl erscheint.
 - TheMealDB-Detailrezepte werden mit Google ML Kit Translation Englisch→Deutsch übersetzt (Titel, Kategorie, Region, Zutaten und Anweisungen). Das Sprachmodell wird dynamisch beim ersten Gebrauch geladen und anschließend lokal wiederverwendet. Der erste Download benötigt Internet; danach ist die Übersetzung mit vorhandenem Modell offline möglich.
 - Version 0.9.5 / versionCode 21; implementiert auf `development`, CI-Build und Gerätetest offen.
+
+
+### H.2 Persönliche Begrüßung (2026-11-26)
+- Erststart fragt nach dem Vornamen; lokale Speicherung auf dem Gerät, keine Übermittlung an einen Server.
+- Startseite begrüßt abhängig von der lokalen Uhrzeit mit Morgen-, Tages-, Abend- oder Nachtgruß und dem gespeicherten Namen.
+- In Version 0.9.6 / versionCode 22 umgesetzt; CI-Build und Gerätetest stehen aus. Option zur späteren Namensänderung in Einstellungen als möglicher Folgeschritt.
