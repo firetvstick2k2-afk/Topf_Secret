@@ -72,7 +72,7 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 
 1. Projektgrundlage, UI-Grundgerüst, Navigation und lokale Rezeptverwaltung – umgesetzt.
 2. Rezeptbilder aus Galerie und Kamera aufnehmen; Dateien in `filesDir/recipe_images` übernehmen und in Rezeptliste/-detail anzeigen – umgesetzt auf `development`; Build-/Gerätetest und Optimierung noch offen.
-3. Online-Gerichtebildersuche über Wikimedia Commons mit Treffer-Vorschau, Lizenz-/Urheberanzeige, lokalem Download und Quellenbeleg – implementiert auf `development`; Build-/Gerätetest noch offen.
+3. Online-Gerichtebildersuche über Wikimedia Commons mit Treffer-Vorschau, Lizenz-/Urheberanzeige, lokalem Download und Quellenbeleg – implementiert auf `development`; Build-/Gerätetest noch offen. Build 27 fand einen Fehler bei der Activity-Label-Referenz in der Bildbereinigung; Korrektur committed, erneuter Build ausstehend.
 4. Bildgrößenoptimierung und Regressionstests für Galerie-, Kamera- und Onlinebilder.
 5. Portionen- und Nährwertberechnung erweitern.
 6. Vollständiger Backup-/Restore-Workflow inklusive Bilder und Quellenbelege.
