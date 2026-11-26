@@ -7,10 +7,11 @@ import androidx.room.RoomDatabase
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
-@Database(entities = [RecipeEntity::class, IngredientEntity::class, PreparationStepEntity::class, LocalFoodProductEntity::class], version = 3, exportSchema = true)
+@Database(entities = [RecipeEntity::class, IngredientEntity::class, PreparationStepEntity::class, LocalFoodProductEntity::class, BlsFoodEntity::class], version = 4, exportSchema = true)
 abstract class TopfSecretDatabase : RoomDatabase() {
     abstract fun recipeDao(): RecipeDao
     abstract fun localFoodProductDao(): LocalFoodProductDao
+    abstract fun blsFoodDao(): BlsFoodDao
 
     companion object {
         private val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -44,10 +45,34 @@ abstract class TopfSecretDatabase : RoomDatabase() {
                 """.trimIndent())
             }
         }
+        private val MIGRATION_3_4 = object : Migration(3, 4) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("""
+                    CREATE TABLE IF NOT EXISTS bls_foods (
+                        code TEXT NOT NULL PRIMARY KEY,
+                        germanName TEXT NOT NULL,
+                        englishName TEXT,
+                        kcalPer100 REAL,
+                        proteinGPer100 REAL,
+                        carbohydratesGPer100 REAL,
+                        fatGPer100 REAL,
+                        kcalOrigin TEXT,
+                        proteinOrigin TEXT,
+                        carbohydratesOrigin TEXT,
+                        fatOrigin TEXT,
+                        kcalReference TEXT,
+                        proteinReference TEXT,
+                        carbohydratesReference TEXT,
+                        fatReference TEXT
+                    )
+                """.trimIndent())
+                db.execSQL("CREATE INDEX IF NOT EXISTS index_bls_foods_germanName ON bls_foods(germanName)")
+            }
+        }
         @Volatile private var INSTANCE: TopfSecretDatabase? = null
         fun getInstance(context: Context): TopfSecretDatabase = INSTANCE ?: synchronized(this) {
             INSTANCE ?: Room.databaseBuilder(context.applicationContext, TopfSecretDatabase::class.java, "topf_secret.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3).build().also { INSTANCE = it }
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4).build().also { INSTANCE = it }
         }
     }
 }
