@@ -294,3 +294,12 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Sicherheit/Robustheit: HTTP(S) only, Verbindungs- und Lese-Timeouts, Größenlimit 1.5 MB, HTTP-Statusprüfung; keine neue Bibliothek.
 - **Noch nicht verifiziert:** Android-Build, Parser-Tests und Geräteprüfung. Vor Freigabe insbesondere prüfen: unterstützte Schema.org-Seite, Seite ohne JSON-LD, Redirect, Sonderzeichen/UTF-8, BLS-Zutatenabgleich und Datenbankpersistenz.
 - Implementierungscommits: Parser 83b6087a / Schema-Typ-Fix 4da75be8; UI-/Flow-Commits 57983ab1, e9428961, db05edd3, d9e1a5f1, d705093e, 7d709976; Version 01a63c6e, CI-Metadaten 1a8cd9e2.
+
+
+## Online-Rezeptimport – Kategorien und Quell-Nährwerte (2026-11-26)
+
+- Importvorschau fragt vor dem Speichern eine frei editierbare Kategorie ab; vorhandene Schema.org-Kategorie wird als Vorschlag vorbelegt, kann aber überschrieben werden.
+- Strukturierte Schema.org Recipe/NutritionInformation-Werte werden – soweit vorhanden – ausgelesen: Energie, Kohlenhydrate, Zucker, Ballaststoffe, Eiweiß, Fett, gesättigte Fettsäuren und Salz. Sodium wird, wenn kein expliziter Salz-Wert vorhanden ist, in Gramm umgerechnet und mit 2,5 als Salzäquivalent abgeleitet.
+- Quell-Nährwerte werden als Werte pro Portion in vorhandenen RecipeEntity-Feldern gespeichert und in der Vorschau angezeigt. In der Rezeptdetailansicht bleiben sie von der eigenen Zutatenberechnung getrennt sichtbar, damit abweichende Daten nicht vermischt werden.
+- Fehlen strukturierte Nährwerte in der Quelle, wird nichts erfunden; die bestehende Zutatenberechnung aus BLS/lokalen Produkten bleibt verfügbar.
+- App-Version 0.7.1 / versionCode 13. Änderungen implementiert, aber Build und Gerätetest stehen noch aus.
