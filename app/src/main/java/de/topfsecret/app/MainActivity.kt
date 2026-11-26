@@ -947,6 +947,34 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, productCatalog: Local
 @Composable
 private fun RecipeDetailScreen(recipe: RecipeWithDetails, onBack: () -> Unit, onEdit: () -> Unit, onFavorite: () -> Unit, onDelete: () -> Unit) {
     var confirmDelete by rememberSaveable(recipe.recipe.id) { mutableStateOf(false) }
+    val savedNutrition = remember(recipe.ingredients, recipe.recipe.servings) {
+        val calculated = mutableListOf<NutritionPer100.Totals>()
+        var uncalculated = 0
+        recipe.ingredients.forEach { ingredient ->
+            val amount = IngredientMeasureConverter.parseAmount(ingredient.amount)
+            if (amount == null) {
+                uncalculated++
+            } else {
+                val nutrition = NutritionPer100(
+                    ingredient.caloriesPer100, ingredient.carbohydratesPer100,
+                    ingredient.proteinPer100, ingredient.fatPer100,
+                    IngredientMeasureConverter.Basis.GRAMS, ingredient.sugarsPer100,
+                    ingredient.fiberPer100, ingredient.saltPer100, ingredient.saturatedFatPer100
+                )
+                val result = nutrition.forAmount(amount.first, amount.second, ingredient.name)
+                if (result == null || listOf(ingredient.caloriesPer100, ingredient.carbohydratesPer100, ingredient.proteinPer100, ingredient.fatPer100).all { it == null }) {
+                    uncalculated++
+                } else calculated += result
+            }
+        }
+        calculated.sumNutrition().copy(
+            uncalculatedIngredients = uncalculated,
+            sugarsComplete = calculated.all { it.sugarsComplete } && uncalculated == 0,
+            fiberComplete = calculated.all { it.fiberComplete } && uncalculated == 0,
+            saltComplete = calculated.all { it.saltComplete } && uncalculated == 0,
+            saturatedFatComplete = calculated.all { it.saturatedFatComplete } && uncalculated == 0
+        )
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
         TextButton(onClick = onBack) { Text("‹ Zurück zu den Rezepten", color = Copper) }
         Spacer(Modifier.height(8.dp))
@@ -967,24 +995,45 @@ private fun RecipeDetailScreen(recipe: RecipeWithDetails, onBack: () -> Unit, on
             Spacer(Modifier.height(8.dp))
             Text(timeLabels.joinToString("  ·  "), color = MutedInk)
         }
-        val nutritionLabels = listOfNotNull(
-            recipe.recipe.caloriesPerServing?.let { "⚡ " + it.prettyNumber() + " kcal" },
-            recipe.recipe.carbohydratesPerServing?.let { "Kohlenhydrate " + it.prettyNumber() + " g" },
-            recipe.recipe.proteinPerServing?.let { "Eiweiß " + it.prettyNumber() + " g" },
-            recipe.recipe.fatPerServing?.let { "Fett " + it.prettyNumber() + " g" },
-            recipe.recipe.sugarsPerServing?.let { "davon Zucker " + it.prettyNumber() + " g" },
-            recipe.recipe.fiberPerServing?.let { "Ballaststoffe " + it.prettyNumber() + " g" },
-            recipe.recipe.saturatedFatPerServing?.let { "davon gesättigte Fettsäuren " + it.prettyNumber() + " g" },
-            recipe.recipe.saltPerServing?.let { "Salz " + it.prettyNumber() + " g" }
-        )
-        if (nutritionLabels.isNotEmpty()) {
+        if (savedNutrition.calculatedIngredients > 0) {
             Spacer(Modifier.height(12.dp))
             Card(colors = CardDefaults.cardColors(containerColor = PaleCopper), shape = RoundedCornerShape(16.dp)) {
                 Column(Modifier.fillMaxWidth().padding(14.dp)) {
                     Text("Nährwerte pro Portion", color = Ink, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(5.dp))
-                    nutritionLabels.forEach { Text(it, color = Ink, style = MaterialTheme.typography.bodyMedium) }
-                    Text("Angaben sind Richtwerte.", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                    Text(if (savedNutrition.uncalculatedIngredients == 0) "Gesamtgericht" else "Berechenbare Zutaten (Teilmenge)", color = Copper, fontWeight = FontWeight.SemiBold)
+                    NutritionValueLines(savedNutrition)
+                    Spacer(Modifier.height(4.dp))
+                    Text("Pro Portion", color = Copper, fontWeight = FontWeight.SemiBold)
+                    val servings = recipe.recipe.servings.coerceAtLeast(1).toDouble()
+                    NutritionValueLines(savedNutrition.copy(
+                        caloriesKcal = savedNutrition.caloriesKcal / servings,
+                        carbohydratesG = savedNutrition.carbohydratesG / servings,
+                        proteinG = savedNutrition.proteinG / servings,
+                        fatG = savedNutrition.fatG / servings,
+                        sugarsG = savedNutrition.sugarsG / servings,
+                        fiberG = savedNutrition.fiberG / servings,
+                        saltG = savedNutrition.saltG / servings,
+                        saturatedFatG = savedNutrition.saturatedFatG / servings
+                    ))
+                    Text(if (savedNutrition.uncalculatedIngredients == 0) "Angaben sind Richtwerte." else "${savedNutrition.uncalculatedIngredients} Zutat(en) nicht berechenbar; Werte zeigen nur die berechenbare Teilmenge.", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                }
+            }
+        } else {
+            val manualLabels = listOfNotNull(
+                recipe.recipe.caloriesPerServing?.let { "⚡ " + it.prettyNumber() + " kcal" },
+                recipe.recipe.carbohydratesPerServing?.let { "Kohlenhydrate " + it.prettyNumber() + " g" },
+                recipe.recipe.proteinPerServing?.let { "Eiweiß " + it.prettyNumber() + " g" },
+                recipe.recipe.fatPerServing?.let { "Fett " + it.prettyNumber() + " g" }
+            )
+            if (manualLabels.isNotEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                Card(colors = CardDefaults.cardColors(containerColor = PaleCopper), shape = RoundedCornerShape(16.dp)) {
+                    Column(Modifier.fillMaxWidth().padding(14.dp)) {
+                        Text("Manuell hinterlegte Nährwerte pro Portion", color = Ink, fontWeight = FontWeight.Bold)
+                        manualLabels.forEach { Text(it, color = Ink, style = MaterialTheme.typography.bodyMedium) }
+                        Text("Angaben sind Richtwerte.", color = MutedInk, style = MaterialTheme.typography.labelSmall)
+                    }
                 }
             }
         }
