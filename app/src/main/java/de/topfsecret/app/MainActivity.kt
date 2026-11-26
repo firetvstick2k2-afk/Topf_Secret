@@ -599,7 +599,16 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                             showProductSearch = true
                         } else scope.launch {
                             OpenFoodFactsClient.lookupBarcode(code).fold(
-                                onSuccess = { scannedProduct = it; barcodeLoading = false },
+                                onSuccess = {
+                                    barcodeLoading = false
+                                    if (it.hasNutrition) {
+                                        scannedProduct = it
+                                    } else {
+                                        productSearchQuery = it.name
+                                        productSearchMessage = "Produkt erkannt, aber es fehlen Nährwerte. Suche nach einer anderen Marke oder Variante."
+                                        showProductSearch = true
+                                    }
+                                },
                                 onFailure = { barcodeError = it.message ?: "Produkt konnte nicht geladen werden."; barcodeLoading = false; productSearchQuery = ""; productSearchMessage = barcodeError; showProductSearch = true }
                             )
                         }
