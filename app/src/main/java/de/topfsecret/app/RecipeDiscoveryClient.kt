@@ -2,11 +2,6 @@ package de.topfsecret.app
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import com.google.android.gms.tasks.Tasks
-import com.google.mlkit.common.model.DownloadConditions
-import com.google.mlkit.nl.translate.TranslateLanguage
-import com.google.mlkit.nl.translate.Translation
-import com.google.mlkit.nl.translate.TranslatorOptions
 import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
@@ -84,24 +79,10 @@ object RecipeDiscoveryClient {
             require(rawIngredients.isNotEmpty()) { "Für dieses Rezept wurden keine Zutaten geliefert." }
             val rawInstructions = meal.optString("strInstructions").replace("\r", "")
                 .split(Regex("""\n+""")).map { it.trim() }.filter(String::isNotBlank)
-            val options = TranslatorOptions.Builder()
-                .setSourceLanguage(TranslateLanguage.ENGLISH)
-                .setTargetLanguage(TranslateLanguage.GERMAN)
-                .build()
-            val translator = Translation.getClient(options)
-            val translated = try {
-                Tasks.await(translator.downloadModelIfNeeded(DownloadConditions.Builder().build()))
-                translateRecipeText(translator, rawIngredients, rawInstructions, meal.optString("strMeal").trim(),
-                    meal.optString("strCategory").ifBlank { "TheMealDB" }, meal.optString("strArea").trim())
-            } catch (error: Exception) {
-                throw IllegalStateException("Die deutsche Übersetzung konnte nicht geladen werden. Bitte Internetverbindung prüfen und erneut versuchen.", error)
-            } finally {
-                translator.close()
-            }
-            val ingredients = translated.ingredients
-            val instructions = translated.instructions
-            val category = translated.category
-            val area = translated.area
+            val ingredients = rawIngredients
+            val instructions = rawInstructions
+            val category = meal.optString("strCategory").trim().ifBlank { "TheMealDB" }
+            val area = meal.optString("strArea").trim()
             val source = meal.optString("strSource").takeIf { it.startsWith("http://") || it.startsWith("https://") }
                 ?: "https://www.themealdb.com/meal/$id"
             ImportedRecipe(
@@ -123,28 +104,3 @@ object RecipeDiscoveryClient {
     }
 }
 
-private data class TranslatedRecipeText(
-    val title: String,
-    val category: String,
-    val area: String,
-    val ingredients: List<String>,
-    val instructions: List<String>
-)
-
-private fun translateRecipeText(
-    translator: com.google.mlkit.nl.translate.Translator,
-    ingredients: List<String>,
-    instructions: List<String>,
-    title: String,
-    category: String,
-    area: String
-): TranslatedRecipeText {
-    fun translate(text: String): String = if (text.isBlank()) text else Tasks.await(translator.translate(text))
-    return TranslatedRecipeText(
-        title = translate(title),
-        category = translate(category),
-        area = translate(area),
-        ingredients = ingredients.map(::translate),
-        instructions = instructions.map(::translate)
-    )
-}
