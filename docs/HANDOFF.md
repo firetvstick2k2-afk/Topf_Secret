@@ -46,7 +46,6 @@ Stand: 2026-11-26
 - Nach Einrichtung der Secrets muss der Nutzer die bisherige, mit dem wechselnden Debug-Schlüssel installierte App einmal deinstallieren und die erste signierte Release-Version installieren. Ab dann sollten Updates mit derselben Signatur direkt über die vorhandene App möglich sein; App-Daten bleiben erhalten, sofern die App nicht deinstalliert wird.
 - Gradle Wrapper ist noch nicht eingecheckt. CI verwendet vorerst Gradle 8.13 über `gradle/actions/setup-gradle@v4`.
 
-
 ## Admin-Freischaltung (Version 0.5.0)
 - Beim Start erscheint vor dem Kochbuch eine lokale Freischaltseite.
 - Ein gemeinsamer, dauerhaft gültiger Admin-Key ist für den Nutzer und seine Ehefrau vorgesehen: `KOCH-1312-2709-TOPF`.
@@ -59,8 +58,16 @@ Stand: 2026-11-26
 
 ## Vereinbarte Produktanforderungen
 - Integrierter PIN-Schutz.
-- Rezepte manuell erstellen, bearbeiten und speichern.
-- Zwei-Wege-Synchronisation zwischen Nutzer und Ehefrau.
+- Zwei lokale persönliche Profile (Nutzer und Ehefrau) mit getrennten PINs und privaten Rezeptbereichen.
+- Gemeinsame Rezepte bleiben für beide Profile sichtbar; bestehende Rezepte werden bei der Einführung als gemeinsam übernommen.
+- PIN-Ersteinrichtung mit freier PIN-Wahl; PIN nicht im Klartext speichern und Fehlversuche begrenzen.
+- Optionale biometrische Entsperrung (z. B. Fingerabdruck) über Android BiometricPrompt; PIN bleibt immer als Alternative verfügbar.
+- Jeder Nutzer erhält einen eigenen, automatisch auf dem Gerät generierten Wiederherstellungscode. Vereinbartes Format: 24 Zeichen aus einem Verwechslungen vermeidenden Base32-Zeichensatz, lesbar in sechs Vierergruppen mit Bindestrichen (120 Bit Zufall bei 32 Symbolen).
+- Der Wiederherstellungscode wird bei der Ersteinrichtung vollständig angezeigt, mit einer Schaltfläche kopierbar gemacht und kann vom Nutzer als Screenshot oder Notiz gesichert werden. Der Nutzer muss die Sicherung bestätigen, bevor die Einrichtung abgeschlossen wird.
+- Der vollständige Wiederherstellungscode wird nur einmal angezeigt und nicht im Klartext gespeichert oder protokolliert. Für die Prüfung/Wiederherstellung werden nur sichere kryptografische Ableitungen bzw. Verifier gespeichert.
+- Der Code eines Profils stellt ausschließlich dieses Profil wieder her: Nach erfolgreicher Prüfung darf eine neue PIN festgelegt und die zugehörige Schlüsselhülle erneuert werden.
+- Der Admin-Freischaltstatus bleibt unabhängig von den persönlichen PINs.
+- Rezeptverwaltung: Rezepte manuell erstellen, bearbeiten und speichern.
 - Webseiten-Rezeptimport mit Vorschau und ausdrücklicher Übernahme.
 - Gerichtsbilder speichern.
 - Nährwertberechnung, insbesondere kcal und Kohlenhydrate pro Portion und Portionsmenge.
@@ -71,6 +78,10 @@ Stand: 2026-11-26
 ## Sicherheitsregeln
 - Keine echten Rezepte, privaten Fotos, Backups, Zugangsdaten, Keystores oder Cloud-Schlüssel committen.
 - PIN nie im Klartext speichern.
+- Wiederherstellungscodes nie im Klartext speichern, loggen oder an einen Server übertragen.
+- PIN und Wiederherstellungscode müssen mit kryptografisch geeigneten Verfahren geprüft werden; Fehlversuche begrenzen und Vergleiche sicher implementieren.
+- Die Schlüsselarchitektur muss vor Implementierung festgelegt und geprüft werden. UI-Filter allein sind keine kryptografische Trennung privater Rezeptdaten.
+- Biometrische Daten werden nicht von der App gespeichert; Android stellt nur das Authentifizierungsergebnis bereit.
 - Synchronisation nur authentifiziert und auf berechtigte Personen begrenzt.
 - Nährwerte als Schätzwerte kennzeichnen; keine medizinischen Therapieempfehlungen.
 - Absturzprotokolle können technische Geräteinformationen enthalten; vor dem Teilen keine persönlichen Inhalte ergänzen.
@@ -82,7 +93,8 @@ Stand: 2026-11-26
 4. Gradle Wrapper aus vertrauenswürdiger Gradle-8.13-Installation ergänzen und CI darauf umstellen.
 5. Version 0.6.0 in GitHub Actions bauen und auf dem Gerät testen: Hell-/Dunkelmodus über das Symbol oben rechts inklusive Neustart, Kontrast der „Guten Appetit“-Karte, Rezeptzeiten, Nährwerte, Zutatenmengen sowie Anlegen/Bearbeiten/Löschen und Datenpersistenz.
 6. Rezept-Suche, Kategorienübersicht, Kategorienfilter, Favoritenübersicht und Info-Dialog (Logo, Autorzeile, dynamische App-Version) sind im Quellstand umgesetzt; GitHub-Actions-Build und Gerätetest stehen noch aus.
-7. PIN-Sperre implementieren und testen.
+7. Sicherheitsarchitektur für persönliche Profile, getrennte private Rezeptdaten, PIN, Biometrie und profilgebundene Wiederherstellung abschließend entwerfen und gegen aktuelle Android-/Room-/Verschlüsselungsbibliotheken prüfen.
+8. Erst danach Datenbankmigration und Profil-/PIN-/Backup-Code-Funktionen implementieren; vorhandene Rezepte als gemeinsam erhalten und Migration testen.
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
