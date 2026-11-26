@@ -38,6 +38,9 @@ Die App führt die sichtbare Rezeptliste aus der gemeinsamen Datenbank und der p
 
 ## Bereits implementierte Grundlage
 
+- SQLCipher for Android `4.20.0` und AndroidX SQLite `2.7.0` sind als Abhängigkeiten eingebunden; die bestehende Room-2.8.3-Datenbank wird dadurch noch nicht umgestellt.
+- `SqlCipherRoomSmokeTest` prüft die Room-2-Integration mit einer isolierten Testdatenbank. GitHub Actions startet dafür einen API-35-Emulator und führt `connectedDebugAndroidTest` aus. Ein erfolgreicher CI-Lauf ist noch nicht bestätigt.
+
 - `app/src/main/java/de/topfsecret/app/security/RecoveryCodeGenerator.kt` erzeugt 24 zufällige Crockford-Base32-Symbole mit `SecureRandom`, formatiert sie als sechs Vierergruppen und normalisiert/validiert spätere Eingaben.
 - Unit-Tests liegen unter `app/src/test/java/de/topfsecret/app/security/RecoveryCodeGeneratorTest.kt`.
 - GitHub Actions führt die Release-Unit-Tests vor dem APK-Build aus. Ein erfolgreicher CI-Lauf für diese Änderung ist noch nicht bestätigt.
@@ -72,8 +75,9 @@ SQLCipher verschlüsselt nur die Datenbankdateien. Private Rezeptbilder und ande
 ## Bibliotheken und Plattform
 
 - Bestehende Datenzugriffsschicht: Room 2.8.3.
-- SQLCipher for Android (neue Bibliothekslinie `net.zetetic:sqlcipher-android`) statt der inzwischen abgekündigten alten `android-database-sqlcipher`-Bibliothek.
-- SQLCipher unterstützt Room 2 über `SupportOpenHelperFactory`; vor Festlegung einer konkreten Bibliotheksversion muss die Kompatibilität mit compileSdk 36, Room 2.8.3, API 26 und dem CI-Setup in einem kleinen Testbuild bestätigt werden.
+- SQLCipher for Android `net.zetetic:sqlcipher-android:4.20.0` statt der inzwischen abgekündigten alten `android-database-sqlcipher`-Bibliothek.
+- Room-2-Integration erfolgt über `net.zetetic.database.sqlcipher.SupportOpenHelperFactory`; dafür ist `androidx.sqlite:sqlite:2.7.0` eingebunden. Die offizielle SQLCipher-Dokumentation beschreibt die Room-2-Integration über diese Factory. Die Bibliothek unterstützt Android API 23+ und ist damit grundsätzlich mit dem App-Mindestziel API 26 kompatibel.
+- Ein Android-Instrumentierungstest öffnet eine separate Testdatenbank mit einem zufälligen Testschlüssel, schreibt/liest einen Rezeptdatensatz, prüft, dass der SQLite-Klartextheader fehlt, und öffnet die Datenbank erneut mit demselben Schlüssel. Die CI soll diesen Test auf einem API-35-Emulator ausführen. Das ist zunächst nur ein Prototyp; die produktive Datenbank und ihr Schlüssel bleiben unverändert.
 - Biometrie über AndroidX Biometric / BiometricPrompt. Verfügbarkeit wird zur Laufzeit geprüft; bei fehlender Hardware oder nicht eingerichteter Biometrie bleibt PIN-Eingabe möglich.
 - Android Keystore schützt nicht exportierbare Schlüsselmaterialien; Biometrie wird vom Betriebssystem ausgewertet, nicht von Topf Secret selbst.
 
@@ -86,7 +90,7 @@ SQLCipher verschlüsselt nur die Datenbankdateien. Private Rezeptbilder und ande
 
 ## Implementierungsreihenfolge
 
-1. Krypto-/SQLCipher-Prototyp und CI-Build für API 26+ validieren.
+1. SQLCipher-/Room-2-Prototyp auf API-35-Emulator und anschließend auf einem API-26-Gerät validieren; CI-Ergebnis abwarten.
 2. Schlüsselverwaltung und Profil-Metadaten implementieren und testen.
 3. Datenbankmigration v1 → verschlüsselte gemeinsame Datenbank mit Integritätsprüfung implementieren.
 4. Zwei private Datenbanken und Profilzugriff ergänzen.
