@@ -183,3 +183,11 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Build #42 war erfolgreich; das beweist allein nicht, dass das Asset in der APK enthalten ist.
 - CI-Workflow wurde auf `development` um einen harten APK-Integritätstest ergänzt: `unzip -Z1` muss `assets/bls_foods_v4.jsonl.gz` finden und der aus der APK extrahierte SHA-256 muss `96e3f2aaf98fa538f84dd6d826a36b1a7565e87f2520bb80b2d9b4aa51ec0bbf` entsprechen. Der nächste manuelle Build soll die Frage eindeutig entscheiden.
 - Bis zum erfolgreichen APK-Asset-Test und Gerätetest bleibt BLS-Lauffähigkeit unbestätigt. Keine Deinstallation oder Datenlöschung.
+
+
+### BLS-GZIP-Paketierungsfehler korrigiert (2026-11-26)
+- CI-Lauf #43 (45871865372) zeigte: APK enthält den Datensatz unter `assets/bls_foods_v4.jsonl`, nicht unter dem ursprünglichen Namen mit `.gz`. Der Android-Packaging-Schritt hatte die GZIP-Quelldatei expandiert und die Endung entfernt.
+- Runtime-Seeder liest jetzt das resultierende Plain-JSONL-Asset direkt; keine zweite GZIP-Dekomprimierung mehr.
+- CI prüft Pfad und SHA-256 des entpackten JSONL-Inhalts (`b58c764620ab5b3b28f81aa3d7caca23b4b2665b151642fde809fca25f4890a6`), damit fehlende oder veränderte BLS-Dateien keine Release-APK durchlassen.
+- App-Version 0.6.2 / versionCode 10 für sicheres In-Place-Update; keine Rezeptdatenbank- oder Rezeptdatenlöschung.
+- Noch offen: nächster manueller CI-Build und anschließender Gerätetest.
