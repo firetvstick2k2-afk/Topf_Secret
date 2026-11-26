@@ -245,3 +245,13 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Bestehende Datenbankstruktur bleibt unverändert; keine Migration, kein Löschen oder Überschreiben vorhandener Rezepte.
 - **Noch nicht verifiziert:** Android-Build/Unit-Tests und Gerätetest dieses Fixes. Insbesondere prüfen: Produkt hinzufügen → Cursor steht in der nächsten leeren Zeile; gespeichertes Rezept zeigt dieselben Gesamt-/Portionswerte wie der Editor, mit Teilmengenhinweis bei nicht berechenbaren Stückmengen.
 - Aktueller Code-Commit: `f96e71ec66c48683cf7faeb0cca29b279352c7cf` (Detailberechnung); Cursor-Fix: `49af76d562b3638a28ff034bc44a67e8d29227e3`. Danach wurde die Speichern-Fallbacklogik angepasst; finalen Branch-HEAD nach Doku-Commit prüfen.
+
+
+
+## Nährwertangaben einklappbar (2026-11-26)
+
+- Nährwertbereiche im Rezepteditor und in der Rezeptdetailansicht sind standardmäßig eingeklappt und über „Nährwerte anzeigen“ / „Nährwerte ausblenden“ erreichbar.
+- In der Rezeptdetailansicht steht der Aufklappknopf erst nach Beschreibung, Zeiten, Zutaten und Zubereitung am Ende des Rezeptinhalts.
+- Die Überschrift im aufgeklappten Bereich lautet einheitlich „Nährwertangaben“. Darunter sind „Gesamtgericht“ und „Pro Portion“ klar getrennt; manuell hinterlegte Altwerte tragen eine eigene Kennzeichnung.
+- Auch im Rezepteditor liegen automatische Berechnung und optionale manuelle Nährwertfelder gemeinsam im aufklappbaren Bereich unterhalb der Zubereitung.
+- Keine Datenbankänderung. Build/Tests und Gerätetest für Commit `fc1e5db39cbcc9ff1d2e9b479140daa11157bfdc` stehen noch aus.
