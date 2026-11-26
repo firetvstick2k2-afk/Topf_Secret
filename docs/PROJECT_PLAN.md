@@ -191,3 +191,5 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - CI prüft Pfad und SHA-256 des entpackten JSONL-Inhalts (`b58c764620ab5b3b28f81aa3d7caca23b4b2665b151642fde809fca25f4890a6`), damit fehlende oder veränderte BLS-Dateien keine Release-APK durchlassen.
 - App-Version 0.6.2 / versionCode 10 für sicheres In-Place-Update; keine Rezeptdatenbank- oder Rezeptdatenlöschung.
 - Noch offen: nächster manueller CI-Build und anschließender Gerätetest.
+
+- Runtime-Einlesung zusätzlich robust gemacht: Asset-Name `bls_foods_v4.jsonl`; GZIP-Magic-Bytes werden geprüft und je nach tatsächlichem APK-Inhalt wird entpackt oder direkt gelesen. CI prüft den entpackten JSONL-Inhalt unabhängig vom Packaging-Verhalten.
