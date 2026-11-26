@@ -17,8 +17,10 @@ Stand: 2026-11-26
 - Android-Projektgrundgerüst mit Kotlin, Jetpack Compose und API-26-Mindestziel angelegt.
 - Erste Platzhalter-Startansicht vorhanden.
 - Produktanforderungen und Roadmap dokumentiert.
-- Noch kein Build auf einem Android-Gerät oder in CI verifiziert.
-- Gradle Wrapper ist noch nicht eingecheckt.
+- GitHub-Actions-Workflow `.github/workflows/android-ci.yml` ergänzt: baut bei Push/Pull Request auf `development` ein Debug-APK.
+- CI verwendet JDK 17 und Gradle 8.13; Android-SDK wird im Workflow eingerichtet.
+- Build ist noch nicht durch einen abgeschlossenen CI-Lauf verifiziert.
+- Gradle Wrapper ist noch nicht eingecheckt; der CI-Workflow verwendet vorerst die bereitgestellte Gradle-Installation.
 
 ## Vereinbarte Produktanforderungen
 - Integrierter PIN-Schutz.
@@ -38,11 +40,12 @@ Stand: 2026-11-26
 - Nährwerte als Schätzwerte kennzeichnen; keine medizinischen Therapieempfehlungen.
 
 ## Nächste Schritte
-1. Android Studio/Gradle-Wrapper und CI-Build verifizieren.
-2. App-Navigation und Designsystem aufbauen.
-3. Datenmodell und Room-Datenbank entwerfen.
-4. PIN-Sperre implementieren und testen.
-5. Rezeptverwaltung entwickeln.
+1. Ersten GitHub-Actions-Build prüfen und eventuelle Fehler beheben.
+2. Gradle Wrapper ergänzen und lokal/CI verifizieren.
+3. App-Navigation und Designsystem aufbauen.
+4. Datenmodell und Room-Datenbank entwerfen.
+5. PIN-Sperre implementieren und testen.
+6. Rezeptverwaltung entwickeln.
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
