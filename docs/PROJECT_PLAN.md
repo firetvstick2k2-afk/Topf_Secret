@@ -365,3 +365,10 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Export und Import über Android Storage Access Framework. Import validiert Backupformat und Pfade, begrenzt Größe auf 100 MB, importiert mit neuen IDs, überspringt Duplikate (Titel + Quell-URL) und überschreibt keine vorhandenen Rezepte.
 - Keine Room-Schemaänderung (weiter Version 7), keine automatische Löschung vorhandener Daten.
 - App-Version 0.9.7 / versionCode 23; CI-Build, Unit-Tests und Gerätetest inkl. Export/Neuinstallation/Import stehen aus. Bis zur erfolgreichen Wiederherstellungsprüfung keine Neuinstallation ohne vorheriges Backup.
+
+
+### H.5 CI-Korrektur: Originaltitel ohne Übersetzungsreferenz (2026-11-27)
+- CI-Lauf `45910259779` schlug bei `RecipeDiscoveryClient.kt:89` fehl (`Unresolved reference: translated`).
+- Verwaiste Referenz aus der entfernten ML-Kit-Übersetzung behoben: `ImportedRecipe.title` erhält jetzt direkt `meal.optString("strMeal")` aus der TheMealDB-Antwort.
+- Keine Änderung an Datenbank, Rezeptdaten oder App-Version. Commit: `8349915c5990f9378a3fe6c07cfe9eb19ee96343` auf `development`.
+- Neuer CI-Build und Gerätetest stehen noch aus. Vor einem destruktiven App-Daten-Reset muss der Build erfolgreich sein und das Backup auf dem Gerät geprüft werden.
