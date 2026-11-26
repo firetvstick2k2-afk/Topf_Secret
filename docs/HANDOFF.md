@@ -413,3 +413,10 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Ursache: Nach dem Entfernen von ML Kit Translation blieb in `details()` die Zuweisung `title = translated.title` zurück, obwohl kein `translated`-Objekt mehr existiert.
 - Korrektur: Rezepttitel wird direkt aus `meal.optString("strMeal")` übernommen. Das entspricht der festgelegten Entscheidung, TheMealDB-Inhalte unverändert in Originalsprache anzuzeigen.
 - Commit auf `development`: `8349915c5990f9378a3fe6c07cfe9eb19ee96343`. Erneuter CI-Build und Gerätetest stehen noch aus; bis zum erfolgreichen Build keine App-Daten löschen oder Wiederherstellungstest starten.
+
+### H.6 Backup-Ansicht scrollbar (2026-11-27)
+- Gerätetest zeigte, dass der Importbereich samt „Backup auswählen“-Button auf kürzeren Displays unterhalb des sichtbaren Bereichs lag.
+- Ursache: Die äußere Compose-Column verwendete `fillMaxSize()` ohne vertikales Scrollen.
+- `verticalScroll(rememberScrollState())` ergänzt; Export- und Importkarten sowie Statusmeldungen sind jetzt durch Scrollen erreichbar.
+- Keine Änderung an Backupformat, Room-Datenbank oder Rezeptdaten. Commit: `414cf23636a63f99f3f87607eaf0940e7aa85203` auf `development`.
+- CI-Build und erneuter Gerätetest stehen noch aus.
