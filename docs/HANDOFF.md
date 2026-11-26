@@ -322,3 +322,13 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Fester Button „Dieses Rezept übernehmen“ reicht die aktuell geöffnete Seiten-URL an den vorhandenen Online-Rezeptimport weiter. Die bekannte Vorschau mit Kategorie, strukturierten Nährwerten und Bildauswahl wird wiederverwendet.
 - Kein Chefkoch-Sonder-Scraping und keine Umgehung von Login, Paywall, Captcha oder Zugriffsschutz. Import bleibt abhängig von den strukturierten Rezeptdaten der geöffneten Seite.
 - App-Version 0.8.0 / versionCode 15. **Build und Gerätetest stehen aus.** Prüfen: Chefkoch-Suche und Rezeptdetail, andere Rezeptseite, Importübergabe der finalen URL, Zurück/Vorwärts, Dark Mode und WebView-Rotation/Neuerstellung.
+
+
+## Rezept-Entdecken – Netflix-artige Oberfläche (2026-11-26)
+
+- Der frühere Browser-Tab wird durch „Entdecken“ ersetzt: eigener Topf-Secret-Feed mit Hero-Rezept, Bildkarten und horizontalen Kategorie-Chips/Karussells.
+- Erste angebundene öffentliche Datenquelle: TheMealDB API (Test-/öffentlicher Schlüssel `1`), Kategorien Chicken, Beef, Seafood, Vegetarian, Pasta, Dessert und Starter; Suchfeld nutzt Rezeptnamenssuche.
+- Neue `RecipeDiscoveryClient.kt` kapselt API-Aufrufe. Bilder werden direkt aus den API-Bild-URLs in Rezeptkarten angezeigt.
+- Auswahl einer Karte übergibt aktuell die TheMealDB-Webadresse des Rezepts an den bestehenden strukturierten URL-Importer. Der Import hängt davon ab, ob die Rezeptdetailseite passende Schema.org-Daten liefert; API-direkter Detailimport mit Zutaten/Anweisungen ist ein nächster sinnvoller Schritt.
+- Chefkoch ist nicht als API-Quelle eingebunden; keine offizielle öffentliche Rezept-API bestätigt. Spätere Anbieter nur über zulässige APIs/Integrationen.
+- Version 0.9.0 / versionCode 16. **Build und Gerätetest stehen aus.** Testen: Feed-Laden, Kategorien, Suche, Kartenbilder, Rezeptübernahme und Verhalten bei Netzwerkfehlern.
