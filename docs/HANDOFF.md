@@ -395,3 +395,14 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Android-CI-Lauf #55 (`45908052183`) schlug bei `:app:compileReleaseKotlin` fehl: `DownloadConditions` wurde aus dem falschen Paket importiert.
 - Import in `RecipeDiscoveryClient.kt` auf `com.google.mlkit.common.model.DownloadConditions` korrigiert. ML-Kit-Translate-Abhängigkeit bleibt `17.0.3`; keine Änderung an Datenbank, Rezeptdaten oder App-Version (0.9.6 / versionCode 22).
 - Fix auf `development` committed. Neuer CI-Build und anschließender Gerätetest stehen noch aus.
+
+
+## TheMealDB-Übersetzung entfernt und Rezept-Backup ergänzt (2026-11-27)
+- Auf Nutzerwunsch wurde die automatische Englisch→Deutsch-Übersetzung vollständig entfernt. TheMealDB-Details bleiben in der gelieferten Originalsprache; keine automatische Sprachmodell-Installation oder Übersetzungsabhängigkeit.
+- ML-Kit-Translate-Abhängigkeit aus `app/build.gradle.kts` entfernt. Der separate Google ML Kit Barcode Scanner bleibt unverändert.
+- Neuer Menüpunkt „Backup & Import“ auf der Startseite.
+- Backupformat: ZIP mit `recipes.json`, lokalen Rezeptbildern und vorhandenen Bildquellen-Dateien. Enthalten sind Rezeptfelder, Kategorien, Portionen, Zeiten, Beschreibung, Notizen, Favoriten, Nährwerte, Zutaten samt Nährwert-Metadaten sowie Zubereitungsschritte.
+- Export über Android-Dateiauswahl; Import akzeptiert ZIP, prüft Format/Version, begrenzt die entpackte Gesamtgröße auf 100 MB und weist ungültige Pfade zurück.
+- Import fügt Rezepte mit neuen lokalen IDs hinzu und überschreibt keine bestehenden Rezepte. Doppelte Rezepte (gleicher Titel und gleiche Quell-URL) werden übersprungen. Lokale Bilder werden in den App-Bildordner kopiert; vorhandene Bildquellen werden mitgesichert.
+- Room-Schema bleibt Version 7; keine Migration und kein Löschen bestehender Daten.
+- Version 0.9.7 / versionCode 23. Implementierung committed auf `development`; Android-CI-Build, Tests und Wiederherstellungstest auf Gerät stehen noch aus. Vor einer Neuinstallation muss ein Backup erstellt und dessen Import praktisch geprüft werden.
