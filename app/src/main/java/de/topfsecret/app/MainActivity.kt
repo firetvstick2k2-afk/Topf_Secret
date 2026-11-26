@@ -518,9 +518,9 @@ private fun RecipeEditorScreen(recipe: RecipeWithDetails?, onCancel: () -> Unit,
                 }.onFailure { imageError = true }
             }) { Text("Kamera") }
             OutlinedButton(onClick = { showOnlineImageSearch = true }) { Text("Online suchen") }
-            if (imageUri.isNotBlank()) {
-                TextButton(onClick = { imageUri = "" }) { Text("Entfernen", color = Color(0xFFB3261E)) }
-            }
+        }
+        if (imageUri.isNotBlank()) {
+            TextButton(onClick = { imageUri = "" }) { Text("Rezeptbild entfernen", color = Color(0xFFB3261E)) }
         }
         if (imageError) {
             Spacer(Modifier.height(4.dp))
