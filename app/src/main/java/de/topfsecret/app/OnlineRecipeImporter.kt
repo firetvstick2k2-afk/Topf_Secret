@@ -80,8 +80,8 @@ object OnlineRecipeImporter {
     private fun findRecipe(value: JSONObject): JSONObject? {
         val type = value.opt("@type")
         val isRecipe = when (type) {
-            is String -> type.equals("Recipe", true)
-            is JSONArray -> (0 until type.length()).any { type.optString(it).equals("Recipe", true) }
+            is String -> type.substringAfterLast("/").equals("Recipe", true)
+            is JSONArray -> (0 until type.length()).any { type.optString(it).substringAfterLast("/").equals("Recipe", true) }
             else -> false
         }
         if (isRecipe) return value
