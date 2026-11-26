@@ -72,8 +72,8 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 
 1. Projektgrundlage, UI-Grundgerüst, Navigation und lokale Rezeptverwaltung – umgesetzt.
 2. Rezeptbilder aus Galerie und Kamera aufnehmen; Dateien in `filesDir/recipe_images` übernehmen und in Rezeptliste/-detail anzeigen – umgesetzt auf `development`; Build-/Gerätetest und Optimierung noch offen.
-3. Online-Gerichtebildersuche über Wikimedia Commons mit Treffer-Vorschau, Lizenz-/Urheberanzeige, lokalem Download und Quellenbeleg – implementiert auf `development`; Build-/Gerätetest noch offen. Build 27 und 28 scheiterten an ungültigen Kotlin-Labels für den Activity-Context. Korrektur committed: `applicationContext` wird vor `setContent` erfasst und explizit an `TopfSecretApp` übergeben (`15bf57b`); Build 29 steht zur Verifikation aus.
-4. Bildgrößenoptimierung und Regressionstests für Galerie-, Kamera- und Onlinebilder.
+3. Online-Gerichtebildersuche über Wikimedia Commons mit Treffer-Vorschau, Lizenz-/Urheberanzeige, lokalem Download und Quellenbeleg – implementiert auf `development`; Galerie, Kamera und Suche wurden vom Nutzer auf dem Gerät erfolgreich ausprobiert. Die Ergebnisqualität ist noch nicht ausreichend: Suche nach „Grünkohl“/„Grünkohl Eintopf“ liefert Gemüse-/Pflanzenmotive und Audio-Dateien statt zubereiteter Gerichte. Suchstrategie und Filter sind gezielt zu verbessern. Build 27 und 28 scheiterten an ungültigen Kotlin-Labels für den Activity-Context. Korrektur committed: `applicationContext` wird vor `setContent` erfasst und explizit an `TopfSecretApp` übergeben (`15bf57b`).
+4. Online-Bildersuche semantisch auf fertige Gerichte optimieren und Nicht-Bild-/Pflanzentreffer filtern; anschließend Bildgrößenoptimierung und Regressionstests für Galerie-, Kamera- und Onlinebilder.
 5. Portionen- und Nährwertberechnung erweitern.
 6. Vollständiger Backup-/Restore-Workflow inklusive Bilder und Quellenbelege.
 7. Web-Rezeptimport mit Vorschau.
@@ -86,3 +86,10 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Nährwertdatenquelle und Lizenz.
 - Synchronisationsdienst.
 - App-Sprache zunächst Deutsch oder mehrsprachig.
+
+
+## Release-Kennzeichnung
+
+- Manuelle GitHub-Releases tragen künftig den Titel `Topf Secret v<versionName> – Build #<GitHub-Run-Nummer>`.
+- Die Release-Beschreibung nennt App-Version, versionCode, Buildnummer und Commit-SHA. So sind installierter Stand und Änderungen leichter zuzuordnen.
+- Der am 2026-11-26 geprüfte Bestand enthält `build-21` und `build-29`; beide bisherigen Releases haben noch den generischen Titel „Topf Secret Build“. Neue Releases verwenden das eindeutige Schema.
