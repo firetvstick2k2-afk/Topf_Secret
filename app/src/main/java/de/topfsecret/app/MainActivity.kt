@@ -151,7 +151,13 @@ private fun TopfSecretApp(repository: RecipeRepository, darkMode: Boolean, onDar
                     selectedRecipeId = 0L
                     editingRecipeId = 0L
                 })
-                else -> PlaceholderScreen("FÜR SPÄTER", "Eure Favoriten", "Die Rezepte, die ihr immer wieder kochen möchtet, sammeln wir hier.", "♡", "Favoriten könnt ihr bereits in der Rezeptansicht markieren.")
+                else -> FavoriteScreen(
+                    recipes = recipes.filter { it.recipe.isFavorite },
+                    onOpen = { recipeId ->
+                        selectedRecipeId = recipeId
+                        selectedTab = 1
+                    }
+                )
             }
         }
     }
@@ -334,6 +340,49 @@ private fun CategoryScreen(
                     Column(Modifier.weight(1f)) {
                         Text(category, color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
                         Text("$count " + if (count == 1) "Rezept" else "Rezepte", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    }
+                    Text("›", color = Copper, fontSize = 28.sp)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun FavoriteScreen(
+    recipes: List<RecipeWithDetails>,
+    onOpen: (Long) -> Unit
+) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp)) {
+        Text("DEINE LIEBLINGE", color = Copper, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+        Spacer(Modifier.height(6.dp))
+        Text("Eure Favoriten", color = Ink, fontSize = 28.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(8.dp))
+        Text("Hier findet ihr eure Rezepte, die ihr besonders gern mögt.", color = MutedInk, style = MaterialTheme.typography.bodyLarge)
+        Spacer(Modifier.height(18.dp))
+        if (recipes.isEmpty()) {
+            Card(shape = RoundedCornerShape(22.dp), colors = CardDefaults.cardColors(containerColor = Paper)) {
+                Column(Modifier.fillMaxWidth().padding(22.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("♡", color = Copper, fontSize = 52.sp)
+                    Spacer(Modifier.height(10.dp))
+                    Text("Noch keine Favoriten", color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(6.dp))
+                    Text("Öffnet ein Rezept und tippt auf „Favorit“, um es hier zu sammeln.", color = MutedInk, textAlign = TextAlign.Center)
+                }
+            }
+        } else recipes.forEach { item ->
+            Card(
+                onClick = { onOpen(item.recipe.id) },
+                modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp),
+                shape = RoundedCornerShape(18.dp),
+                colors = CardDefaults.cardColors(containerColor = Paper)
+            ) {
+                Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text("❤️", fontSize = 27.sp)
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(item.recipe.title, color = Ink, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text(item.recipe.category.ifBlank { "Ohne Kategorie" } + " · " + item.recipe.servings + " Portionen", color = MutedInk, style = MaterialTheme.typography.bodySmall)
                     }
                     Text("›", color = Copper, fontSize = 28.sp)
                 }
