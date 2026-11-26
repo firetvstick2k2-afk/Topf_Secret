@@ -9,7 +9,6 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
 import java.io.InputStreamReader
-import java.util.zip.GZIPInputStream
 
 /**
  * Seeds the bundled, official BLS 4.0 JSONL dataset into Room.
@@ -32,9 +31,9 @@ object BlsDatasetSeeder {
         var imported = 0
         var batch = ArrayList<BlsFoodEntity>(BATCH_SIZE)
         try {
-            context.assets.open("bls_foods_v4.jsonl.gz").use { asset ->
-                GZIPInputStream(asset).use { gzip ->
-                    BufferedReader(InputStreamReader(gzip, Charsets.UTF_8)).useLines { lines ->
+            // Android APK packaging expands the source .gz asset and removes the suffix.
+            context.assets.open("bls_foods_v4.jsonl").use { asset ->
+                BufferedReader(InputStreamReader(asset, Charsets.UTF_8)).useLines { lines ->
                         lines.forEach { line ->
                             if (line.isBlank()) return@forEach
                             val record = JSONObject(line)
@@ -81,7 +80,6 @@ object BlsDatasetSeeder {
                             }
                         }
                     }
-                }
             }
             if (batch.isNotEmpty()) {
                 dao.insertAll(batch)
