@@ -61,7 +61,7 @@ Stand: 2026-11-26
 - Die normale Android-Bildschirmsperre schützt den Gerätezugriff.
 - Admin-Freischaltung bleibt davon unabhängig bestehen.
 - Rezepte manuell erstellen, bearbeiten und speichern.
-- Rezeptbilder aus Galerie auswählen und anzeigen; Kameraaufnahme folgt.
+- Rezeptbilder aus Galerie, Kamera und Online-Bildersuche auswählen und anzeigen.
 - Webseiten-Rezeptimport mit Vorschau und ausdrücklicher Übernahme.
 - Nährwertberechnung, insbesondere kcal und Kohlenhydrate pro Portion und Portionsmenge.
 - Vollständiger Rezept-Export/Import inklusive Bilder als Backup.
@@ -89,7 +89,7 @@ Stand: 2026-11-26
 - Rezeptbilder: Galerieauswahl über Android Document Picker; ausgewählte Bilddateien werden in `filesDir/recipe_images` kopiert, damit sie nicht von externen URI-Berechtigungen abhängen. Kameraaufnahme erfolgt über Android `TakePicture` und einen nicht exportierten `FileProvider`; auch Kamerabilder landen direkt im internen App-Speicher.
 - Bildvorschau in Rezeptliste, Detailansicht und Editor; Bild ändern/entfernen. Alte intern verwaltete Bilddateien werden nach erfolgreichem Speichern ersetzt/entfernt; neu importierte Dateien werden beim Abbrechen des Editors bereinigt.
 - Speicherung verwendet das bereits vorhandene Feld `RecipeEntity.imageUri`; Room-Schema bleibt Version 1. `AndroidManifest.xml` registriert den FileProvider und `res/xml/file_paths.xml` begrenzt den freigegebenen Pfad auf `recipe_images/`.
-- Noch offen: Build-/Gerätetest, Prüfung mit unterschiedlichen Galerieformaten und Kamera-Apps sowie Bildgrößen-/Speicheroptimierung.
+- Online-Gerichtebildersuche ergänzt: Suche nach Gerichtsnamen über die Wikimedia-Commons-Action-API, Treffer mit Vorschaubildern und Lizenz-/Urheberangaben; Auswahl lädt ein Vorschaubild in `filesDir/recipe_images` herunter. Ein begleitender `.source.txt`-Beleg speichert Commons-Dateiseite, Thumbnail-URL, Lizenz, Urheber und Attribution. Die Bildquelle wird beim Löschen/Ersetzen der verwalteten Bilddatei mit entfernt. Dafür ist die Android-Internetberechtigung erforderlich. Es werden keine Google-Bilderseiten gescrapt und kein API-Schlüssel benötigt.\n- Online-Suche ist auf Gerichtefotos begrenzt; keine Rezept- oder Zutaten-Websuche. Ergebnisse ohne auslesbare Lizenzangabe werden ausgelassen. Vor der Übernahme werden Lizenz und Urheber im Treffer angezeigt.\n- Noch offen: Build-/Gerätetest der Online-Suche, Netzwerkfehler/Commons-Rate-Limits, Galerieformate und Kamera-Apps sowie Bildgrößen-/Speicheroptimierung.
 
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
