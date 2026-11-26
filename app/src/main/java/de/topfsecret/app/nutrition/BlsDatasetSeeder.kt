@@ -47,9 +47,9 @@ object BlsDatasetSeeder {
                             fun numeric(code: String): Double? =
                                 rawValue(code)?.replace(',', '.')?.toDoubleOrNull()?.takeIf(Double::isFinite)
                             fun origin(code: String): String? =
-                                triple(code)?.opt(1)?.toString()?.takeIf { it.isNotBlank() && it != "null" && it != "0" }
+                                triple(code)?.opt(1)?.toString()?.takeIf { it.isNotBlank() && it != "null" }
                             fun reference(code: String): String? =
-                                triple(code)?.opt(2)?.toString()?.takeIf { it.isNotBlank() && it != "null" && it != "0" }
+                                triple(code)?.opt(2)?.toString()?.takeIf { it.isNotBlank() && it != "null" }
 
                             val code = record.optString("c")
                             val germanName = record.optString("de")
@@ -68,7 +68,7 @@ object BlsDatasetSeeder {
                                 fatOrigin = origin("FAT"),
                                 kcalReference = reference("ENERCC"),
                                 proteinReference = reference("PROT625"),
-                                carbohydratesReference = reference("FAT"),
+                                carbohydratesReference = reference("CHO"),
                                 fatReference = reference("FAT"),
                                 nutrientsJson = nutrients.toString(),
                                 note = record.optString("note").takeIf { it.isNotBlank() && it != "null" }
