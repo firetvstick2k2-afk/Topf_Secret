@@ -105,5 +105,7 @@ Stand: 2026-11-26
 
 - Der Emulator-Runner-Bericht zu `adb: device 'emulator-5554' not found` dokumentiert unter anderem einen nicht gestarteten Emulator durch eine zu große AVD-Userdata-Partition bei knappem Runner-Speicher. Daher wird die AVD-Datengröße jetzt explizit auf 6G begrenzt; die konkrete Ursache unseres Laufs ist ohne den vollständigen Emulator-Startlog noch nicht abschließend bewiesen.
 
+- Die Datenträgerdiagnose in Build #24 zeigte 85 GB frei (146 GB gesamt, 42 % belegt); Speichermangel war in diesem Lauf damit nicht die Ursache. Der Emulator meldete außerdem ausdrücklich, dass die Disk-Anforderungen erfüllt waren.
+
 ## Letzter Hinweis
 Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim ersten echten Build gegen die verfügbare Android-Studio-/SDK-Umgebung geprüft und gegebenenfalls aktualisiert werden.
