@@ -8,10 +8,10 @@ import java.security.spec.X509EncodedKeySpec
 import java.util.UUID
 
 /**
- * Verifies offline Topf Secret Lifetime licence tokens issued by Licence Studio.
+ * Verifies offline Topf Secret licence tokens issued by Licence Studio.
  *
  * Token format: TSL1.<base64url-payload>.<base64url-ECDSA-SHA256-signature>
- * The public key is the X.509 SubjectPublicKeyInfo exported by Android Keystore.
+ * The public key is the X.509 SubjectPublicKeyInfo of the Licence Studio main key.
  */
 internal object LicenseVerifier {
     private const val PUBLIC_KEY_BASE64_URL =
@@ -38,10 +38,20 @@ internal object LicenseVerifier {
         val payload = JSONObject(payloadBytes.toString(Charsets.UTF_8))
         require(payload.optInt("version", -1) == 1)
         require(payload.optString("product") == "topf_secret")
-        require(payload.optString("type") == "lifetime")
-        require(payload.optLong("issuedAt", -1L) > 0L)
+        val type = payload.optString("type")
+        require(type in setOf("lifetime", "monthly", "quarterly", "half_yearly", "yearly", "custom"))
+        val issuedAt = payload.optLong("issuedAt", -1L)
+        require(issuedAt > 0L)
         require(payload.optString("customerName").isNotBlank())
         UUID.fromString(payload.getString("id"))
+        if (type == "lifetime") {
+            require(!payload.has("expiresAt"))
+        } else {
+            val expiresAt = payload.optLong("expiresAt", -1L)
+            require(expiresAt > issuedAt && expiresAt > System.currentTimeMillis() / 1000L)
+            require(payload.optInt("durationValue", 0) in 1..3650)
+            require(payload.optString("durationUnit") in setOf("days", "months", "years"))
+        }
         true
     }.getOrDefault(false)
 }
