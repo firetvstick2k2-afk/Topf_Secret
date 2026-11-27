@@ -6,7 +6,7 @@
         android:allowBackup="false"
         android:icon="@drawable/topf_secret_app_icon"
         android:roundIcon="@drawable/topf_secret_app_icon"
-        android:label="Topf Secret"
+        android:label="${appLabel}"
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <meta-data
