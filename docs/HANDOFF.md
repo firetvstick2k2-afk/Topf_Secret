@@ -452,3 +452,12 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Gemeinsame Funktionen und Datenbankschema bleiben unverändert; Admin- und Kundenvariante verwenden dieselbe Quellcodebasis.
 - Version bleibt 0.9.8 / versionCode 24.
 - **Noch nicht verifiziert:** Android-CI-Build, APK-Installation und Negativtests beider Aktivierungswege stehen aus. Erst nach erfolgreichem CI-Lauf und Tests sind die APKs als testbereit zu betrachten.
+
+
+## Lizenzanzeige und professioneller Info-Dialog (2026-11-27)
+
+- Die Kunden-App zeigt im Startmenü den Eintrag „Lizenz & Version“.
+- Der Lizenzstatus wird direkt aus dem Aktivierungs-Gate bereitgestellt und als „Lifetime-Lizenz aktiv“ oder „Nicht aktiviert“ angezeigt. Produkt, Lizenztyp und App-Version werden ergänzt.
+- Die ADMIN-Variante erhält keinen Kunden-Lifetime-Menüpunkt.
+- Der Dialog „Über Topf Secret“ wurde auf eine klare Entwicklerdarstellung umgestellt: „Entwickelt & gestaltet von Andre Schlüter“, App-Version und unabhängiges Projekt.
+- Noch ausstehend: CI-Build beider Varianten und Gerätetest; insbesondere prüfen, dass der Lizenzstatus in der Kunden-App korrekt angezeigt wird und ADMIN keinen Kunden-Lizenzdialog anbietet.
