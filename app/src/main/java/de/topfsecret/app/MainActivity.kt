@@ -442,6 +442,8 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
 @Composable
 private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, userName: String, onDarkModeChange: (Boolean) -> Unit, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit, onSourcesClick: () -> Unit, onBackupClick: () -> Unit) {
     var showInfoDialog by rememberSaveable { mutableStateOf(false) }
+    var showLicenseDialog by rememberSaveable { mutableStateOf(false) }
+    val lifetimeLicenseActive = LocalLifetimeLicenseActive.current
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.Start
@@ -455,6 +457,9 @@ private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, 
                     DropdownMenuItem(text = { Text("Rezepte") }, onClick = { menuExpanded = false; onRecipesClick() })
                     DropdownMenuItem(text = { Text("Kategorien") }, onClick = { menuExpanded = false; onCategoriesClick() })
                     DropdownMenuItem(text = { Text("Backup & Import") }, onClick = { menuExpanded = false; onBackupClick() })
+                    if (!BuildConfig.ADMIN_ONLY) {
+                        DropdownMenuItem(text = { Text("Lizenz & Version") }, onClick = { menuExpanded = false; showLicenseDialog = true })
+                    }
                     DropdownMenuItem(text = { Text("Quellen & Danksagungen") }, onClick = { menuExpanded = false; onSourcesClick() })
                     DropdownMenuItem(text = { Text("Über Topf Secret") }, onClick = { menuExpanded = false; showInfoDialog = true })
                 }
@@ -484,10 +489,55 @@ private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, 
                     Image(painterResource(R.drawable.topf_secret_logo), "Topf Secret Logo", Modifier.size(104.dp))
                 },
                 title = {
-                    Text("Topf Secret by\nAndre Schlüter", color = Ink, textAlign = TextAlign.Center)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        Text("TOPF SECRET", color = Copper, fontWeight = FontWeight.ExtraBold, letterSpacing = 2.sp, textAlign = TextAlign.Center)
+                        Spacer(Modifier.height(6.dp))
+                        Text("Entwickelt & gestaltet von", color = MutedInk, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                        Text("Andre Schlüter", color = Ink, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    }
                 },
                 text = {
-                    Text("Version $appVersion", color = MutedInk, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                        Text("Version $appVersion", color = MutedInk, textAlign = TextAlign.Center)
+                        Spacer(Modifier.height(10.dp))
+                        Text("Dein digitales Kochbuch für Rezepte, Ideen und gemeinsame Lieblingsmomente.", color = Ink, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium)
+                        Spacer(Modifier.height(8.dp))
+                        Text("Ein unabhängiges Projekt.", color = MutedInk, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodySmall)
+                    }
+                },
+                containerColor = Paper
+            )
+        }
+        if (showLicenseDialog) {
+            AlertDialog(
+                onDismissRequest = { showLicenseDialog = false },
+                confirmButton = {
+                    TextButton(onClick = { showLicenseDialog = false }) { Text("Schließen", color = Copper) }
+                },
+                icon = { Image(painterResource(R.drawable.topf_secret_logo), "Topf Secret Logo", Modifier.size(76.dp)) },
+                title = { Text("Lizenz & Version", color = Ink, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+                text = {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Card(
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(containerColor = if (lifetimeLicenseActive) Sage else PaleCopper)
+                        ) {
+                            Column(Modifier.fillMaxWidth().padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(if (lifetimeLicenseActive) "LIFETIME-LIZENZ AKTIV" else "NICHT AKTIVIERT",
+                                    color = Ink, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                                Spacer(Modifier.height(4.dp))
+                                Text(if (lifetimeLicenseActive) "Dauerhafte Freischaltung bestätigt" else "Für die Nutzung ist eine gültige Lizenz erforderlich",
+                                    color = MutedInk, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+                            }
+                        }
+                        Spacer(Modifier.height(14.dp))
+                        Text("Produkt: Topf Secret", color = Ink, style = MaterialTheme.typography.bodyMedium)
+                        Text("Lizenztyp: Lifetime", color = Ink, style = MaterialTheme.typography.bodyMedium)
+                        Text("App-Version: $appVersion", color = MutedInk, style = MaterialTheme.typography.bodySmall)
+                    }
                 },
                 containerColor = Paper
             )
