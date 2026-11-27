@@ -470,3 +470,11 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Der „Über Topf Secret“-Dialog zeigt die professionelle Entwicklerdarstellung „Entwickelt & gestaltet von Andre Schlüter“, die App-Version und den Hinweis „Ein unabhängiges Projekt“.
 - Der Lizenzdialog zeigt Lizenzstatus, Lifetime-Typ, Produkt und App-Version.
 - Build und Gerätetests beider APKs sind weiterhin ausstehend.
+
+
+## Getrennte Schlüsselprüfung: neue Licence-Studio-Identität (2026-11-27)
+- Der öffentliche Lifetime-Prüfschlüssel in `app/src/main/java/de/topfsecret/app/LicenseVerifier.kt` wurde auf den nach Neuinstallation erfolgreich wiederhergestellten Licence-Studio-Schlüssel umgestellt.
+- Die Änderung betrifft ausschließlich die kryptografische Prüfung der Kunden-/öffentlichen Variante (`customer`). Der private Signaturschlüssel ist nicht in Topf Secret enthalten.
+- Die getrennte Build-Variante bleibt erhalten: `customer` (`de.topfsecret.app`) prüft ausschließlich den Lifetime-Token über `LicenseVerifier`; `admin` (`de.topfsecret.admin`) verwendet weiterhin ausschließlich den bestehenden Admin-Key-Prüfpfad und speichert `admin_unlocked`. Der Admin-Prüfwert wurde nicht geändert.
+- Geplanter Gerätetest: (1) neuer Licence-Studio-Lifetime-Token in Kunden-APK muss funktionieren; (2) Admin-Key in Kunden-APK muss abgelehnt werden; (3) bestehender Admin-Key in Admin-APK muss funktionieren; (4) neuer Lifetime-Token in Admin-APK muss abgelehnt werden. Die beiden APKs bleiben getrennt installierbar.
+- Status: Quellcodeänderung committed auf `development`; CI-Build und alle vier Kreuztests stehen noch aus. Erst nach erfolgreichem Build und Gerätetest als verifiziert betrachten.
