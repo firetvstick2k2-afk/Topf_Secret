@@ -441,3 +441,14 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - App-Version auf 0.9.8 / versionCode 24 erhöht. Release-Workflow-Metadaten ebenfalls aktualisiert.
 - Implementierungscommits auf `development`: Prüfer `a10d663d244cb65e292511e5f9c5bf8281d70470`; Aktivierungsoberfläche `07b131e38f7d13aa17b1347d1dc0a6bcd808ab60`; Version `85941e195cc45c071267ab46258fe18724f07f14`; CI-Metadaten `ed8d4341de23e8ea39aff450e12f571ce375429f`.
 - **Noch nicht verifiziert:** Android-CI-Build und Installation stehen aus. Anschließend mit dem auf dem Screenshot gezeigten Orucevic-Lifetime-Token testen, zusätzlich ungültigen/abgeänderten Token und Admin-Key prüfen.
+
+
+## Getrennte Admin- und Kunden-APK (2026-11-27)
+- Android-Produktvarianten `admin` und `customer` auf derselben Codebasis eingerichtet.
+- Kundenvariante: Application ID `de.topfsecret.app`, App-Name **Topf Secret**, Aktivierung ausschließlich mit gültigem, lokal signaturgeprüftem Licence-Studio-Token.
+- Adminvariante: Application ID `de.topfsecret.admin`, App-Name **Topf Secret ADMIN**, Aktivierung ausschließlich mit dem bestehenden Admin-Key.
+- Die Aktivierungsprüfung ist zur Build-Zeit über `BuildConfig.ADMIN_ONLY` getrennt. Kunden-Build akzeptiert keinen Admin-Key; Admin-Build akzeptiert keinen Lizenz-Token. Die beiden Apps können parallel installiert werden und verwenden getrennte App-Datenbereiche.
+- CI-Workflow baut beide signierten Release-Varianten und veröffentlicht bei manuellem Start beide APKs als `TopfSecret.apk` und `TopfSecret_ADMIN.apk`.
+- Gemeinsame Funktionen und Datenbankschema bleiben unverändert; Admin- und Kundenvariante verwenden dieselbe Quellcodebasis.
+- Version bleibt 0.9.8 / versionCode 24.
+- **Noch nicht verifiziert:** Android-CI-Build, APK-Installation und Negativtests beider Aktivierungswege stehen aus. Erst nach erfolgreichem CI-Lauf und Tests sind die APKs als testbereit zu betrachten.
