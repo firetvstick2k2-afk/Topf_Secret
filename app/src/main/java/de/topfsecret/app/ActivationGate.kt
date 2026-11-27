@@ -41,7 +41,7 @@ private const val ACTIVATION_PREFS = "topf_secret_activation"
 private const val ADMIN_ACTIVATED_KEY = "admin_unlocked"
 private const val LIFETIME_TOKEN_KEY = "lifetime_license_token"
 
-val LocalLifetimeLicenseActive = androidx.compose.runtime.compositionLocalOf { false }
+val LocalCustomerLicenseInfo = androidx.compose.runtime.compositionLocalOf<CustomerLicenseInfo?> { null }
 
 @Composable
 fun ActivationGate(content: @Composable () -> Unit) {
@@ -52,13 +52,16 @@ fun ActivationGate(content: @Composable () -> Unit) {
     val storedLifetimeToken = remember(preferences) {
         preferences.getString(LIFETIME_TOKEN_KEY, null)
     }
+    var customerLicenseInfo by remember {
+        mutableStateOf(
+            if (BuildConfig.ADMIN_ONLY) null
+            else storedLifetimeToken?.let(LicenseVerifier::verifyCustomerToken)
+        )
+    }
     var isActivated by remember {
         mutableStateOf(
-            if (BuildConfig.ADMIN_ONLY) {
-                preferences.getBoolean(ADMIN_ACTIVATED_KEY, false)
-            } else {
-                storedLifetimeToken?.let(LicenseVerifier::isValidLifetimeToken) == true
-            }
+            if (BuildConfig.ADMIN_ONLY) preferences.getBoolean(ADMIN_ACTIVATED_KEY, false)
+            else customerLicenseInfo != null
         )
     }
     var enteredSerial by rememberSaveable { mutableStateOf("") }
@@ -67,7 +70,7 @@ fun ActivationGate(content: @Composable () -> Unit) {
 
     if (isActivated) {
         androidx.compose.runtime.CompositionLocalProvider(
-            LocalLifetimeLicenseActive provides (!BuildConfig.ADMIN_ONLY && isActivated)
+            LocalCustomerLicenseInfo provides if (BuildConfig.ADMIN_ONLY) null else customerLicenseInfo
         ) { content() }
     } else {
         Column(
@@ -185,8 +188,10 @@ fun ActivationGate(content: @Composable () -> Unit) {
                         Button(
                             onClick = {
                                 val candidate = enteredSerial.trim()
-                                if (LicenseVerifier.isValidLifetimeToken(candidate)) {
+                                val verifiedLicense = LicenseVerifier.verifyCustomerToken(candidate)
+                                if (verifiedLicense != null) {
                                     preferences.edit().putString(LIFETIME_TOKEN_KEY, candidate).apply()
+                                    customerLicenseInfo = verifiedLicense
                                     isActivated = true
                                     enteredSerial = ""
                                 } else {
