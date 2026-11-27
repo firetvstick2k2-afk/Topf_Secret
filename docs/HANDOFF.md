@@ -420,3 +420,12 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - `verticalScroll(rememberScrollState())` ergänzt; Export- und Importkarten sowie Statusmeldungen sind jetzt durch Scrollen erreichbar.
 - Keine Änderung an Backupformat, Room-Datenbank oder Rezeptdaten. Commit: `414cf23636a63f99f3f87607eaf0940e7aa85203` auf `development`.
 - CI-Build und erneuter Gerätetest stehen noch aus.
+
+### H.7 Backup-Import transaktionssicher gemacht (2026-11-27)
+- Bisher wurden importierte Rezepte einzeln committed; ein Fehler bei einem späteren Rezept konnte einen Teilimport hinterlassen.
+- RecipeDao.importRecipesWithDetails() fügt jetzt alle Rezepte, Zutaten und Schritte innerhalb einer einzigen Room-@Transaction ein. Bei einem Datenbankfehler wird der gesamte Batch zurückgerollt.
+- Import parst und validiert zunächst das vollständige Archiv, filtert Duplikate (auch innerhalb derselben ZIP), staged benötigte Bilder/Quellbelege und ruft erst danach die Batch-Transaktion auf.
+- Bei Fehlern vor oder während der Transaktion werden alle neu gestagten Bild- und Sidecar-Dateien entfernt. Bestehende Rezepte und Bilder bleiben unangetastet.
+- Keine Änderung am ZIP-Format, an der Datenbankversion (weiter 7) oder an vorhandenen Rezeptdaten.
+- Commits auf development: DAO 233647e5d6d6d091340e29855c5a3d95855b2e85; Importer ecae999222229ada6495a31bbc850e07261c2a02; Cleanup-Härtung ffa99eb5bd1b8071ad75964cd325508777e548af.
+- Android-CI-Build und Geräteprüfung stehen noch aus. Der Import gilt erst nach erfolgreichem Build und einem praktischen Wiederherstellungstest als verifiziert.
