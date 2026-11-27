@@ -478,3 +478,13 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Die getrennte Build-Variante bleibt erhalten: `customer` (`de.topfsecret.app`) prüft ausschließlich den Lifetime-Token über `LicenseVerifier`; `admin` (`de.topfsecret.admin`) verwendet weiterhin ausschließlich den bestehenden Admin-Key-Prüfpfad und speichert `admin_unlocked`. Der Admin-Prüfwert wurde nicht geändert.
 - Geplanter Gerätetest: (1) neuer Licence-Studio-Lifetime-Token in Kunden-APK muss funktionieren; (2) Admin-Key in Kunden-APK muss abgelehnt werden; (3) bestehender Admin-Key in Admin-APK muss funktionieren; (4) neuer Lifetime-Token in Admin-APK muss abgelehnt werden. Die beiden APKs bleiben getrennt installierbar.
 - Status: Quellcodeänderung committed auf `development`; CI-Build und alle vier Kreuztests stehen noch aus. Erst nach erfolgreichem Build und Gerätetest als verifiziert betrachten.
+
+
+## Zeitlich begrenzte Kundenlizenzen: Aktivierung und Anzeige vervollständigt (2026-11-27)
+- Der Kunden-Prüfer liefert nach erfolgreicher Signatur- und Payload-Prüfung jetzt die verifizierten Lizenzdetails zurück: Lizenztyp, Ausstellungszeitpunkt, Ablaufzeitpunkt und Dauer.
+- Das Aktivierungs-Gate der Kundenvariante verwendet diese Details statt eines pauschalen Lifetime-Status. Gespeicherte Tokens werden beim App-Start erneut kryptografisch und zeitlich geprüft; abgelaufene Tokens schalten nicht frei. Der bestehende SharedPreferences-Schlüssel bleibt aus Kompatibilitätsgründen erhalten.
+- Der Dialog „Lizenz & Version“ zeigt den tatsächlichen Lizenztyp. Zeitlich begrenzte Lizenzen zeigen „Gültig bis TT.MM.JJJJ“, Lifetime zeigt weiterhin „Dauerhafte Freischaltung bestätigt“.
+- Unterstützte Typen: Lifetime, 1 Monat, 3 Monate, 6 Monate, 1 Jahr sowie individuelle Dauer mit Einheit.
+- Admin-Zweig (`ADMIN_ONLY`, Admin-Key-Prüfung und `admin_unlocked`) wurde nicht geändert; der Admin-Build erhält keine Kunden-Lizenzdetails.
+- Commits auf `development`: Prüfer `1d0547283123d406f63d91ddc9ff602fd69c0b7e`; Aktivierungs-Gate `af395c460c02e9a3ab2484e1333efe1df63d00d5`; Lizenzdialog `5a46dcad0cd4b89eab7cc74967126b6144dffa5b`.
+- CI-Build und Gerätetest stehen noch aus. Zu testen: Jahreslizenz wird als „1 Jahr“ mit Ablaufdatum angezeigt; Lifetime bleibt dauerhaft; abgelaufener zeitlich begrenzter Token wird abgelehnt; Admin-Key-Prüfweg bleibt unverändert.
