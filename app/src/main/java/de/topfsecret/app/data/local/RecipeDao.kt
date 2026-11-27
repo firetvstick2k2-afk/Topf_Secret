@@ -9,6 +9,12 @@ import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
+data class RecipeImportRecord(
+    val recipe: RecipeEntity,
+    val ingredients: List<IngredientEntity>,
+    val steps: List<PreparationStepEntity>
+)
+
 @Dao
 interface RecipeDao {
 
@@ -50,6 +56,24 @@ interface RecipeDao {
             })
         }
         return newId
+    }
+
+    @Transaction
+    suspend fun importRecipesWithDetails(records: List<RecipeImportRecord>): Int {
+        records.forEach { record ->
+            val newId = insertRecipe(record.recipe.copy(id = 0))
+            if (record.ingredients.isNotEmpty()) {
+                insertIngredients(record.ingredients.mapIndexed { index, item ->
+                    item.copy(id = 0, recipeId = newId, position = index)
+                })
+            }
+            if (record.steps.isNotEmpty()) {
+                insertSteps(record.steps.mapIndexed { index, step ->
+                    step.copy(id = 0, recipeId = newId, position = index)
+                })
+            }
+        }
+        return records.size
     }
 
     @Insert(onConflict = OnConflictStrategy.ABORT)
