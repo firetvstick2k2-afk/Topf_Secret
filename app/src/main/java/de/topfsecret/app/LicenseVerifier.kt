@@ -7,7 +7,7 @@ import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
 import java.util.UUID
 
-internal data class CustomerLicenseInfo(
+data class CustomerLicenseInfo(
     val type: String,
     val issuedAt: Long,
     val expiresAt: Long?,
