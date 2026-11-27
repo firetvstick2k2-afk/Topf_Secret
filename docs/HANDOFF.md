@@ -487,4 +487,5 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Unterstützte Typen: Lifetime, 1 Monat, 3 Monate, 6 Monate, 1 Jahr sowie individuelle Dauer mit Einheit.
 - Admin-Zweig (`ADMIN_ONLY`, Admin-Key-Prüfung und `admin_unlocked`) wurde nicht geändert; der Admin-Build erhält keine Kunden-Lizenzdetails.
 - Commits auf `development`: Prüfer `1d0547283123d406f63d91ddc9ff602fd69c0b7e`; Aktivierungs-Gate `af395c460c02e9a3ab2484e1333efe1df63d00d5`; Lizenzdialog `5a46dcad0cd4b89eab7cc74967126b6144dffa5b`.
+- Ergänzung im Aktivierungs-Gate: Eine zeitlich begrenzte Lizenz wird auch während einer laufenden App-Sitzung beim Erreichen des Ablaufzeitpunkts deaktiviert; der Admin-Zweig bleibt davon unberührt. Commit: `156b26ec528b13a17c9b5bf17b55c24cf23e26d2`.
 - CI-Build und Gerätetest stehen noch aus. Zu testen: Jahreslizenz wird als „1 Jahr“ mit Ablaufdatum angezeigt; Lifetime bleibt dauerhaft; abgelaufener zeitlich begrenzter Token wird abgelehnt; Admin-Key-Prüfweg bleibt unverändert.
