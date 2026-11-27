@@ -461,3 +461,12 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Die ADMIN-Variante erhält keinen Kunden-Lifetime-Menüpunkt.
 - Der Dialog „Über Topf Secret“ wurde auf eine klare Entwicklerdarstellung umgestellt: „Entwickelt & gestaltet von Andre Schlüter“, App-Version und unabhängiges Projekt.
 - Noch ausstehend: CI-Build beider Varianten und Gerätetest; insbesondere prüfen, dass der Lizenzstatus in der Kunden-App korrekt angezeigt wird und ADMIN keinen Kunden-Lizenzdialog anbietet.
+
+
+## Release-Version 1.0 (2026-11-27)
+
+- Kunden- und Admin-Variante werden auf App-Version **1.0** gesetzt.
+- Android `versionName` ist `1.0`; `versionCode` wird zur Upgrade-Kennzeichnung auf 25 erhöht.
+- Der „Über Topf Secret“-Dialog zeigt die professionelle Entwicklerdarstellung „Entwickelt & gestaltet von Andre Schlüter“, die App-Version und den Hinweis „Ein unabhängiges Projekt“.
+- Der Lizenzdialog zeigt Lizenzstatus, Lifetime-Typ, Produkt und App-Version.
+- Build und Gerätetests beider APKs sind weiterhin ausstehend.
