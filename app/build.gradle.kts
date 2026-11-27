@@ -17,6 +17,22 @@ android {
         versionName = "0.9.8"
     }
 
+    flavorDimensions += "edition"
+    productFlavors {
+        create("customer") {
+            dimension = "edition"
+            applicationId = "de.topfsecret.app"
+            manifestPlaceholders["appLabel"] = "Topf Secret"
+            buildConfigField("boolean", "ADMIN_ONLY", "false")
+        }
+        create("admin") {
+            dimension = "edition"
+            applicationId = "de.topfsecret.admin"
+            manifestPlaceholders["appLabel"] = "Topf Secret ADMIN"
+            buildConfigField("boolean", "ADMIN_ONLY", "true")
+        }
+    }
+
     signingConfigs {
         create("release") {
             storeFile = file(System.getenv("ANDROID_KEYSTORE_PATH") ?: "release-key.jks")
@@ -35,6 +51,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {
