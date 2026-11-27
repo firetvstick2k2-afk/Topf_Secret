@@ -7,6 +7,34 @@ import java.security.Signature
 import java.security.spec.X509EncodedKeySpec
 import java.util.UUID
 
+internal data class CustomerLicenseInfo(
+    val type: String,
+    val issuedAt: Long,
+    val expiresAt: Long?,
+    val durationValue: Int?,
+    val durationUnit: String?
+) {
+    val typeLabel: String
+        get() = when (type) {
+            "lifetime" -> "Lifetime"
+            "monthly" -> "1 Monat"
+            "quarterly" -> "3 Monate"
+            "half_yearly" -> "6 Monate"
+            "yearly" -> "1 Jahr"
+            "custom" -> {
+                val amount = durationValue ?: 0
+                val unit = when (durationUnit) {
+                    "days" -> if (amount == 1) "Tag" else "Tage"
+                    "months" -> if (amount == 1) "Monat" else "Monate"
+                    "years" -> if (amount == 1) "Jahr" else "Jahre"
+                    else -> "Einheiten"
+                }
+                "Individuelle Lizenz ($amount $unit)"
+            }
+            else -> "Unbekannt"
+        }
+}
+
 /**
  * Verifies offline Topf Secret licence tokens issued by Licence Studio.
  *
@@ -17,7 +45,9 @@ internal object LicenseVerifier {
     private const val PUBLIC_KEY_BASE64_URL =
         "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEO_8xiWBZLIQw--gBpf1Touzg5jPDJLbLHbHiRUlakcvVTgdEcqSBf3-wsU9pzvsF9yCpKZfz4lWWB4bj2LGnQ"
 
-    fun isValidLifetimeToken(token: String): Boolean = runCatching {
+    fun isValidLifetimeToken(token: String): Boolean = verifyCustomerToken(token) != null
+
+    fun verifyCustomerToken(token: String): CustomerLicenseInfo? = runCatching {
         val parts = token.trim().split('.')
         require(parts.size == 3 && parts[0] == "TSL1")
         val payloadBytes = Base64.decode(parts[1], Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
@@ -44,14 +74,18 @@ internal object LicenseVerifier {
         require(issuedAt > 0L)
         require(payload.optString("customerName").isNotBlank())
         UUID.fromString(payload.getString("id"))
+
         if (type == "lifetime") {
             require(!payload.has("expiresAt"))
+            CustomerLicenseInfo(type, issuedAt, null, null, null)
         } else {
             val expiresAt = payload.optLong("expiresAt", -1L)
             require(expiresAt > issuedAt && expiresAt > System.currentTimeMillis() / 1000L)
-            require(payload.optInt("durationValue", 0) in 1..3650)
-            require(payload.optString("durationUnit") in setOf("days", "months", "years"))
+            val durationValue = payload.optInt("durationValue", 0)
+            require(durationValue in 1..3650)
+            val durationUnit = payload.optString("durationUnit")
+            require(durationUnit in setOf("days", "months", "years"))
+            CustomerLicenseInfo(type, issuedAt, expiresAt, durationValue, durationUnit)
         }
-        true
-    }.getOrDefault(false)
+    }.getOrNull()
 }
