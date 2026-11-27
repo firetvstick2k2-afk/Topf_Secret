@@ -150,14 +150,14 @@ object RecipeBackup {
                         }
                     }
                     val file = File(directory, "restore-${UUID.randomUUID()}.img")
-                    file.writeBytes(bytes)
                     importedFiles.add(file)
+                    file.writeBytes(bytes)
 
                     val oldId = name.substringAfter("images/").substringBefore("-")
                     entries["sources/$oldId.txt"]?.let { sourceBytes ->
                         val sidecar = File(directory, file.name + ".source.txt")
-                        sidecar.writeBytes(sourceBytes)
                         importedFiles.add(sidecar)
+                        sidecar.writeBytes(sourceBytes)
                     }
                     Uri.fromFile(file).toString()
                 }
