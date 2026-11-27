@@ -377,3 +377,11 @@ Ein einfaches, zuverlässiges Android-Kochbuch für zwei Personen. Rezepte und B
 - Auf dem Gerät war der Import-Button wegen fehlendem vertikalem Scrollen nicht erreichbar. Die äußere Compose-Column nutzt jetzt `verticalScroll(rememberScrollState())`.
 - Dadurch sind Export, Import und Rückmeldungen auch auf kürzeren Displays erreichbar. Keine Datenbank- oder Backupformatänderung.
 - Commit: `414cf23636a63f99f3f87607eaf0940e7aa85203` auf `development`; CI-Build und Gerätetest noch offen.
+
+### H.7 Backup-Import transaktionssicher gemacht (2026-11-27)
+- Rezeptbatch wird über eine einzelne Room-@Transaction importiert; Fehler bei einem Rezept oder seinen Zutaten/Schritten rollen den gesamten Datenbankbatch zurück.
+- ZIP wird vor dem Schreiben vollständig geparst/validiert; Duplikate im Archiv und bereits vorhandene Rezepte werden übersprungen.
+- Bilddateien und Quellenbelege werden vor der Datenbanktransaktion staged und bei jedem Fehler wieder entfernt. Bestehende Rezepte und Bilder werden nicht verändert.
+- ZIP-Format und Room-Schema v7 bleiben unverändert.
+- DAO-Commit 233647e5d6d6d091340e29855c5a3d95855b2e85; Importer-Commits ecae999222229ada6495a31bbc850e07261c2a02 und ffa99eb5bd1b8071ad75964cd325508777e548af. Doku-Commit Handoff eef3fdbe04ab7c31fe1f92e57daeb1bcf142551b.
+- CI-Build und Gerätetest stehen noch aus; erst nach erfolgreicher Wiederherstellung ist der Ablauf als praktisch verifiziert einzustufen.
