@@ -16,6 +16,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -38,7 +39,8 @@ import java.util.Locale
 
 private const val ADMIN_KEY_SHA256 = "625a5d8ffcc7d51ed5ec6703877b3d4c30a2232ee1a2c34434b7ad3f055ada1f"
 private const val ACTIVATION_PREFS = "topf_secret_activation"
-private const val ACTIVATED_KEY = "admin_unlocked"
+private const val ADMIN_ACTIVATED_KEY = "admin_unlocked"
+private const val LIFETIME_TOKEN_KEY = "lifetime_license_token"
 
 @Composable
 fun ActivationGate(content: @Composable () -> Unit) {
@@ -46,9 +48,20 @@ fun ActivationGate(content: @Composable () -> Unit) {
     val preferences = remember(context) {
         context.getSharedPreferences(ACTIVATION_PREFS, android.content.Context.MODE_PRIVATE)
     }
-    var isActivated by remember { mutableStateOf(preferences.getBoolean(ACTIVATED_KEY, false)) }
-    var enteredKey by rememberSaveable { mutableStateOf("") }
-    var showError by rememberSaveable { mutableStateOf(false) }
+    val storedLifetimeToken = remember(preferences) {
+        preferences.getString(LIFETIME_TOKEN_KEY, null)
+    }
+    var isActivated by remember {
+        mutableStateOf(
+            preferences.getBoolean(ADMIN_ACTIVATED_KEY, false) ||
+                storedLifetimeToken?.let(LicenseVerifier::isValidLifetimeToken) == true
+        )
+    }
+    var enteredSerial by rememberSaveable { mutableStateOf("") }
+    var enteredAdminKey by rememberSaveable { mutableStateOf("") }
+    var showLicenseError by rememberSaveable { mutableStateOf(false) }
+    var showAdminError by rememberSaveable { mutableStateOf(false) }
+    var showAdminEntry by rememberSaveable { mutableStateOf(false) }
 
     if (isActivated) {
         content()
@@ -80,7 +93,7 @@ fun ActivationGate(content: @Composable () -> Unit) {
             )
             Spacer(Modifier.height(10.dp))
             Text(
-                "Gebt euren persönlichen Admin-Freischalt-Key ein, um Topf Secret zu öffnen.",
+                "Gebt eure Seriennummer ein, um Topf Secret freizuschalten.",
                 color = Color(0xFF806E62),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyLarge
@@ -93,21 +106,22 @@ fun ActivationGate(content: @Composable () -> Unit) {
             ) {
                 Column(Modifier.padding(20.dp)) {
                     OutlinedTextField(
-                        value = enteredKey,
+                        value = enteredSerial,
                         onValueChange = {
-                            enteredKey = it
-                            showError = false
+                            enteredSerial = it
+                            showLicenseError = false
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Freischalt-Key") },
-                        singleLine = true,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
-                        visualTransformation = PasswordVisualTransformation()
+                        label = { Text("Seriennummer") },
+                        placeholder = { Text("TSL1.…") },
+                        minLines = 2,
+                        maxLines = 4,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii)
                     )
-                    if (showError) {
+                    if (showLicenseError) {
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            "Der Key stimmt leider nicht. Bitte prüft eure Eingabe.",
+                            "Diese Seriennummer ist ungültig. Bitte prüft den vollständigen Lizenzschlüssel.",
                             color = Color(0xFFB3261E),
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -115,29 +129,85 @@ fun ActivationGate(content: @Composable () -> Unit) {
                     Spacer(Modifier.height(16.dp))
                     Button(
                         onClick = {
-                            val candidate = enteredKey.trim().uppercase(Locale.ROOT)
-                            val actualHash = MessageDigest.getInstance("SHA-256")
-                                .digest(candidate.toByteArray(Charsets.UTF_8))
-                                .joinToString("") { "%02x".format(it) }
-                            if (MessageDigest.isEqual(
-                                    actualHash.toByteArray(Charsets.US_ASCII),
-                                    ADMIN_KEY_SHA256.toByteArray(Charsets.US_ASCII)
-                                )
-                            ) {
-                                preferences.edit().putBoolean(ACTIVATED_KEY, true).apply()
+                            val candidate = enteredSerial.trim()
+                            if (LicenseVerifier.isValidLifetimeToken(candidate)) {
+                                preferences.edit().putString(LIFETIME_TOKEN_KEY, candidate).apply()
                                 isActivated = true
-                                enteredKey = ""
+                                enteredSerial = ""
                             } else {
-                                showError = true
+                                showLicenseError = true
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
-                        enabled = enteredKey.isNotBlank()
+                        enabled = enteredSerial.isNotBlank()
                     ) {
                         Text("Topf Secret freischalten")
                     }
                 }
             }
+
+            Spacer(Modifier.height(14.dp))
+            TextButton(onClick = { showAdminEntry = !showAdminEntry }) {
+                Text(if (showAdminEntry) "Admin-Eingabe schließen" else "Admin-Zugang")
+            }
+
+            if (showAdminEntry) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(22.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDF9))
+                ) {
+                    Column(Modifier.padding(20.dp)) {
+                        Text("Privater Admin-Zugang", fontWeight = FontWeight.Bold, color = Color(0xFF302019))
+                        Spacer(Modifier.height(10.dp))
+                        OutlinedTextField(
+                            value = enteredAdminKey,
+                            onValueChange = {
+                                enteredAdminKey = it
+                                showAdminError = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Admin-Key") },
+                            singleLine = true,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
+                            visualTransformation = PasswordVisualTransformation()
+                        )
+                        if (showAdminError) {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Der Admin-Key stimmt leider nicht.",
+                                color = Color(0xFFB3261E),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Spacer(Modifier.height(14.dp))
+                        Button(
+                            onClick = {
+                                val candidate = enteredAdminKey.trim().uppercase(Locale.ROOT)
+                                val actualHash = MessageDigest.getInstance("SHA-256")
+                                    .digest(candidate.toByteArray(Charsets.UTF_8))
+                                    .joinToString("") { "%02x".format(it) }
+                                if (MessageDigest.isEqual(
+                                        actualHash.toByteArray(Charsets.US_ASCII),
+                                        ADMIN_KEY_SHA256.toByteArray(Charsets.US_ASCII)
+                                    )
+                                ) {
+                                    preferences.edit().putBoolean(ADMIN_ACTIVATED_KEY, true).apply()
+                                    isActivated = true
+                                    enteredAdminKey = ""
+                                } else {
+                                    showAdminError = true
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = enteredAdminKey.isNotBlank()
+                        ) {
+                            Text("Admin-Zugang freischalten")
+                        }
+                    }
+                }
+            }
+
             Spacer(Modifier.height(18.dp))
             Text(
                 "Die Freischaltung bleibt auf diesem Gerät gespeichert.",
