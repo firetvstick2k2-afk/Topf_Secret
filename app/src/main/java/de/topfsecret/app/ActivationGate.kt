@@ -16,7 +16,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,15 +52,16 @@ fun ActivationGate(content: @Composable () -> Unit) {
     }
     var isActivated by remember {
         mutableStateOf(
-            preferences.getBoolean(ADMIN_ACTIVATED_KEY, false) ||
+            if (BuildConfig.ADMIN_ONLY) {
+                preferences.getBoolean(ADMIN_ACTIVATED_KEY, false)
+            } else {
                 storedLifetimeToken?.let(LicenseVerifier::isValidLifetimeToken) == true
+            }
         )
     }
     var enteredSerial by rememberSaveable { mutableStateOf("") }
     var enteredAdminKey by rememberSaveable { mutableStateOf("") }
-    var showLicenseError by rememberSaveable { mutableStateOf(false) }
-    var showAdminError by rememberSaveable { mutableStateOf(false) }
-    var showAdminEntry by rememberSaveable { mutableStateOf(false) }
+    var showError by rememberSaveable { mutableStateOf(false) }
 
     if (isActivated) {
         content()
@@ -85,7 +85,7 @@ fun ActivationGate(content: @Composable () -> Unit) {
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                "Euer Kochbuch wartet!",
+                if (BuildConfig.ADMIN_ONLY) "Privater Admin-Zugang" else "Euer Kochbuch wartet!",
                 color = Color(0xFF302019),
                 fontSize = 27.sp,
                 fontWeight = FontWeight.Bold,
@@ -93,7 +93,10 @@ fun ActivationGate(content: @Composable () -> Unit) {
             )
             Spacer(Modifier.height(10.dp))
             Text(
-                "Gebt eure Seriennummer ein, um Topf Secret freizuschalten.",
+                if (BuildConfig.ADMIN_ONLY)
+                    "Diese Version wird mit dem Admin-Key freigeschaltet."
+                else
+                    "Gebt eure Seriennummer ein, um Topf Secret freizuschalten.",
                 color = Color(0xFF806E62),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodyLarge
@@ -105,66 +108,12 @@ fun ActivationGate(content: @Composable () -> Unit) {
                 colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDF9))
             ) {
                 Column(Modifier.padding(20.dp)) {
-                    OutlinedTextField(
-                        value = enteredSerial,
-                        onValueChange = {
-                            enteredSerial = it
-                            showLicenseError = false
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("Seriennummer") },
-                        placeholder = { Text("TSL1.…") },
-                        minLines = 2,
-                        maxLines = 4,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii)
-                    )
-                    if (showLicenseError) {
-                        Spacer(Modifier.height(8.dp))
-                        Text(
-                            "Diese Seriennummer ist ungültig. Bitte prüft den vollständigen Lizenzschlüssel.",
-                            color = Color(0xFFB3261E),
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                    Spacer(Modifier.height(16.dp))
-                    Button(
-                        onClick = {
-                            val candidate = enteredSerial.trim()
-                            if (LicenseVerifier.isValidLifetimeToken(candidate)) {
-                                preferences.edit().putString(LIFETIME_TOKEN_KEY, candidate).apply()
-                                isActivated = true
-                                enteredSerial = ""
-                            } else {
-                                showLicenseError = true
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                        enabled = enteredSerial.isNotBlank()
-                    ) {
-                        Text("Topf Secret freischalten")
-                    }
-                }
-            }
-
-            Spacer(Modifier.height(14.dp))
-            TextButton(onClick = { showAdminEntry = !showAdminEntry }) {
-                Text(if (showAdminEntry) "Admin-Eingabe schließen" else "Admin-Zugang")
-            }
-
-            if (showAdminEntry) {
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(22.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFDF9))
-                ) {
-                    Column(Modifier.padding(20.dp)) {
-                        Text("Privater Admin-Zugang", fontWeight = FontWeight.Bold, color = Color(0xFF302019))
-                        Spacer(Modifier.height(10.dp))
+                    if (BuildConfig.ADMIN_ONLY) {
                         OutlinedTextField(
                             value = enteredAdminKey,
                             onValueChange = {
                                 enteredAdminKey = it
-                                showAdminError = false
+                                showError = false
                             },
                             modifier = Modifier.fillMaxWidth(),
                             label = { Text("Admin-Key") },
@@ -172,7 +121,7 @@ fun ActivationGate(content: @Composable () -> Unit) {
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii),
                             visualTransformation = PasswordVisualTransformation()
                         )
-                        if (showAdminError) {
+                        if (showError) {
                             Spacer(Modifier.height(8.dp))
                             Text(
                                 "Der Admin-Key stimmt leider nicht.",
@@ -192,11 +141,13 @@ fun ActivationGate(content: @Composable () -> Unit) {
                                         ADMIN_KEY_SHA256.toByteArray(Charsets.US_ASCII)
                                     )
                                 ) {
-                                    preferences.edit().putBoolean(ADMIN_ACTIVATED_KEY, true).apply()
+                                    preferences.edit()
+                                        .putBoolean(ADMIN_ACTIVATED_KEY, true)
+                                        .apply()
                                     isActivated = true
                                     enteredAdminKey = ""
                                 } else {
-                                    showAdminError = true
+                                    showError = true
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
@@ -204,10 +155,48 @@ fun ActivationGate(content: @Composable () -> Unit) {
                         ) {
                             Text("Admin-Zugang freischalten")
                         }
+                    } else {
+                        OutlinedTextField(
+                            value = enteredSerial,
+                            onValueChange = {
+                                enteredSerial = it
+                                showError = false
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            label = { Text("Seriennummer") },
+                            placeholder = { Text("TSL1.…") },
+                            minLines = 2,
+                            maxLines = 4,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Ascii)
+                        )
+                        if (showError) {
+                            Spacer(Modifier.height(8.dp))
+                            Text(
+                                "Diese Seriennummer ist ungültig. Bitte prüft den vollständigen Lizenzschlüssel.",
+                                color = Color(0xFFB3261E),
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        Button(
+                            onClick = {
+                                val candidate = enteredSerial.trim()
+                                if (LicenseVerifier.isValidLifetimeToken(candidate)) {
+                                    preferences.edit().putString(LIFETIME_TOKEN_KEY, candidate).apply()
+                                    isActivated = true
+                                    enteredSerial = ""
+                                } else {
+                                    showError = true
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = enteredSerial.isNotBlank()
+                        ) {
+                            Text("Topf Secret freischalten")
+                        }
                     }
                 }
             }
-
             Spacer(Modifier.height(18.dp))
             Text(
                 "Die Freischaltung bleibt auf diesem Gerät gespeichert.",
