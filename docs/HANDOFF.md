@@ -429,3 +429,15 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Keine Änderung am ZIP-Format, an der Datenbankversion (weiter 7) oder an vorhandenen Rezeptdaten.
 - Commits auf development: DAO 233647e5d6d6d091340e29855c5a3d95855b2e85; Importer ecae999222229ada6495a31bbc850e07261c2a02; Cleanup-Härtung ffa99eb5bd1b8071ad75964cd325508777e548af.
 - Android-CI-Build und Geräteprüfung stehen noch aus. Der Import gilt erst nach erfolgreichem Build und einem praktischen Wiederherstellungstest als verifiziert.
+
+
+## Lifetime-Seriennummernaktivierung (2026-11-27)
+- Erste Offline-Aktivierung für individuelle Lifetime-Lizenzen ergänzt.
+- `LicenseVerifier.kt` prüft das Format `TSL1.<payload>.<signature>` mit ECDSA P-256 / SHA-256 und dem öffentlichen X.509-Schlüssel aus Licence Studio. Zuerst wird die Signatur über die unveränderten Payload-Bytes geprüft; danach werden Version (`1`), Produkt (`topf_secret`), Lizenztyp (`lifetime`), Ausstellungszeitpunkt, Kundenname und UUID geprüft.
+- Der öffentliche Prüfschlüssel entspricht dem im Licence-Studio-Screenshot angezeigten Schlüssel. Es wird ausschließlich der öffentliche Schlüssel in Topf Secret eingebettet; kein privater Signaturschlüssel.
+- Aktivierungsseite enthält nun das Eingabefeld „Seriennummer“ für den vollständigen Lizenz-Token. Ein gültiger Token wird lokal in SharedPreferences gespeichert und bei jedem App-Start erneut kryptografisch geprüft. Fehlerhafte oder manipulierte Tokens schalten nicht frei.
+- Bestehender Admin-Key und sein SHA-256-Prüfwert bleiben unverändert. Der Admin-Zugang ist separat hinter „Admin-Zugang“ erreichbar; `admin_unlocked` wird weiterhin unterstützt.
+- Keine Room-Datenbankänderung, keine Netzwerkprüfung und keine Gerätebindung. Offline-Lifetime-Token kann auf mehreren Geräten verwendet werden; Remote-Widerruf ist ohne Server nicht möglich.
+- App-Version auf 0.9.8 / versionCode 24 erhöht. Release-Workflow-Metadaten ebenfalls aktualisiert.
+- Implementierungscommits auf `development`: Prüfer `a10d663d244cb65e292511e5f9c5bf8281d70470`; Aktivierungsoberfläche `07b131e38f7d13aa17b1347d1dc0a6bcd808ab60`; Version `85941e195cc45c071267ab46258fe18724f07f14`; CI-Metadaten `ed8d4341de23e8ea39aff450e12f571ce375429f`.
+- **Noch nicht verifiziert:** Android-CI-Build und Installation stehen aus. Anschließend mit dem auf dem Screenshot gezeigten Orucevic-Lifetime-Token testen, zusätzlich ungültigen/abgeänderten Token und Admin-Key prüfen.
