@@ -13,8 +13,8 @@ android {
         applicationId = "de.topfsecret.app"
         minSdk = 26
         targetSdk = 36
-        versionCode = 24
-        versionName = "0.9.8"
+        versionCode = 25
+        versionName = "1.0"
     }
 
     flavorDimensions += "edition"
