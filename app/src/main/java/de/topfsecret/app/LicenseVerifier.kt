@@ -15,7 +15,7 @@ import java.util.UUID
  */
 internal object LicenseVerifier {
     private const val PUBLIC_KEY_BASE64_URL =
-        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEBokANbM6NqN4zxM5iXcFpbRoJrasqXfcp8hPA31xImPDt0NZkOJChJz3f0BbydjgNcMo0qw9EQUSk_ym1vW0dA"
+        "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEEO_8xiWBZLIQw--gBpf1Touzg5jPDJLbLHbHiRUlakcvVTgdEcqSBf3-wsU9pzvsF9yCpKZfz4lWWB4bj2LGnQ"
 
     fun isValidLifetimeToken(token: String): Boolean = runCatching {
         val parts = token.trim().split('.')
