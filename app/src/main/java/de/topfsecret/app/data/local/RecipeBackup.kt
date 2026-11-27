@@ -4,7 +4,6 @@ import android.content.Context
 import android.net.Uri
 import org.json.JSONArray
 import org.json.JSONObject
-import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.UUID
@@ -108,39 +107,61 @@ object RecipeBackup {
                         require(total <= MAX_BACKUP_BYTES) { "Das Backup ist größer als 100 MB." }
                         bytes.write(buffer, 0, count)
                     }
+                    require(!entries.containsKey(entry.name)) { "Die Backup-Datei enthält doppelte Dateieinträge." }
                     entries[entry.name] = bytes.toByteArray()
                     zip.closeEntry()
                 }
             }
         } ?: throw IllegalStateException("Die Backup-Datei konnte nicht geöffnet werden.")
-        val jsonBytes = entries[MANIFEST] ?: throw IllegalArgumentException("Keine gültige Topf-Secret-Sicherung gefunden.")
+
+        val jsonBytes = entries[MANIFEST]
+            ?: throw IllegalArgumentException("Keine gültige Topf-Secret-Sicherung gefunden.")
         val root = JSONObject(String(jsonBytes, Charsets.UTF_8))
         require(root.optString("format") == "topf-secret-backup" && root.optInt("version") == 1) {
             "Dieses Backup-Format wird nicht unterstützt."
         }
+
         val recipes = root.optJSONArray("recipes") ?: JSONArray()
-        val importedImages = mutableListOf<File>()
-        var added = 0
+        val importedFiles = mutableListOf<File>()
+        val importRecords = mutableListOf<RecipeImportRecord>()
+        val seenKeys = mutableSetOf<Pair<String, String?>>()
+
         try {
             for (index in 0 until recipes.length()) {
                 val item = recipes.getJSONObject(index)
                 val title = item.optString("title").trim()
                 require(title.isNotBlank()) { "Ein Rezept im Backup hat keinen Namen." }
                 val sourceUrl = item.optNullableString("sourceUrl")
+                val duplicateKey = title.lowercase(java.util.Locale.ROOT) to sourceUrl
+                if (!seenKeys.add(duplicateKey)) continue
                 if (dao.recipeExists(title, sourceUrl)) continue
-                val imageEntry = item.optString("imageEntry").takeIf { it.isNotBlank() && it != "null" }
+
+                val imageEntry = item.optString("imageEntry")
+                    .takeIf { it.isNotBlank() && it != "null" }
                 val imageUri = imageEntry?.let { name ->
-                    val bytes = entries[name] ?: throw IllegalArgumentException("Ein Rezeptbild im Backup fehlt.")
-                    val directory = File(context.filesDir, "recipe_images").apply { mkdirs() }
+                    require(name.startsWith("images/") && !name.contains("..")) {
+                        "Ein Rezeptbild hat einen ungültigen Dateipfad."
+                    }
+                    val bytes = entries[name]
+                        ?: throw IllegalArgumentException("Ein Rezeptbild im Backup fehlt.")
+                    val directory = File(context.filesDir, "recipe_images").apply {
+                        if (!exists() && !mkdirs()) {
+                            throw IllegalStateException("Der Rezeptbild-Ordner konnte nicht angelegt werden.")
+                        }
+                    }
                     val file = File(directory, "restore-${UUID.randomUUID()}.img")
                     file.writeBytes(bytes)
-                    importedImages.add(file)
+                    importedFiles.add(file)
+
                     val oldId = name.substringAfter("images/").substringBefore("-")
                     entries["sources/$oldId.txt"]?.let { sourceBytes ->
-                        File(directory, file.name + ".source.txt").writeBytes(sourceBytes)
+                        val sidecar = File(directory, file.name + ".source.txt")
+                        sidecar.writeBytes(sourceBytes)
+                        importedFiles.add(sidecar)
                     }
                     Uri.fromFile(file).toString()
                 }
+
                 val recipe = RecipeEntity(
                     title = title,
                     description = item.optString("description"),
@@ -167,9 +188,12 @@ object RecipeBackup {
                 val ingredients = (0 until ingredientArray.length()).map { ingredientIndex ->
                     val value = ingredientArray.getJSONObject(ingredientIndex)
                     IngredientEntity(
-                        recipeId = 0, position = value.optInt("position", ingredientIndex),
-                        name = value.optString("name"), amount = value.optString("amount"),
-                        note = value.optString("note"), barcode = value.optNullableString("barcode"),
+                        recipeId = 0,
+                        position = value.optInt("position", ingredientIndex),
+                        name = value.optString("name"),
+                        amount = value.optString("amount"),
+                        note = value.optString("note"),
+                        barcode = value.optNullableString("barcode"),
                         caloriesPer100 = value.nullableDouble("caloriesPer100"),
                         carbohydratesPer100 = value.nullableDouble("carbohydratesPer100"),
                         proteinPer100 = value.nullableDouble("proteinPer100"),
@@ -185,16 +209,22 @@ object RecipeBackup {
                 val stepArray = item.optJSONArray("steps") ?: JSONArray()
                 val steps = (0 until stepArray.length()).map { stepIndex ->
                     val value = stepArray.getJSONObject(stepIndex)
-                    PreparationStepEntity(recipeId = 0, position = value.optInt("position", stepIndex), instruction = value.optString("instruction"))
+                    PreparationStepEntity(
+                        recipeId = 0,
+                        position = value.optInt("position", stepIndex),
+                        instruction = value.optString("instruction")
+                    )
                 }
-                dao.importRecipeWithDetails(recipe, ingredients, steps)
-                added++
+                importRecords.add(RecipeImportRecord(recipe, ingredients, steps))
             }
+
+            // All database rows are committed together or rolled back together.
+            dao.importRecipesWithDetails(importRecords)
+            return importRecords.size
         } catch (error: Exception) {
-            importedImages.forEach { it.delete(); File(it.parentFile, it.name + ".source.txt").delete() }
+            importedFiles.forEach { file -> file.delete() }
             throw error
         }
-        return added
     }
 
     private fun managedImageFile(context: Context, uriString: String?): File? = runCatching {
