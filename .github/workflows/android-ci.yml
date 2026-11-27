@@ -1,8 +1,6 @@
 name: Android CI
 
 on:
-  # Builds werden bewusst manuell über "Run workflow" gestartet.
-  # Pull Requests gegen development werden weiterhin automatisch geprüft.
   pull_request:
     branches:
       - development
@@ -13,7 +11,7 @@ permissions:
 
 jobs:
   build:
-    name: Build signed release APK
+    name: Build signed Admin and Customer APKs
     runs-on: ubuntu-22.04
     steps:
       - name: Check out source
@@ -45,59 +43,52 @@ jobs:
           fi
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/topf-secret-release.jks"
 
-      - name: Build signed release APK
+      - name: Build both signed release APKs
         env:
           ANDROID_KEYSTORE_PATH: ${{ runner.temp }}/topf-secret-release.jks
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: gradle --no-daemon testReleaseUnitTest assembleRelease
+        run: gradle --no-daemon testAdminReleaseUnitTest testCustomerReleaseUnitTest assembleAdminRelease assembleCustomerRelease
 
-      - name: Verify bundled BLS asset inside APK
+      - name: Verify bundled BLS asset in both APKs
         run: |
-          APK_SOURCE="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n 1)"
-          if [ -z "$APK_SOURCE" ]; then
-            echo "::error::No release APK was produced"
-            exit 1
-          fi
-          if ! unzip -Z1 "$APK_SOURCE" | grep -Fxq "assets/bls_foods_v4.jsonl"; then
-            echo "::error::BLS asset is missing from the generated APK"
-            unzip -Z1 "$APK_SOURCE" | grep 'assets/' || true
-            exit 1
-          fi
-          APK_ASSET="$RUNNER_TEMP/bls_foods_v4.jsonl"
-          unzip -p "$APK_SOURCE" assets/bls_foods_v4.jsonl > "$APK_ASSET"
-          if gzip -t "$APK_ASSET" 2>/dev/null; then
-            APK_ASSET_SHA="$(gzip -dc "$APK_ASSET" | sha256sum | awk '{print $1}')"
-          else
-            APK_ASSET_SHA="$(sha256sum "$APK_ASSET" | awk '{print $1}')"
-          fi
-          EXPECTED_SHA="b58c764620ab5b3b28f81aa3d7caca23b4b2665b151642fde809fca25f4890a6"
-          if [ "$APK_ASSET_SHA" != "$EXPECTED_SHA" ]; then
-            echo "::error::BLS JSONL content checksum mismatch inside APK: $APK_ASSET_SHA"
-            exit 1
-          fi
-          echo "Verified BLS JSONL content in APK (SHA-256: $APK_ASSET_SHA)"
-          
-      - name: Rename APK with build number
-        run: |
-          APK_SOURCE="$(find app/build/outputs/apk/release -maxdepth 1 -type f -name '*.apk' | head -n 1)"
-          if [ -z "$APK_SOURCE" ]; then
-            echo "::error::No release APK was produced"
-            exit 1
-          fi
-          APK_NAME="topf_secret_#${GITHUB_RUN_NUMBER}.apk"
-          APK_PATH="app/build/outputs/apk/release/$APK_NAME"
-          mv "$APK_SOURCE" "$APK_PATH"
-          echo "APK_PATH=$APK_PATH" >> "$GITHUB_ENV"
-          echo "Created $APK_NAME"
+          for APK_SOURCE in app/build/outputs/apk/admin/release/*.apk app/build/outputs/apk/customer/release/*.apk; do
+            if [ ! -f "$APK_SOURCE" ]; then
+              echo "::error::Expected APK missing: $APK_SOURCE"
+              exit 1
+            fi
+            if ! unzip -Z1 "$APK_SOURCE" | grep -Fxq "assets/bls_foods_v4.jsonl"; then
+              echo "::error::BLS asset is missing from $APK_SOURCE"
+              exit 1
+            fi
+            APK_ASSET="$RUNNER_TEMP/$(basename "$(dirname "$(dirname "$APK_SOURCE")")")-bls_foods_v4.jsonl"
+            unzip -p "$APK_SOURCE" assets/bls_foods_v4.jsonl > "$APK_ASSET"
+            if gzip -t "$APK_ASSET" 2>/dev/null; then
+              APK_ASSET_SHA="$(gzip -dc "$APK_ASSET" | sha256sum | awk '{print $1}')"
+            else
+              APK_ASSET_SHA="$(sha256sum "$APK_ASSET" | awk '{print $1}')"
+            fi
+            EXPECTED_SHA="b58c764620ab5b3b28f81aa3d7caca23b4b2665b151642fde809fca25f4890a6"
+            if [ "$APK_ASSET_SHA" != "$EXPECTED_SHA" ]; then
+              echo "::error::BLS JSONL content checksum mismatch in $APK_SOURCE: $APK_ASSET_SHA"
+              exit 1
+            fi
+            echo "Verified BLS JSONL content in $APK_SOURCE"
+          done
 
-      - name: Publish APK as direct GitHub Release download
+      - name: Prepare named APK files
+        run: |
+          mkdir -p release-apks
+          cp app/build/outputs/apk/admin/release/*.apk release-apks/TopfSecret_ADMIN.apk
+          cp app/build/outputs/apk/customer/release/*.apk release-apks/TopfSecret.apk
+
+      - name: Publish both APKs as direct GitHub Release downloads
         if: github.event_name == 'workflow_dispatch'
         uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
-          name: Topf Secret v0.9.8 – Build #${{ github.run_number }}
+          name: Topf Secret 0.9.8 – Admin + Kunden-App – Build #${{ github.run_number }}
           body: |
             **App-Version:** 0.9.8 (versionCode 24)
 
@@ -105,7 +96,13 @@ jobs:
 
             **Commit:** `${{ github.sha }}`
 
-            Installierbare APK für Topf Secret. Die Änderungen dieses Builds sind im Commit und in der Projektdokumentation auf `development` nachvollziehbar.
-          files: ${{ env.APK_PATH }}
+            Enthalten sind zwei getrennte Installationen:
+            - `TopfSecret.apk`: Kunden-App, ausschließlich mit gültiger Licence-Studio-Seriennummer.
+            - `TopfSecret_ADMIN.apk`: Admin-App, ausschließlich mit dem Admin-Key.
+
+            Beide APKs stammen aus demselben Entwicklungsstand.
+          files: |
+            release-apks/TopfSecret.apk
+            release-apks/TopfSecret_ADMIN.apk
           draft: false
           prerelease: true
