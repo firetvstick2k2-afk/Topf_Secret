@@ -443,7 +443,8 @@ private fun TopfSecretApp(context: Context, repository: RecipeRepository, produc
 private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, userName: String, onDarkModeChange: (Boolean) -> Unit, onRecipesClick: () -> Unit, onCategoriesClick: () -> Unit, onSourcesClick: () -> Unit, onBackupClick: () -> Unit) {
     var showInfoDialog by rememberSaveable { mutableStateOf(false) }
     var showLicenseDialog by rememberSaveable { mutableStateOf(false) }
-    val lifetimeLicenseActive = LocalLifetimeLicenseActive.current
+    val customerLicenseInfo = LocalCustomerLicenseInfo.current
+    val customerLicenseActive = customerLicenseInfo != null
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 22.dp, vertical = 18.dp),
         horizontalAlignment = Alignment.Start
@@ -523,19 +524,29 @@ private fun HomeScreen(recipeCount: Int, darkMode: Boolean, appVersion: String, 
                     ) {
                         Card(
                             shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = if (lifetimeLicenseActive) Sage else PaleCopper)
+                            colors = CardDefaults.cardColors(containerColor = if (customerLicenseActive) Sage else PaleCopper)
                         ) {
                             Column(Modifier.fillMaxWidth().padding(14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(if (lifetimeLicenseActive) "LIFETIME-LIZENZ AKTIV" else "NICHT AKTIVIERT",
+                                Text(if (customerLicenseActive) "${customerLicenseInfo?.typeLabel?.uppercase(java.util.Locale.GERMAN)}-LIZENZ AKTIV" else "NICHT AKTIVIERT",
                                     color = Ink, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
                                 Spacer(Modifier.height(4.dp))
-                                Text(if (lifetimeLicenseActive) "Dauerhafte Freischaltung bestätigt" else "Für die Nutzung ist eine gültige Lizenz erforderlich",
+                                Text(
+                                    when {
+                                        customerLicenseInfo?.type == "lifetime" -> "Dauerhafte Freischaltung bestätigt"
+                                        customerLicenseInfo?.expiresAt != null -> {
+                                            val expiryDate = java.time.Instant.ofEpochSecond(customerLicenseInfo!!.expiresAt!!)
+                                                .atZone(java.time.ZoneId.systemDefault())
+                                                .format(java.time.format.DateTimeFormatter.ofPattern("dd.MM.yyyy"))
+                                            "Gültig bis $expiryDate"
+                                        }
+                                        else -> "Für die Nutzung ist eine gültige Lizenz erforderlich"
+                                    },
                                     color = MutedInk, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
                             }
                         }
                         Spacer(Modifier.height(14.dp))
                         Text("Produkt: Topf Secret", color = Ink, style = MaterialTheme.typography.bodyMedium)
-                        Text("Lizenztyp: Lifetime", color = Ink, style = MaterialTheme.typography.bodyMedium)
+                        Text("Lizenztyp: ${customerLicenseInfo?.typeLabel ?: "Nicht aktiviert"}", color = Ink, style = MaterialTheme.typography.bodyMedium)
                         Text("App-Version: $appVersion", color = MutedInk, style = MaterialTheme.typography.bodySmall)
                     }
                 },
