@@ -489,3 +489,10 @@ Die Versionsstände der Gradle-/Android-Plugins und Bibliotheken müssen beim er
 - Commits auf `development`: Prüfer `1d0547283123d406f63d91ddc9ff602fd69c0b7e`; Aktivierungs-Gate `af395c460c02e9a3ab2484e1333efe1df63d00d5`; Lizenzdialog `5a46dcad0cd4b89eab7cc74967126b6144dffa5b`.
 - Ergänzung im Aktivierungs-Gate: Eine zeitlich begrenzte Lizenz wird auch während einer laufenden App-Sitzung beim Erreichen des Ablaufzeitpunkts deaktiviert; der Admin-Zweig bleibt davon unberührt. Commit: `156b26ec528b13a17c9b5bf17b55c24cf23e26d2`.
 - CI-Build und Gerätetest stehen noch aus. Zu testen: Jahreslizenz wird als „1 Jahr“ mit Ablaufdatum angezeigt; Lifetime bleibt dauerhaft; abgelaufener zeitlich begrenzter Token wird abgelehnt; Admin-Key-Prüfweg bleibt unverändert.
+
+
+## CI-Fix: Sichtbarkeit der Lizenzdetails (2026-11-27)
+- Android-CI-Lauf #64 (`45933656383`) scheiterte beim Kompilieren beider Varianten (`admin` und `customer`) in `ActivationGate.kt:46`: Eine öffentliche CompositionLocal-Eigenschaft verwendete den nur internen Typ `CustomerLicenseInfo`.
+- Ursache gezielt behoben: `CustomerLicenseInfo` in `LicenseVerifier.kt` ist jetzt öffentlich sichtbar. Lizenzfelder, Signaturprüfung, Ablaufprüfung, Admin-Key-Prüfung und Build-Konfiguration wurden nicht verändert.
+- Fix-Commit auf `development`: `c008fbc7ccbad2e44b59143dc153e1c754d65276`.
+- **Noch nicht verifiziert:** Neuer Android-CI-Build und Gerätetest stehen aus. Jahreslizenz, Lifetime, Ablaufverhalten und unveränderter Admin-Zugang anschließend testen.
