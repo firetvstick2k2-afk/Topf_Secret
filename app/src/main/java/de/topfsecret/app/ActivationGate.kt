@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +34,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.delay
 import java.security.MessageDigest
 import java.util.Locale
 
@@ -67,6 +69,18 @@ fun ActivationGate(content: @Composable () -> Unit) {
     var enteredSerial by rememberSaveable { mutableStateOf("") }
     var enteredAdminKey by rememberSaveable { mutableStateOf("") }
     var showError by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(customerLicenseInfo?.expiresAt) {
+        val expiresAt = customerLicenseInfo?.expiresAt
+        if (!BuildConfig.ADMIN_ONLY && expiresAt != null) {
+            val remainingMillis = expiresAt * 1000L - System.currentTimeMillis()
+            if (remainingMillis > 0L) delay(remainingMillis)
+            if (System.currentTimeMillis() / 1000L >= expiresAt) {
+                customerLicenseInfo = null
+                isActivated = false
+            }
+        }
+    }
 
     if (isActivated) {
         androidx.compose.runtime.CompositionLocalProvider(
