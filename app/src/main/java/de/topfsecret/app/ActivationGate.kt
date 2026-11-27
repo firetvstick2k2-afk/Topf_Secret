@@ -41,6 +41,8 @@ private const val ACTIVATION_PREFS = "topf_secret_activation"
 private const val ADMIN_ACTIVATED_KEY = "admin_unlocked"
 private const val LIFETIME_TOKEN_KEY = "lifetime_license_token"
 
+val LocalLifetimeLicenseActive = androidx.compose.runtime.compositionLocalOf { false }
+
 @Composable
 fun ActivationGate(content: @Composable () -> Unit) {
     val context = LocalContext.current
@@ -64,7 +66,9 @@ fun ActivationGate(content: @Composable () -> Unit) {
     var showError by rememberSaveable { mutableStateOf(false) }
 
     if (isActivated) {
-        content()
+        androidx.compose.runtime.CompositionLocalProvider(
+            LocalLifetimeLicenseActive provides (!BuildConfig.ADMIN_ONLY && isActivated)
+        ) { content() }
     } else {
         Column(
             modifier = Modifier
